@@ -54,6 +54,7 @@
             v-for="fileRecord, idx in relatedFiles"
             v-bind:key="idx"
             class="related-file"
+            v-bind:class="{ 'backlink': fileRecord.backlink }"
           >
             <span
               class="filename"
@@ -542,6 +543,10 @@ body {
           flex-grow: 2;
           flex-shrink: 0;
           text-align: right;
+        }
+
+        &.backlink {
+          border-left: 3px solid var(--c-primary);
         }
       }
     }
