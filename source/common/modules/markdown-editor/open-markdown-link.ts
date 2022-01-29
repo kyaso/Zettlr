@@ -17,8 +17,10 @@ import { mdFileExtensions } from '@common/get-file-extensions'
 import makeValidUri from '@common/util/make-valid-uri'
 import CodeMirror from 'codemirror'
 import { IpcRenderer } from 'electron'
+import { PlatformPath } from '@dts/renderer/path'
 
-const path = (window as any).path
+const path: PlatformPath = (window as any).path
+
 const ipcRenderer: IpcRenderer = (window as any).ipc
 
 const VALID_FILETYPES = mdFileExtensions(true)
@@ -30,6 +32,8 @@ const VALID_FILETYPES = mdFileExtensions(true)
  * @param   {CodeMirror.Editor}  cm   The instance to use if it's a heading link
  */
 export default function (url: string, cm: CodeMirror.Editor): void {
+  const base: string = (cm as any).getOption('zettlr').markdownImageBasePath
+
   if (url[0] === '#') {
     // We should open an internal link
     let re = new RegExp('#\\s[^\\r\\n]*?' +
@@ -43,6 +47,13 @@ export default function (url: string, cm: CodeMirror.Editor): void {
         break
       }
     }
+  } else if (url.startsWith('.')) {
+    // We are definitely dealing with a relative URL. So let's resolve it
+    const absPath = path.resolve(url, base)
+    window.location.assign(`safe-file://${absPath}`)
+  } else if (url.startsWith('/') || url.startsWith('\\')) {
+    // We are definitely dealing with an absolute URL.
+    window.location.assign(`safe-file://${url}`)
   } else {
     // It is valid Markdown to surround the URL with < and >
     url = url.replace(/^<(.+)>$/, '$1') // Looks like an Emoji!
@@ -50,14 +61,13 @@ export default function (url: string, cm: CodeMirror.Editor): void {
     // we cannot rely on the errors thrown by new URL(), as,
     // e.g., file://./relative.md will not throw an error albeit
     // we need to convert it to absolute.
-    let base = (cm as any).getOption('zettlr').markdownImageBasePath
     let validURI = makeValidUri(url, base)
 
     // Now we have a valid link. Finally, let's check if we can open the file
     // internally, without having to switch to an external program.
     const localPath = validURI.replace('file://', '')
     const isValidFile = VALID_FILETYPES.includes(path.extname(localPath))
-    const isLocalMdFile = path.isAbsolute(localPath) === true && isValidFile
+    const isLocalMdFile = path.isAbsolute(localPath) && isValidFile
 
     if (isLocalMdFile) {
       // Attempt to open internally

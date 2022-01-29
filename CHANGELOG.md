@@ -2,11 +2,69 @@
 
 ## GUI and Functionality
 
-(nothing here yet)
+- Display inline math using monospaced font
+- Right-clicking citations doesn't select parts of it anymore
+- Inline-equations are now properly syntax highlighted
+- Fixed a bug that caused unintentional pastes when closing a tab using the
+  middle mouse button on Linux
+- Heavily improved the full text search: Previously, certain files that should
+  have been returned for specific search terms were not considered a match, and
+  multiple results per line were mostly not reported; additionally, search
+  results are now ordered by relevancy and the search results are marked more
+  visibly
+- Heavily improved the table editor user interface: Now the table editor will on
+  certain actions write all changes back to the document so that the possibility
+  of data loss involves a single table cell at most in case the user forgets to
+  un-focus the table. Furthermore, the table editor will now not be removed from
+  the document when it loses focus, and instead the table will be updated
+  silently
+- The log viewer now only displays errors and warnings initially
+- Fix a small visual glitch on macOS for toolbar searches
+- Added "Open in new Tab" button to link preview tooltip, when user has
+  preference "Avoid Opening Files in New Tabs" set to true
+- Fix `Use the CodeMirror default actions for Home and End` preference not
+  working on MacOS
+- Fix task item strikethrough appearing laggy
+- Fix task item strikethrough covering the preceding whitespace
+- On macOS, file tree icons are now displayed using the theme/system color. On
+  all platforms, you can customize the appearance using the selector
+  `body .tree-item clr-icon.special` (including platform/mode selectors)
+- Improve the readability mode: Now it will not render a YAML frontmatter and it
+  will additionally treat sentences smarter than before
+- Fixed an issue that would sometimes break images when you edited the caption
+  in the rendered image caption.
+- Enable resetting of the custom Zettelkasten directory
+- The default value for "Use system accent color" is now off for all platforms
+  except macOS
+- The app now remembers if you had the sidebar open, and which tab you selected
+- The app now remembers your recent global searches
+- The file tree now expands when you are filtering for files/directories
+- Translate the auto dark mode start/end setting strings
+- The ToC now displays the currently active section
+- Fix file manager always showing word count, even if user selected character
+  count in preferences
+- When clicking on a heading in the ToC, the cursor is now set to that heading
+  and the editor is focused immediately
+- Fix recent documents items not being clickable in Linux
+- Fix drag & drop of files onto the editor
+- Fix some bugs in the link opener
 
 ## Under the Hood
 
 - Update Pandoc to 2.17
+- Removed the unused PDF settings from the config
+- Removed the unused `pandoc` and `xelatex` config options
+- Convert all MarkdownEditor hooks and plugins to TypeScript
+- Tests now simply transpile without type checking
+- Move service provider types to the new types directory
+- Provide `@dts` as an alias to retrieve typings
+- Move FSAL types to the new types directory
+- Convert the remaining utility functions to TypeScript
+- Polyfill the `path` module in renderer processes
+- Convert the MainSidebar component to TypeScript
+- Move out the statistics calculation from the FSAL
+- The `yarn package` and `yarn test-gui` commands now skip typechecking,
+  reducing build time by a large margin
 
 # 2.1.2
 

@@ -303,7 +303,7 @@ export default defineComponent({
       }
 
       // We have received new items, so we should update them in the editor.
-      const items = this.cslItems.map(item => {
+      const items = this.cslItems.map((item: any) => {
         // Get a rudimentary author list
         let authors = ''
         if (item.author !== undefined) {
@@ -566,13 +566,18 @@ export default defineComponent({
       // Don't update every keystroke to not run into performance problems with
       // very long documents, since calculating the word count needs considerable
       // time, and without the delay, typing seems "laggy".
-      this.maybeUpdateActiveDocumentInfo()
+      if (mdEditor !== null) {
+        this.$store.commit('activeDocumentInfo', mdEditor.documentInfo)
+      }
     })
 
     mdEditor.on('zettelkasten-link', (linkContents) => {
       ipcRenderer.invoke('application', {
         command: 'force-open',
-        payload: linkContents
+        payload: {
+          linkContents: linkContents,
+          newTab: undefined // let open-file command decide based on preferences
+        }
       })
         .catch(err => console.error(err))
 
@@ -666,9 +671,9 @@ export default defineComponent({
         }
       }, 1000)
     },
-    jtl (lineNumber: number) {
+    jtl (lineNumber: number, setCursor: boolean = false) {
       if (mdEditor !== null) {
-        mdEditor.jtl(lineNumber)
+        mdEditor.jtl(lineNumber, setCursor)
       }
     },
     /**
@@ -748,7 +753,6 @@ export default defineComponent({
       if (mdEditor === null) {
         return
       }
-      console.log('refreshing file database!', this.filenameOnly)
 
       const fileDatabase: any = {}
 

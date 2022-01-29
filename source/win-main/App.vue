@@ -96,6 +96,7 @@ import { IpcRenderer } from 'electron'
 import glassFile from './assets/glass.wav'
 import alarmFile from './assets/digital_alarm.mp3'
 import chimeFile from './assets/chime.mp3'
+import { ToolbarControl } from '@dts/renderer/window'
 
 const ipcRenderer: IpcRenderer = (window as any).ipc
 const clipboard = (window as any).clipboard
@@ -129,7 +130,6 @@ export default defineComponent({
     return {
       title: 'Zettlr',
       readabilityActive: false,
-      sidebarVisible: false,
       fileManagerVisible: true,
       distractionFree: false,
       mainSplitViewVisibleComponent: 'fileManager',
@@ -166,6 +166,9 @@ export default defineComponent({
     }
   },
   computed: {
+    sidebarVisible: function (): boolean {
+      return this.$store.state.config['window.sidebarVisible']
+    },
     shouldCountChars: function (): boolean {
       return this.$store.state.config['editor.countChars']
     },
@@ -189,7 +192,7 @@ export default defineComponent({
       if (info.selections.length > 0) {
         // We have selections to display.
         let length = 0
-        info.selections.forEach(sel => {
+        info.selections.forEach((sel: any) => {
           length += sel.selectionLength
         })
 
@@ -218,7 +221,7 @@ export default defineComponent({
     hasTagSuggestions: function (): boolean {
       return this.$store.state.tagSuggestions.length > 0
     },
-    toolbarControls: function (): any[] {
+    toolbarControls: function (): ToolbarControl[] {
       return [
         {
           type: 'three-way-toggle',
@@ -261,7 +264,8 @@ export default defineComponent({
           icon: 'cog'
         },
         {
-          type: 'spacer'
+          type: 'spacer',
+          id: 'spacer-one'
         },
         {
           type: 'button',
@@ -278,6 +282,7 @@ export default defineComponent({
         },
         {
           type: 'spacer',
+          id: 'spacer-two',
           size: '1x'
         },
         {
@@ -317,7 +322,8 @@ export default defineComponent({
           icon: 'footnote'
         },
         {
-          type: 'spacer'
+          type: 'spacer',
+          id: 'spacer-three'
         },
         {
           type: 'text',
@@ -338,7 +344,7 @@ export default defineComponent({
           id: 'toggle-sidebar',
           title: trans('menu.toggle_sidebar'),
           icon: 'view-columns',
-          initialState: this.sidebarVisible === true
+          initialState: this.sidebarVisible ? 'active' : ''
         }
       ]
     },
@@ -388,7 +394,7 @@ export default defineComponent({
   mounted: function () {
     ipcRenderer.on('shortcut', (event, shortcut, state) => {
       if (shortcut === 'toggle-sidebar') {
-        this.sidebarVisible = this.sidebarVisible === false
+        (global as any).config.set('window.sidebarVisible', !this.sidebarVisible)
       } else if (shortcut === 'insert-id') {
         // Generates an ID based upon the configured pattern, writes it into the
         // clipboard and then triggers the paste command on these webcontents.
@@ -452,12 +458,12 @@ export default defineComponent({
           }
 
           this.distractionFree = true
-          this.sidebarVisible = false
+          ;(global as any).config.set('window.sidebarVisible', false)
           this.fileManagerVisible = false
         } else {
           // Leave distraction free mode
           this.distractionFree = false
-          this.sidebarVisible = this.sidebarsBeforeDistractionfree.sidebar
+          ;(global as any).config.set('window.sidebarVisible', this.sidebarsBeforeDistractionfree.sidebar)
           this.fileManagerVisible = this.sidebarsBeforeDistractionfree.fileManager
         }
       }
@@ -465,11 +471,13 @@ export default defineComponent({
 
     // Initially, we need to hide the sidebar, since the view will be visible
     // by default.
-    this.editorSidebarSplitComponent.hideView(2)
+    if (!this.sidebarVisible) {
+      this.editorSidebarSplitComponent.hideView(2)
+    }
   },
   methods: {
-    jtl: function (lineNumber: number) {
-      (this.$refs.editor as any).jtl(lineNumber)
+    jtl: function (lineNumber: number, setCursor: boolean = false) {
+      (this.$refs.editor as any).jtl(lineNumber, setCursor)
     },
     startGlobalSearch: function (terms: string) {
       this.mainSplitViewVisibleComponent = 'globalSearch'
@@ -649,7 +657,7 @@ export default defineComponent({
       if (id === 'toggle-readability') {
         this.readabilityActive = state // For simple toggles, the state is just a boolean
       } else if (id === 'toggle-sidebar') {
-        this.sidebarVisible = state
+        ;(global as any).config.set('window.sidebarVisible', state)
       } else if (id === 'toggle-file-manager') {
         // Since this is a three-way-toggle, we have to inspect the state.
         this.fileManagerVisible = state !== undefined

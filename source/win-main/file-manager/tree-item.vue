@@ -8,11 +8,11 @@
         'tree-item': true,
         [obj.type]: true,
         'selected': isSelected,
-        'project': obj.project != null,
+        'project': obj.type === 'directory' && obj.project != null,
         'root': isRoot
       }"
       v-bind:data-hash="obj.hash"
-      v-bind:data-id="obj.id || ''"
+      v-bind:data-id="obj.type === 'file' ? obj.id : ''"
       v-bind:style="{
         'padding-left': `${depth * 15 + 10}px`
       }"
@@ -34,7 +34,8 @@
           v-bind:shape="secondaryIcon"
           role="presentation"
           v-bind:class="{
-            'is-solid': typeof secondaryIcon !== 'boolean' && [ 'disconnect', 'blocks-group' ].includes(secondaryIcon)
+            'is-solid': typeof secondaryIcon !== 'boolean' && [ 'disconnect', 'blocks-group' ].includes(secondaryIcon),
+            'special': typeof secondaryIcon !== 'boolean'
           }"
         />
       </span>
@@ -47,7 +48,8 @@
           v-bind:shape="primaryIcon"
           role="presentation"
           v-bind:class="{
-            'is-solid': typeof primaryIcon !== 'boolean' && [ 'disconnect', 'blocks-group' ].includes(primaryIcon)
+            'is-solid': typeof primaryIcon !== 'boolean' && [ 'disconnect', 'blocks-group' ].includes(primaryIcon),
+            'special': typeof primaryIcon !== 'boolean' && ![ 'caret right', 'caret down' ].includes(primaryIcon)
           }"
           v-on:click.stop="handlePrimaryIconClick"
         ></clr-icon>
@@ -102,11 +104,12 @@
         v-on:keyup.enter="handleOperationFinish(($event.target as HTMLInputElement).value)"
       >
     </div>
-    <div v-if="isDirectory && !collapsed">
+    <div v-if="isDirectory && !shouldBeCollapsed">
       <TreeItem
         v-for="child in filteredChildren"
         v-bind:key="child.hash"
         v-bind:obj="child"
+        v-bind:is-currently-filtering="isCurrentlyFiltering"
         v-bind:depth="depth + 1"
       >
       </TreeItem>
@@ -135,8 +138,10 @@ import { trans } from '@common/i18n-renderer'
 
 import { nextTick, defineComponent } from 'vue'
 import { IpcRenderer } from 'electron'
+import { MDFileMeta, DirMeta, CodeFileMeta } from '@dts/common/fsal'
+import { PlatformPath } from '@dts/renderer/path'
 
-const path = (window as any).path
+const path: PlatformPath = (window as any).path
 const ipcRenderer: IpcRenderer = (window as any).ipc
 
 export default defineComponent({
@@ -153,8 +158,12 @@ export default defineComponent({
       default: false // Can only be true if root and actually has a duplicate name
     },
     obj: {
-      type: Object,
+      type: Object as () => MDFileMeta|DirMeta|CodeFileMeta,
       required: true
+    },
+    isCurrentlyFiltering: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => {
@@ -166,6 +175,15 @@ export default defineComponent({
     }
   },
   computed: {
+    shouldBeCollapsed: function (): boolean {
+      if (this.isCurrentlyFiltering) {
+        // If the application is currently running a filter, uncollapse everything
+        return false
+      } else {
+        // Else, just uncollapse if the user wishes so
+        return this.collapsed
+      }
+    },
     /**
      * The secondary icon's shape -- this is the visually FIRST icon to be displayed
      *
@@ -259,7 +277,10 @@ export default defineComponent({
     /**
      * Returns a list of children that can be displayed inside the tree view
      */
-    filteredChildren: function (): any[] {
+    filteredChildren: function (): Array<MDFileMeta|DirMeta|CodeFileMeta> {
+      if (this.obj.type !== 'directory') {
+        return []
+      }
       if (this.combined === true) {
         return this.obj.children
       } else {
@@ -361,18 +382,11 @@ export default defineComponent({
       }
 
       event.dataTransfer.dropEffect = 'move'
-      if (this.obj.type === 'file') {
-        event.dataTransfer.setData('text/x-zettlr-file', JSON.stringify({
-          type: this.obj.type,
-          path: this.obj.path,
-          id: this.obj.id
-        }))
-      } else {
-        event.dataTransfer.setData('text/x-zettlr-dir', JSON.stringify({
-          path: this.obj.path,
-          type: this.obj.type
-        }))
-      }
+      event.dataTransfer.setData('text/x-zettlr-file', JSON.stringify({
+        type: this.obj.type,
+        path: this.obj.path,
+        id: (this.obj.type === 'file') ? this.obj.id : ''
+      }))
     },
     /**
      * Called when a drag operation enters this item; adds a highlight class
@@ -437,12 +451,7 @@ export default defineComponent({
       let data
 
       try {
-        let eventData = event.dataTransfer.getData('text/x-zettlr-file')
-        if (eventData === '') {
-          // If the eventData is empty, this suggests there was no corresponding
-          // data available, so it might be a directory.
-          eventData = event.dataTransfer.getData('text/x-zettlr-dir')
-        }
+        const eventData = event.dataTransfer.getData('text/x-zettlr-file')
         data = JSON.parse(eventData) // Throws error if eventData === ''
       } catch (err) {
         // Error in JSON stringifying (either b/c malformed or no text)
@@ -542,6 +551,9 @@ body.darwin {
   .tree-item {
     margin: 6px 0px;
     color: rgb(53, 53, 53);
+
+    // On macOS, non-standard icons are normally displayed in color
+    clr-icon.special { color: var(--system-accent-color, --c-primary); }
 
     .item-icon, .toggle-icon {
       display: inline-block;
