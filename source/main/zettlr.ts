@@ -451,6 +451,9 @@ export default class Zettlr {
     } else if (command === 'get-open-files') {
       // Return all open files as their metadata objects
       return this._documentManager.openFiles.map(file => this._fsal.getMetadataFor(file))
+      // Switch to the previous file
+    } else if (command === 'switch-file') {
+      await this._documentManager.switch()
     } else if (command === 'copy-img-to-clipboard') {
       // We should copy the contents of an image file to clipboard. Payload
       // contains the image path. We can rely on the Electron framework here.

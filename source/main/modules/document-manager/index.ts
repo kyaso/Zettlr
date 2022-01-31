@@ -33,6 +33,7 @@ export default class DocumentManager extends EventEmitter {
   private readonly _watcher: chokidar.FSWatcher
   private readonly _sessionHistory: string[]
   private _sessionPointer: number
+  private _prevFile: MDFileDescriptor|CodeFileDescriptor|null
 
   constructor () {
     super()
@@ -41,6 +42,7 @@ export default class DocumentManager extends EventEmitter {
     this._sessionHistory = []
     this._sessionPointer = -1
     this._activeFile = null
+    this._prevFile = null
 
     let options: chokidar.WatchOptions = {
       persistent: true,
@@ -191,6 +193,7 @@ export default class DocumentManager extends EventEmitter {
    * @return {Promise<MDFileDescriptor|CodeFileDescriptor>} The file's descriptor
    */
   public async openFile (filePath: string, newTab?: boolean, modifyHistory?: boolean): Promise<MDFileDescriptor|CodeFileDescriptor> {
+    // console.warn("Opening file " + filePath)
     const openFile = this._loadedDocuments.find(file => file.path === filePath)
 
     // Remove the file from the session history if applicable
@@ -336,6 +339,13 @@ export default class DocumentManager extends EventEmitter {
   }
 
   /**
+   * Opens the previous file.
+   */
+  public async switch (): Promise<void> {
+    await this.openFile(this._prevFile?.path as string, true)
+  }
+
+  /**
    * Opens, reads, and parses a file to be loaded.
    *
    * @param {String} filePath The file to be loaded
@@ -414,6 +424,7 @@ export default class DocumentManager extends EventEmitter {
           global.citeproc.loadAndSelect(dbFile)
             .finally(() => {
               // No matter what, we need to make the file active
+              this._prevFile = this._activeFile
               this._activeFile = file
               global.recentDocs.add(file.path)
               global.config.set('activeFile', this._activeFile.path)
@@ -421,6 +432,7 @@ export default class DocumentManager extends EventEmitter {
             })
             .catch(err => global.log.error(`[DocumentManager] Could not load file-specific database ${dbFile}`, err))
         } else {
+          this._prevFile = this._activeFile
           this._activeFile = file
           global.recentDocs.add(file.path)
           global.config.set('activeFile', this._activeFile.path)

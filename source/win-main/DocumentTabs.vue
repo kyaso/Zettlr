@@ -99,11 +99,12 @@ export default defineComponent({
           this.selectFile(this.openFiles[this.openFiles.length - 1])
         }
       } else if (shortcut === 'next-tab') {
-        if (currentIdx < this.openFiles.length - 1) {
-          this.selectFile(this.openFiles[currentIdx + 1])
-        } else {
-          this.selectFile(this.openFiles[0])
-        }
+        this.switchTabs()
+        // if (currentIdx < this.openFiles.length - 1) {
+        //   this.selectFile(this.openFiles[currentIdx + 1])
+        // } else {
+        //   this.selectFile(this.openFiles[0])
+        // }
       } else if (shortcut === 'close-window') {
         // The tab bar has the responsibility to first close the activeFile if
         // there is one. If there is none, it should send a request to close
@@ -272,6 +273,12 @@ export default defineComponent({
       ipcRenderer.invoke('application', {
         command: 'open-file',
         payload: { path: file.path }
+      })
+        .catch(e => console.error(e))
+    },
+    switchTabs: function () {
+      ipcRenderer.invoke('application', {
+        command: 'switch-file'
       })
         .catch(e => console.error(e))
     },
