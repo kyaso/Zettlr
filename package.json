@@ -15,7 +15,7 @@
   "description": "A Markdown Editor for the 21st century.",
   "main": ".webpack/main",
   "scripts": {
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps && patch-package",
     "start": "cross-env NODE_ENV=develop electron-forge start",
     "package": "cross-env NODE_ENV=production SKIP_TYPECHECKING=true electron-forge package",
     "package:mac-x64": "cross-env NODE_ENV=production electron-forge package --platform=darwin --arch=x64",
@@ -68,6 +68,7 @@
     "minimatch": "^3.0.4",
     "moment": "^2.29.1",
     "nspell": "^2.1.5",
+    "patch-package": "^6.4.7",
     "rimraf": "^3.0.2",
     "sanitize-filename": "^1.6.3",
     "sanitize-html": "^2.6.1",
