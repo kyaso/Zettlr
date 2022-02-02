@@ -1,10 +1,13 @@
 diff --git a/node_modules/codemirror/keymap/vim.js b/node_modules/codemirror/keymap/vim.js
-index 1cf9636..331b60b 100644
+index 1cf9636..b69acc1 100644
 --- a/node_modules/codemirror/keymap/vim.js
 +++ b/node_modules/codemirror/keymap/vim.js
-@@ -86,7 +86,7 @@
+@@ -84,9 +84,9 @@
+     { keys: '<C-n>', type: 'keyToKey', toKeys: 'j' },
+     { keys: '<C-p>', type: 'keyToKey', toKeys: 'k' },
      { keys: '<C-[>', type: 'keyToKey', toKeys: '<Esc>' },
-     { keys: '<C-c>', type: 'keyToKey', toKeys: '<Esc>' },
+-    { keys: '<C-c>', type: 'keyToKey', toKeys: '<Esc>' },
++    // { keys: '<C-c>', type: 'keyToKey', toKeys: '<Esc>' },
      { keys: '<C-[>', type: 'keyToKey', toKeys: '<Esc>', context: 'insert' },
 -    { keys: '<C-c>', type: 'keyToKey', toKeys: '<Esc>', context: 'insert' },
 +    { keys: 'jk', type: 'keyToKey', toKeys: '<Esc>', context: 'insert' },
