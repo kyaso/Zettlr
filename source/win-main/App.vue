@@ -469,6 +469,11 @@ export default defineComponent({
       }
     })
 
+    // Added this for our custom tooltip
+    ipcRenderer.on('start-global-search', (event, searchTerms) => {
+      this.startGlobalSearch(searchTerms)
+    })
+
     // Initially, we need to hide the sidebar, since the view will be visible
     // by default.
     if (!this.sidebarVisible) {

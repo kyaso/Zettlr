@@ -81,6 +81,8 @@ interface ConfigOptions {
     autoCreateLinkedFiles: boolean
     autoSearch: boolean
     customDirectory: string
+    tooltipEnable: boolean
+    tooltipDelay: number
   }
   editor: {
     autocompleteAcceptSpace: boolean

@@ -52,15 +52,18 @@ export default class FilePathFindMetaData extends ZettlrCommand {
     // Get the contents of the file such as:
     if (metaData !== undefined) {
       metaData = metaData as MDFileMeta // forces MDFileMeta rather than CodeFileMeta
-      let content = metaData.content.substring(0, 200) // The content
-      if (metaData.content.length > 200) {
-        content += '...'
-      }
-      let wordCount = metaData.wordCount // The word count
+      // We don't need content, word count and date for our custom tooltip
+      //
+      // let content = metaData.content.substring(0, 200) // The content
+      // if (metaData.content.length > 200) {
+      //   content += '...'
+      // }
+      // let wordCount = metaData.wordCount // The word count
       let title = metaData.name // The file name
 
       // use luxon to get a local time difference
-      return ([ title, content, wordCount, metaData.modtime ])
+      // return ([ title, content, wordCount, metaData.modtime ])
+      return ([ title, null, null, null ])
     }
     // We can't find it, so return Not Found
     return null

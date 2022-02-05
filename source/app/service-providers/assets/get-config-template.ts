@@ -104,7 +104,9 @@ export default function getConfigTemplate (): ConfigOptions {
       // If true, create files that are not found, if forceOpen is called
       autoCreateLinkedFiles: false,
       autoSearch: true, // Automatically start a search upon following a link?
-      customDirectory: '' // If present, saves auto-created files here
+      customDirectory: '', // If present, saves auto-created files here
+      tooltipEnable: true, // Whether link tooltips are enabled
+      tooltipDelay: 250 // Tooltip popup delay (ms) 
     },
     // Editor related stuff
     editor: {

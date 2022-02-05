@@ -502,6 +502,8 @@ export default class Zettlr {
       this._windowManager.showUpdateWindow()
     } else if (command === 'open-project-preferences') {
       this._windowManager.showProjectPropertiesWindow(payload)
+    } else if (command === 'start-global-search') {
+      this.startGlobalSearch(payload)
     } else {
       // ELSE: If the command has not yet been found, try to run one of the
       // bigger commands
@@ -842,5 +844,14 @@ export default class Zettlr {
    */
   prompt (options: any): void {
     this._windowManager.prompt(options)
+  }
+
+  /**
+   * Starts the global search
+   * 
+   * @param {string}  terms   The search term(s)
+   */
+  startGlobalSearch(terms: string): void {
+    BrowserWindow.getFocusedWindow()?.webContents.send('start-global-search', terms)
   }
 }

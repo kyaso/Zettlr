@@ -1,4 +1,4 @@
-import tippy from 'tippy.js'
+import tippy, { followCursor } from 'tippy.js'
 import { trans } from '@common/i18n-renderer'
 import formatDate from '@common/util/format-date'
 import { IpcRenderer } from 'electron'
@@ -13,7 +13,12 @@ const ipcRenderer: IpcRenderer = (window as any).ipc
  */
 
 export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
+  
   elem.getWrapperElement().addEventListener('mousemove', (event) => {
+    if (!global.config.get('zkn.tooltipEnable')) {
+      return
+    }
+
     const a = event.target as HTMLElement
 
     // Only for note links
@@ -31,30 +36,31 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       content: trans('gui.preview_searching_label'),
       allowHTML: true, // Obviously
       interactive: true,
-      placement: 'top-start', // Display at the beginning of the anchor
+      placement: 'top', // Display at the beginning of the anchor
+      followCursor: 'horizontal',
       appendTo: document.body, // anchor
       showOnCreate: true, // Immediately show the tooltip
       arrow: true, // Arrow for these tooltips
-      delay: 500
+      onHidden (instance) {
+        instance.destroy() // Destroy the tippy instance.
+      },
+      delay: global.config.get('zkn.tooltipDelay'),
+      plugins: [followCursor]
     })
 
     // Find the file
     ipcRenderer.invoke('application', { command: 'file-find-and-return-meta-data', payload: a.innerText })
       .then((metaData) => {
-        if (metaData !== null) {
-          // Set the tooltip's contents to the note contents
-          const wrapper = getPreviewElement(metaData, a.innerText)
+        // Set the tooltip's contents to the note contents
+        const wrapper = getPreviewElement(metaData, a.innerText)
 
-          tooltip.setContent(wrapper)
+        tooltip.setContent(wrapper)
 
-          // Also, destroy the tooltip as soon as the button is clicked to
-          // prevent visual artifacts
-          wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
-            tooltip.destroy()
-          })
-        } else {
-          tooltip.setContent(trans('system.error.fnf_message'))
-        }
+        // Also, destroy the tooltip as soon as the button is clicked to
+        // prevent visual artifacts
+        wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
+          tooltip.destroy()
+        })
       }).catch(err => console.error(err))
   })
 }
@@ -72,22 +78,34 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
 
-  const title = document.createElement('h4')
-  title.classList.add('filename')
-  title.textContent = metadata[0]
+  let openButtonTxt = 'Search'
+  // When the link is an actual file, add its title.
+  // Otherwise (ID) do nothing
+  if (metadata !== null) {
+    const title = document.createElement('h4')
+    title.classList.add('filename')
+    title.textContent = metadata[0]
 
-  const content = document.createElement('div')
-  content.classList.add('note-content')
-  content.textContent = metadata[1]
+    openButtonTxt = trans('menu.open').replace('\u2026', '') // remove "...", if any
 
-  const meta = document.createElement('div')
-  meta.classList.add('metadata')
-  meta.innerHTML = `${trans('gui.preview_word_count')}: ${metadata[2]}`
-  meta.innerHTML += '<br>'
-  meta.innerHTML += `${trans('gui.modified')}: ${formatDate(metadata[3])}`
+    wrapper.appendChild(title)
+  }
+
+  // const content = document.createElement('div')
+  // content.classList.add('note-content')
+  // content.textContent = metadata[1]
+
+  // const meta = document.createElement('div')
+  // meta.classList.add('metadata')
+  // meta.innerHTML = `${trans('gui.preview_word_count')}: ${metadata[2]}`
+  // meta.innerHTML += '<br>'
+  // meta.innerHTML += `${trans('gui.modified')}: ${formatDate(metadata[3])}`
 
   const actions = document.createElement('div')
   actions.classList.add('actions')
+  // Center horizontal (source: https://stackoverflow.com/a/7560887/3727722)
+  actions.style.display = 'flex'
+  actions.style.justifyContent = 'center'
 
   const openFunc = function (): void {
     ipcRenderer.invoke('application', {
@@ -98,11 +116,17 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
       }
     })
       .catch(err => console.error(err))
+    
+    ipcRenderer.invoke('application', {
+      command: 'start-global-search',
+      payload: linkContents
+    })
+      .catch(err => console.error(err))
   }
 
   const openButton = document.createElement('button')
   openButton.setAttribute('id', 'open-note')
-  openButton.textContent = trans('menu.open').replace('\u2026', '') // remove "...", if any
+  openButton.textContent = openButtonTxt
   openButton.addEventListener('click', openFunc)
   actions.appendChild(openButton)
 
@@ -129,9 +153,9 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
     actions.appendChild(openButtonNT)
   }
 
-  wrapper.appendChild(title)
-  wrapper.appendChild(content)
-  wrapper.appendChild(meta)
+  // wrapper.appendChild(title) // -> Moved to above
+  // wrapper.appendChild(content)
+  // wrapper.appendChild(meta)
   wrapper.appendChild(actions)
 
   return wrapper
