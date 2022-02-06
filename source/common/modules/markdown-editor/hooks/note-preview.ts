@@ -126,7 +126,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
 
   const openButton = document.createElement('button')
   openButton.setAttribute('id', 'open-note')
-  openButton.textContent = openButtonTxt
+  openButton.innerHTML = openButtonTxt + ' <clr-icon shape="pop-out"></clr-icon>'
   openButton.addEventListener('click', openFunc)
   actions.appendChild(openButton)
 
