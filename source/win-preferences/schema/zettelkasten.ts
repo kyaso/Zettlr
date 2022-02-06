@@ -82,7 +82,9 @@ export default function (): any {
           label: trans('dialog.preferences.zkn.custom_directory'),
           model: 'zkn.customDirectory',
           reset: ''
-        },
+        }
+      ],
+      [
         {
           type: 'checkbox',
           label: 'Enable link tooltips',
