@@ -4,6 +4,7 @@ import formatDate from '@common/util/format-date'
 import { IpcRenderer } from 'electron'
 import CodeMirror from 'codemirror'
 const ipcRenderer: IpcRenderer = (window as any).ipc
+const clipboard = (window as any).clipboard
 
 /**
  * A hook for displaying link tooltips which display metadata
@@ -59,6 +60,9 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
         // Also, destroy the tooltip as soon as the button is clicked to
         // prevent visual artifacts
         wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
+          tooltip.destroy()
+        })
+        wrapper.querySelector('#copy-id')?.addEventListener('click', (event) => {
           tooltip.destroy()
         })
       }).catch(err => console.error(err))
@@ -129,6 +133,18 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   openButton.innerHTML = openButtonTxt + ' <clr-icon shape="pop-out"></clr-icon>'
   openButton.addEventListener('click', openFunc)
   actions.appendChild(openButton)
+
+  // Copy ID button
+  const copyID = function (): void {
+    clipboard.writeText('[[' + linkContents + ']]')
+  }
+
+  const copyButton = document.createElement('button')
+  copyButton.setAttribute('id', 'copy-id')
+  copyButton.innerHTML = '<clr-icon shape="copy"></clr-icon>'
+  copyButton.style.marginLeft = '10px'
+  copyButton.addEventListener('click', copyID)
+  actions.appendChild(copyButton)
 
   // Only if preference "Avoid New Tabs" is set,
   // offer an additional button on preview tooltip
