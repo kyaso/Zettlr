@@ -21,6 +21,12 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       return
     }
 
+    // Only handle this event when no mouse button was pressed at the
+    // same time (e.g. mouse moved while highlighting text)
+    if (event.buttons > 0) {
+      return
+    }
+
     const a = event.target as HTMLElement
 
     // Only for note links
