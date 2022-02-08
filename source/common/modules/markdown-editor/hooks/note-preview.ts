@@ -82,7 +82,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
 
-  let openButtonTxt = 'Search'
+  let openButtonTxt = '<clr-icon shape="search"></clr-icon>'
   // When the link is an actual file, add its title.
   // Otherwise (ID) do nothing
   if (metadata !== null) {
@@ -90,7 +90,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
     title.classList.add('filename')
     title.textContent = metadata[0]
 
-    openButtonTxt = trans('menu.open').replace('\u2026', '') // remove "...", if any
+    openButtonTxt = '<clr-icon shape="pop-out"></clr-icon>' 
 
     wrapper.appendChild(title)
   }
@@ -130,7 +130,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
 
   const openButton = document.createElement('button')
   openButton.setAttribute('id', 'open-note')
-  openButton.innerHTML = openButtonTxt + ' <clr-icon shape="pop-out"></clr-icon>'
+  openButton.innerHTML = openButtonTxt
   openButton.addEventListener('click', openFunc)
   actions.appendChild(openButton)
 
