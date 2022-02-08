@@ -1,10 +1,11 @@
-import tippy, { followCursor } from 'tippy.js'
+import tippy, { followCursor, Instance } from 'tippy.js'
 import { trans } from '@common/i18n-renderer'
-import formatDate from '@common/util/format-date'
 import { IpcRenderer } from 'electron'
 import CodeMirror from 'codemirror'
 const ipcRenderer: IpcRenderer = (window as any).ipc
 const clipboard = (window as any).clipboard
+
+let linkTooltip: Instance|undefined
 
 /**
  * A hook for displaying link tooltips which display metadata
@@ -32,8 +33,11 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       return
     }
 
+    // Hide any existing tooltip
+    maybeHideLinkTooltip()
+
     // Create a tippy. This will display the loading values
-    const tooltip = tippy(a, {
+    linkTooltip = tippy(a, {
       content: trans('gui.preview_searching_label'),
       allowHTML: true, // Obviously
       interactive: true,
@@ -42,8 +46,11 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       appendTo: document.body, // anchor
       showOnCreate: true, // Immediately show the tooltip
       arrow: true, // Arrow for these tooltips
-      onHidden (instance) {
-        instance.destroy() // Destroy the tippy instance.
+      onHidden: (instance) => {
+        if (linkTooltip !== undefined) {
+          linkTooltip.destroy()
+          linkTooltip = undefined
+        }
       },
       delay: global.config.get('zkn.tooltipDelay'),
       plugins: [followCursor]
@@ -55,15 +62,18 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
         // Set the tooltip's contents to the note contents
         const wrapper = getPreviewElement(metaData, a.innerText)
 
-        tooltip.setContent(wrapper)
+        ;(linkTooltip as Instance).setContent(wrapper)
 
         // Also, destroy the tooltip as soon as the button is clicked to
         // prevent visual artifacts
         wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
-          tooltip.destroy()
+          // took this from formatting-bar.ts (TS complained about possible undefined)
+          ;(linkTooltip as Instance).destroy()
+          linkTooltip = undefined
         })
         wrapper.querySelector('#copy-id')?.addEventListener('click', (event) => {
-          tooltip.destroy()
+          ;(linkTooltip as Instance).destroy()
+          linkTooltip = undefined
         })
       }).catch(err => console.error(err))
   })
@@ -175,4 +185,11 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   wrapper.appendChild(actions)
 
   return wrapper
+}
+
+function maybeHideLinkTooltip (): void {
+  if (linkTooltip !== undefined) {
+    linkTooltip.destroy()
+    linkTooltip = undefined
+  }
 }
