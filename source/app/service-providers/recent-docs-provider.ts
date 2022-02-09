@@ -50,9 +50,9 @@ export default class RecentDocsProvider extends EventEmitter {
           app.addRecentDocument(docPath)
         }
 
-        // Make sure we never exceed 10 recent docs
-        if (this._recentDocs.length > 10) {
-          this._recentDocs = this._recentDocs.slice(0, 10)
+        // Make sure we never exceed 20 recent docs
+        if (this._recentDocs.length > 20) {
+          this._recentDocs = this._recentDocs.slice(0, 20)
         }
 
         // Finally, announce the fact that the list of recent documents has
