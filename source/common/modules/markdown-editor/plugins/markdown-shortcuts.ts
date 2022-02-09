@@ -692,3 +692,19 @@ function markdownBlock (cm: CodeMirror.Editor, mark: string): void {
     }
   }
 }
+
+/**
+ * Toggles a ZKN (internal, Wiki) link
+ * 
+ * @param   {CodeMirror.Editor}  cm  The editor instance
+ */
+;(commands as any).markdownZknLink = function (cm: CodeMirror.Editor) {
+  console.log("Command ZKN worked!")
+  if (cm.isReadOnly()) {
+    return Pass
+  }
+
+  // We don't pass the fourth parameter.
+  // This means that we can undo a ZKN link, like e.g. for bold.
+  markdownInline(cm, '[[', ']]')
+}

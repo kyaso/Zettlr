@@ -34,6 +34,7 @@ const FORMATTING_BAR_HTML = `<div class="editor-formatting-bar">
 <div class="button" data-command="markdownImage"><clr-icon shape="image"></clr-icon></div>
 <div class="button" data-command="markdownCode"><clr-icon shape="code-alt"></clr-icon></div>
 <div class="button" data-command="markdownComment"><clr-icon shape="code"></clr-icon></div>
+<div class="button" data-command="markdownZknLink"><clr-icon shape="angle-double"></clr-icon></div>
 </div>`
 
 export default function formattingBarHook (cm: CodeMirror.Editor): void {
