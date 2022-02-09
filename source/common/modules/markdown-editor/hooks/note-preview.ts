@@ -46,6 +46,28 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
     let cursor = elem.coordsChar({ left: event.clientX, top: event.clientY })
     let tokenInfo = elem.getTokenAt(cursor)
     let tokenList = tokenInfo.type?.split(' ')
+    
+    // Return when tokenList is invalid
+    if (tokenList === undefined) {
+      return
+    }
+
+    // Determine whether we have a link or a tag
+    let isLink = undefined
+    // We do the filtering because (for some reason) sometimes links have class
+    // "zkn-link", and sometimes "zkn-link-formatting" -> so we just test for
+    // "zkn-link".
+    // Similar story for tags below
+    if (tokenList.filter( (token) => token.includes('zkn-link') ).length > 0) {
+      isLink = true
+    } else if (tokenList.filter( (token) => token.includes('zkn-tag') ).length > 0) {
+      isLink = false
+    }
+
+    // Neither link, nor tag -> abort
+    if (isLink === undefined) {
+      return
+    }
 
     // Hide any existing tooltip
     maybeHideLinkTooltip()
@@ -70,7 +92,7 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       plugins: [followCursor]
     })
 
-    if (tokenList?.includes('zkn-link')) {
+    if (isLink) {
       // Find the file
       ipcRenderer.invoke('application', { command: 'file-find-and-return-meta-data', payload: tokenInfo.string })
         .then((metaData) => {
@@ -92,7 +114,7 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
           //   linkTooltip = undefined
           // })
         }).catch(err => console.error(err))
-    } else if (tokenList?.includes('zkn-tag')) {
+    } else {
       // Only show a search button for tags
       const searchButton = getSearchButton(tokenInfo.string)
       ;(linkTooltip as Instance).setContent(searchButton)
