@@ -29,8 +29,8 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
 
     const a = event.target as HTMLElement
 
-    // Only for note links
-    if (!a.classList.contains('cm-zkn-link')) {
+    // Only for note links or tags
+    if (!a.classList.contains('cm-zkn-link') && !a.classList.contains('cm-zkn-tag')) {
       return
     }
 
@@ -38,6 +38,14 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
     if (a.hasOwnProperty('_tippy')) {
       return
     }
+
+    // Token hack borrowed from markdown-editor/index.ts.
+    // This is a workaround for the Vim normal mode bug
+    // where highlighting parts of a ZKN link seems to
+    // break up the link into multiple parts...
+    let cursor = elem.coordsChar({ left: event.clientX, top: event.clientY })
+    let tokenInfo = elem.getTokenAt(cursor)
+    let tokenList = tokenInfo.type?.split(' ')
 
     // Hide any existing tooltip
     maybeHideLinkTooltip()
@@ -62,26 +70,33 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       plugins: [followCursor]
     })
 
-    // Find the file
-    ipcRenderer.invoke('application', { command: 'file-find-and-return-meta-data', payload: a.innerText })
-      .then((metaData) => {
-        // Set the tooltip's contents to the note contents
-        const wrapper = getPreviewElement(metaData, a.innerText)
+    if (tokenList?.includes('zkn-link')) {
+      // Find the file
+      ipcRenderer.invoke('application', { command: 'file-find-and-return-meta-data', payload: tokenInfo.string })
+        .then((metaData) => {
+          // Set the tooltip's contents to the note contents
+          const wrapper = getPreviewElement(metaData, tokenInfo.string)
 
-        ;(linkTooltip as Instance).setContent(wrapper)
+          ;(linkTooltip as Instance).setContent(wrapper)
 
-        // Also, destroy the tooltip as soon as the button is clicked to
-        // prevent visual artifacts
-        wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
-          // took this from formatting-bar.ts (TS complained about possible undefined)
-          ;(linkTooltip as Instance).destroy()
-          linkTooltip = undefined
-        })
-        wrapper.querySelector('#copy-id')?.addEventListener('click', (event) => {
-          ;(linkTooltip as Instance).destroy()
-          linkTooltip = undefined
-        })
-      }).catch(err => console.error(err))
+          // We now destroy the tooltips directly in the buttons event handlers
+          // Also, destroy the tooltip as soon as the button is clicked to
+          // prevent visual artifacts
+          // wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
+          //   // took this from formatting-bar.ts (TS complained about possible undefined)
+          //   ;(linkTooltip as Instance).destroy()
+          //   linkTooltip = undefined
+          // })
+          // wrapper.querySelector('#copy-id')?.addEventListener('click', (event) => {
+          //   ;(linkTooltip as Instance).destroy()
+          //   linkTooltip = undefined
+          // })
+        }).catch(err => console.error(err))
+    } else if (tokenList?.includes('zkn-tag')) {
+      // Only show a search button for tags
+      const searchButton = getSearchButton(tokenInfo.string)
+      ;(linkTooltip as Instance).setContent(searchButton)
+    }
   })
 }
 
@@ -98,15 +113,14 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
 
-  let openButtonTxt = '<clr-icon shape="search"></clr-icon>'
+  const linkIsFile = metadata !== null
+
   // When the link is an actual file, add its title.
   // Otherwise (ID) do nothing
-  if (metadata !== null) {
+  if (linkIsFile) {
     const title = document.createElement('h4')
     title.classList.add('filename')
     title.textContent = metadata[0]
-
-    openButtonTxt = '<clr-icon shape="pop-out"></clr-icon>' 
 
     wrapper.appendChild(title)
   }
@@ -121,45 +135,27 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   // meta.innerHTML += '<br>'
   // meta.innerHTML += `${trans('gui.modified')}: ${formatDate(metadata[3])}`
 
+  // Create a div for the buttons
   const actions = document.createElement('div')
   actions.classList.add('actions')
   // Center horizontal (source: https://stackoverflow.com/a/7560887/3727722)
   actions.style.display = 'flex'
   actions.style.justifyContent = 'center'
 
-  const openFunc = function (): void {
-    ipcRenderer.invoke('application', {
-      command: 'force-open',
-      payload: {
-        linkContents: linkContents,
-        newTab: undefined // let open-file command decide based on preferences
-      }
-    })
-      .catch(err => console.error(err))
-    
-    ipcRenderer.invoke('application', {
-      command: 'start-global-search',
-      payload: linkContents
-    })
-      .catch(err => console.error(err))
+  // Now add the open/search buttons
+  if (linkIsFile) {
+    // Create an "Open" button
+    const openButton = getOpenButton(linkContents)
+    actions.appendChild(openButton)
+  } else {
+    // Create a "Search" button (ID)
+    const searchButton = getSearchButton(linkContents)
+    actions.appendChild(searchButton)
   }
 
-  const openButton = document.createElement('button')
-  openButton.setAttribute('id', 'open-note')
-  openButton.innerHTML = openButtonTxt
-  openButton.addEventListener('click', openFunc)
-  actions.appendChild(openButton)
-
-  // Copy ID button
-  const copyID = function (): void {
-    clipboard.writeText('[[' + linkContents + ']]')
-  }
-
-  const copyButton = document.createElement('button')
-  copyButton.setAttribute('id', 'copy-id')
-  copyButton.innerHTML = '<clr-icon shape="copy"></clr-icon>'
+  // Next, add the copy button
+  const copyButton = getCopyButton(linkContents)
   copyButton.style.marginLeft = '10px'
-  copyButton.addEventListener('click', copyID)
   actions.appendChild(copyButton)
 
   // Only if preference "Avoid New Tabs" is set,
@@ -193,9 +189,92 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   return wrapper
 }
 
+/**
+ * Basically destroys the tooltip if it exists already
+ */
 function maybeHideLinkTooltip (): void {
   if (linkTooltip !== undefined) {
     linkTooltip.destroy()
     linkTooltip = undefined
   }
+}
+
+/**
+ * Returns an "Open" note button
+ * @param linkContents link content
+ * @returns 
+ */
+function getOpenButton (linkContents: String): HTMLButtonElement {
+  const openFunc = function (): void {
+    ipcRenderer.invoke('application', {
+      command: 'force-open',
+      payload: {
+        linkContents: linkContents,
+        newTab: undefined // let open-file command decide based on preferences
+      }
+    })
+      .catch(err => console.error(err))
+    
+    ipcRenderer.invoke('application', {
+      command: 'start-global-search',
+      payload: linkContents
+    })
+      .catch(err => console.error(err))
+    
+    // Destroy the tooltip instance
+    maybeHideLinkTooltip()
+  }
+
+  const openButton = document.createElement('button')
+  openButton.setAttribute('id', 'open-note')
+  openButton.innerHTML = '<clr-icon shape="pop-out"></clr-icon>'
+  openButton.addEventListener('click', openFunc)
+
+  return openButton
+}
+
+/**
+ * Returns a "Search" button
+ * @param linkContents link content
+ * @returns 
+ */
+function getSearchButton (linkContents: String): HTMLButtonElement {
+  const searchFunc = function (): void {
+    ipcRenderer.invoke('application', {
+      command: 'start-global-search',
+      payload: linkContents
+    })
+      .catch(err => console.error(err))
+    
+    // Destroy the tooltip instance
+    maybeHideLinkTooltip()
+  }
+
+  const searchButton = document.createElement('button')
+  searchButton.setAttribute('id', 'search-id')
+  searchButton.innerHTML = '<clr-icon shape="search"></clr-icon>'
+  searchButton.addEventListener('click', searchFunc)
+
+  return searchButton 
+}
+
+/**
+ * Returns a "Copy" button
+ * @param linkContents link content
+ * @returns 
+ */
+function getCopyButton (linkContents: String): HTMLButtonElement {
+  const copyID = function (): void {
+    clipboard.writeText('[[' + linkContents + ']]')
+
+    // Destroy the tooltip instance
+    maybeHideLinkTooltip()
+  }
+
+  const copyButton = document.createElement('button')
+  copyButton.setAttribute('id', 'copy-id')
+  copyButton.innerHTML = '<clr-icon shape="copy"></clr-icon>'
+  copyButton.addEventListener('click', copyID) 
+
+  return copyButton
 }
