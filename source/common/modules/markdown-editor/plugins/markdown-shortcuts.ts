@@ -705,6 +705,6 @@ function markdownBlock (cm: CodeMirror.Editor, mark: string): void {
   }
 
   // We don't pass the fourth parameter.
-  // This means that we can undo a ZKN link, like e.g. for bold.
+  // This means that we can't undo a ZKN link, like e.g. for bold.
   markdownInline(cm, '[[', ']]')
 }
