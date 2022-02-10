@@ -1,4 +1,5 @@
 import tippy, { followCursor, Instance } from 'tippy.js'
+import 'tippy.js/animations/shift-away.css'
 import { trans } from '@common/i18n-renderer'
 import { IpcRenderer } from 'electron'
 import CodeMirror from 'codemirror'
@@ -77,6 +78,7 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       content: trans('gui.preview_searching_label'),
       allowHTML: true, // Obviously
       interactive: true,
+      animation: 'shift-away',
       placement: 'top', // Display at the beginning of the anchor
       followCursor: 'horizontal',
       appendTo: document.body, // anchor
