@@ -166,20 +166,20 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   actions.style.display = 'flex'
   actions.style.justifyContent = 'center'
 
-  // Now add the open/search buttons
+  // Create a "Search" button
+  const searchButton = getSearchButton(linkContents)
+  searchButton.style.marginRight = '10px'
+  actions.appendChild(searchButton)
+
+  // If it is a file, add an "Open" button
   if (linkIsFile) {
-    // Create an "Open" button
     const openButton = getOpenButton(linkContents)
+    openButton.style.marginRight = '10px'
     actions.appendChild(openButton)
-  } else {
-    // Create a "Search" button (ID)
-    const searchButton = getSearchButton(linkContents)
-    actions.appendChild(searchButton)
   }
 
-  // Next, add the copy button
+  // Finally, add the copy button
   const copyButton = getCopyButton(linkContents)
-  copyButton.style.marginLeft = '10px'
   actions.appendChild(copyButton)
 
   // Only if preference "Avoid New Tabs" is set,
