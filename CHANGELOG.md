@@ -1,3 +1,63 @@
+# 2.2.0
+
+**Attention**: This update switches one preference in the exporters' defaults:
+`file-scope` is now removed. Remove this line from your defaults files, or reset
+them to the (new) default, if you'd like to use this in your exports as well.
+See for more info [this issue](https://github.com/Zettlr/Zettlr/issues/3103).
+
+## GUI and Functionality
+
+- Tags and keywords within a YAML frontmatter are now clickable
+- AutoCorrect values are no longer detected as spelling mistakes
+- Fix an issue with false detection of footnote reference texts
+- Fix link resolving: Now files dropped onto the editor will be easier to detect
+  as files (rather than weblinks)
+- Fixed reloading issues with very large citation databases
+- Fixed a visual glitch when choosing to "Open in a new tab" in a note preview
+- Fix a regression that inserting pasted image paths into the editor didn't work
+- Fix wrong display of citations if there was an error rendering the citation
+- The tutorial is now also available after the first start; you can reopen it
+  any time from the Help menu
+- The autocompletion popup doesn't disappear anymore if you completely remove
+  anything already written to begin anew
+- Fix a bug that would with some installations result in a blank main window.
+- Fixed a bug that would sometimes not update the tag autocompletion
+- Ensure documents are saved when renaming a directory
+- Do not show "Open Image Externally" if loading a data URL
+- Improve styling for the "No results" message on file tree filtering
+- Newly created files now always open in a new tab
+- Fixed a bug where you would receive two "paste image" dialogs if you had text
+  selected when pasting an image onto the editor
+- Fixed conflicting text decorations between strikethrough and spellchecking
+- Fixed a bug where a YAML frontmatter beginning and end would also be
+  recognized even if it was not valid. A valid YAML frontmatter must be
+  delimited by exactly three dashes/dots on their own line, and *not more*
+
+## Under the Hood
+
+- Update Pandoc to 2.17.1.1
+- Activate watchdog polling for the citeproc provider. This should reduce issues
+  with very large citation databases.
+- If the error message upon a failed database reload indicates that the file was
+  simply incomplete, the citeproc provider now attempts a second reload after a
+  delay of 5 seconds
+- Moved the workspace and root file opening logic into their own command
+- Make the ZettlrCommand base class abstract and require constraints on derived
+- Remove all calls to `global` in the renderer processes; instead properly type
+  the API provided via the window object
+- Refactor the main process:
+  - Move the FSAL, the WindowManager, and the DocumentManager into the service
+    provider realm
+  - Factor out all commands into a new CommandProvider
+  - Use singleton dependency injection to provide services to each other,
+    utilizing an AppServiceContainer
+  - Remove (almost) every dependency on the `global` object
+  - Move the littered code from the Zettlr main class into their corresponding
+    service providers
+  - Fixed the dependency hell within the FSAL
+- The app doesn't attempt to download the Vue3 devtools in production anymore
+- The date formatter now takes everything as parameters and has unit tests
+
 # 2.1.3
 
 ## GUI and Functionality

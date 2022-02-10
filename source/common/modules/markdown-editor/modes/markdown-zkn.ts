@@ -92,16 +92,20 @@ defineMode('markdown-zkn', function (config, parserConfig) {
      * @return  {string|null|undefined}            Returns a token class or null
      */
     token: function (stream, state) {
-      // First: YAML highlighting. This block will only execute
-      // at the beginning of a file.
-      if (state.startOfFile && stream.sol() && stream.match(/---/) !== null) {
+      // First: YAML highlighting. This block will only execute at the beginning
+      // of a file. NOTE the `stream.eol()` check at the end of the conditions.
+      // If the RE for a frontmatter did match, we have to additionally check
+      // that three dots or dashes are indeed the *only* contents on the line
+      // for it in order to be recognized as a valid frontmatter. More dashes or
+      // dots are not allowed as per the Pandoc documentation.
+      if (state.startOfFile && stream.sol() && stream.match(/---/) !== null && stream.eol()) {
         // Assume a frontmatter
         state.startOfFile = false
         state.inFrontmatter = true
         return 'hr yaml-frontmatter-start'
       } else if (!state.startOfFile && state.inFrontmatter) {
         // Still in frontMatter?
-        if (stream.sol() && stream.match(/---|\.\.\./) !== null) {
+        if (stream.sol() && stream.match(/---|\.\.\./) !== null && stream.eol()) {
           state.inFrontmatter = false
           return 'hr yaml-frontmatter-end'
         }
@@ -111,6 +115,14 @@ defineMode('markdown-zkn', function (config, parserConfig) {
       } else if (state.startOfFile) {
         // If no frontmatter was found, set the state to a desirable state
         state.startOfFile = false
+      }
+
+      // Now let's check for footnotes. Other than reference style links these
+      // require a different formatting, which we'll implement here. NOTE: We
+      // must perform the check before below's check if we are in a codeblock,
+      // because multi-paragraph footnotes will set those
+      if (stream.sol() && stream.match(fnReferenceRE) !== null) {
+        return 'footnote-formatting'
       }
 
       // Directly afterwards check for inline code or comments, so
@@ -148,12 +160,6 @@ defineMode('markdown-zkn', function (config, parserConfig) {
           stream.next()
           return null // No highlighting for escaped characters
         } // Else: It might be sol(), but don't escape
-      }
-
-      // Now let's check for footnotes. Other than reference style links these
-      // require a different formatting, which we'll implement here.
-      if (stream.sol() && stream.match(fnReferenceRE) !== null) {
-        return 'footnote-formatting'
       }
 
       // Are we in a link?

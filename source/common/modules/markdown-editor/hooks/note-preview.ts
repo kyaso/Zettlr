@@ -3,8 +3,9 @@ import 'tippy.js/animations/shift-away.css'
 import { trans } from '@common/i18n-renderer'
 import { IpcRenderer } from 'electron'
 import CodeMirror from 'codemirror'
-const ipcRenderer: IpcRenderer = (window as any).ipc
-const clipboard = (window as any).clipboard
+const ipcRenderer = window.ipc
+const clipboard = window.clipboard
+const config = window.config
 
 let linkTooltip: Instance|undefined
 
@@ -18,7 +19,7 @@ let linkTooltip: Instance|undefined
 export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
   
   elem.getWrapperElement().addEventListener('mousemove', (event) => {
-    if (!global.config.get('zkn.tooltipEnable')) {
+    if (!config.get('zkn.tooltipEnable')) {
       return
     }
 
@@ -90,7 +91,7 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
           linkTooltip = undefined
         }
       },
-      delay: global.config.get('zkn.tooltipDelay'),
+      delay: config.get('zkn.tooltipDelay'),
       plugins: [followCursor]
     })
 
@@ -185,7 +186,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   // Only if preference "Avoid New Tabs" is set,
   // offer an additional button on preview tooltip
   // to open the file in a new tab
-  if (global.config.get('system.avoidNewTabs')) {
+  if (window.config.get('system.avoidNewTabs') === true) {
     const openFuncNewTab = function (): void {
       ipcRenderer.invoke('application', {
         command: 'force-open',

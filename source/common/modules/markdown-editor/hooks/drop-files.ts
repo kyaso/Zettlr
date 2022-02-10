@@ -14,9 +14,8 @@
 
 import { getImageFileRE } from '@common/regular-expressions'
 import CodeMirror from 'codemirror'
-import { PlatformPath } from '@dts/renderer/path'
 
-const path: PlatformPath = (window as any).path
+const path = window.path
 const IMAGE_REGEXP = getImageFileRE()
 
 interface XFileObject {
@@ -72,7 +71,15 @@ export default function dropFilesHook (cm: CodeMirror.Editor): void {
       const filesToAdd = []
 
       for (const file of filePaths) {
-        const relativePath = path.relative(basePath, file)
+        let relativePath = path.relative(basePath, file)
+
+        // If the file resides in the same directory, it will just return the
+        // basename of the file. However, since the bias for links is --
+        // obviously -- weblinks, not file links, we should help the resolver
+        // determine that the user is referring to a local file.
+        if (!relativePath.startsWith('.')) {
+          relativePath = './' + relativePath
+        }
 
         if (IMAGE_REGEXP.test(file)) {
           filesToAdd.push(`![${path.basename(file)}](${relativePath})`)
@@ -103,13 +110,13 @@ function getInternalLink (data: XFileObject, linkStart: string, linkEnd: string,
     return `[${path.basename(data.path)}](${path.relative(basePath, data.path)})`
   }
 
-  const fnameOnly: boolean = global.config.get('zkn.linkFilenameOnly')
+  const fnameOnly: boolean = window.config.get('zkn.linkFilenameOnly')
 
   if (fnameOnly) {
     return `${linkStart}${path.basename(data.path)}${linkEnd}`
   }
 
-  const linkPref: 'always'|'never'|'withID' = global.config.get('zkn.linkWithFilename')
+  const linkPref: 'always'|'never'|'withID' = window.config.get('zkn.linkWithFilename')
 
   if (data.id === '' && linkPref !== 'always') {
     return `${linkStart}${path.basename(data.path)}${linkEnd}`
