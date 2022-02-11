@@ -54,6 +54,11 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       return
     }
 
+    // Return when we only found "[[" or "]]"
+    if (tokenInfo.string === '[[' || tokenInfo.string === ']]') {
+      return
+    }
+
     // Determine whether we have a link or a tag
     let isLink = undefined
     // We do the filtering because (for some reason) sometimes links have class
