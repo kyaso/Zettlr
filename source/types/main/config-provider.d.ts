@@ -125,6 +125,7 @@ interface ConfigOptions {
     renderMath: boolean
     renderTasks: boolean
     renderHTags: boolean
+    renderEmphasis: boolean
   }
   selectedDicts: string[]
   appLang: string

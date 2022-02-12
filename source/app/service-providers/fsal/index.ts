@@ -46,9 +46,11 @@ import TargetProvider from '@providers/targets'
 import LogProvider from '@providers/log'
 import TagProvider from '@providers/tags'
 import { hasCodeExt, hasMarkdownExt, isMdOrCodeFile } from './util/is-md-or-code-file'
+import { mdFileExtensions } from './util/valid-file-extensions'
 import getMarkdownFileParser from './util/file-parser'
 import LinkProvider from '@providers/links'
 import broadcastIpcMessage from '@common/util/broadcast-ipc-message'
+import { getIDRE } from '@common/regular-expressions'
 
 // Re-export all interfaces necessary for other parts of the code (Document Manager)
 export {
@@ -740,12 +742,38 @@ export default class FSAL extends ProviderContract {
   }
 
   /**
-   * Searches for a file with the exact name as given,
-   * accounting for missing endings.
-   * @param {String} name The file name to be searched for
+   * Searches for a file using the query, which can be either an ID (as
+   * recognized by the RegExp pattern) or a filename (with or without extension)
+   *
+   * @param  {string}  query  What to search for
    */
-  public findExact (query: string, property: string = 'name'): MDFileDescriptor {
-    return findObject(this._state.filetree, property, query, 'children')
+  public findExact (query: string): MDFileDescriptor|undefined {
+    const idREPattern = this._config.get('zkn.idRE')
+
+    const idRE = getIDRE(idREPattern, true)
+    const extensions = mdFileExtensions(true)
+
+    // First, let's see if what we got looks like an ID, or not. If it looks
+    // like an ID, attempt to match it that way, else try to search for a
+    // filename.
+    if (idRE.test(query)) {
+      // It's an ID
+      return findObject(this._state.filetree, 'id', query, 'children')
+    } else {
+      if (hasMarkdownExt(query)) {
+        return findObject(this._state.filetree, 'name', query, 'children')
+      } else {
+        // No file ending given, so let's test all allowed. The filetypes are
+        // sorted by probability (first .md, then .markdown), to reduce the
+        // amount of time spent on the tree.
+        for (const type of extensions) {
+          const file = findObject(this._state.filetree, 'name', query + type, 'children')
+          if (file !== undefined) {
+            return file
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -891,7 +919,7 @@ export default class FSAL extends ProviderContract {
     this._afterRemoteChange()
   }
 
-  public async removeFile (src: MDFileDescriptor|CodeFileDescriptor): Promise<void> {
+  public async removeFile (src: MDFileDescriptor|CodeFileDescriptor|OtherFileDescriptor): Promise<void> {
     this._fsalIsBusy = true
     // NOTE: Generates 1x unlink
     // First remove the file
@@ -905,12 +933,14 @@ export default class FSAL extends ProviderContract {
     // Now we're safe to remove the file actually.
     if (src.type === 'file') {
       await FSALFile.remove(src, this._config.get('system.deleteOnFail'))
-    } else {
+    } else if (src.type === 'code') {
       await FSALCodeFile.remove(src, this._config.get('system.deleteOnFail'))
+    } else {
+      await FSALAttachment.remove(src, this._config.get('system.deleteOnFail'))
     }
 
     // In case it was a root file, we need to splice it
-    if (src.parent === null) {
+    if (src.parent === null && src.type !== 'other') {
       this.unloadPath(src)
     }
 

@@ -224,7 +224,8 @@ export default defineComponent({
         return []
       } else {
         const extensions: string[] = this.$store.state.config.attachmentExtensions
-        return currentDir.attachments.filter(attachment => extensions.includes(attachment.ext))
+        const attachments = currentDir.children.filter(child => child.type === 'other') as OtherFileMeta[]
+        return attachments.filter(attachment => extensions.includes(attachment.ext))
       }
     },
     activeFile: function (): MDFileMeta|null {
@@ -322,15 +323,12 @@ export default defineComponent({
 
       // Then retrieve the inbound links first, since that is the most important
       // relation, so they should be on top of the list.
-      const inboundLinks = await ipcRenderer.invoke('link-provider', {
+      const { inbound /* , outbound */ } = await ipcRenderer.invoke('link-provider', {
         command: 'get-inbound-links',
-        payload: {
-          filePath: this.activeFile.path,
-          fileID: this.activeFile.id
-        }
+        payload: { filePath: this.activeFile.path }
       })
 
-      for (const absPath of inboundLinks) {
+      for (const absPath of inbound) {
         unreactiveList.push({
           file: path.basename(absPath),
           path: absPath,

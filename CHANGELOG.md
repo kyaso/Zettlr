@@ -1,3 +1,33 @@
+# 2.2.1
+
+## GUI and Functionality
+
+- Fixed an error that would under certain circumstances crash the application on
+  start
+- Fix an error that would make some actions unusable if a faulty translation was
+  provided
+- Fixed an issue where sometimes moving the cursor to the beginning of a list
+  item would misbehave
+- Zettlr now detects if a directory is a git repository and displays this
+  information in the directory properties
+- Zettlr can now also preview emphasis such as italic or bold text
+- Using an absolute path as the default image location will ensure that pasted
+  images will be inserted using absolute paths as well.
+- Sometimes, something goes wrong when you start the application; now you will
+  receive an informative message box if that happens, so that reporting problems
+  will be easier
+
+## Under the Hood
+
+- Other files are now stored in the `children` array; the `attachments` array is
+  now gone for good
+- Removed old remnants of the experimental WYSIWYG mode, since Zettlr now offers
+  this via the ensemble of all rendering plugins in the main editor
+- Incorporate the logic to disambiguate ID and filename links into
+  `FSAL::findExact()`
+- Improve findObject utility function
+- Resolve outbound links directly in the link provider
+
 # 2.2.0
 
 **Attention**: This update switches one preference in the exporters' defaults:
