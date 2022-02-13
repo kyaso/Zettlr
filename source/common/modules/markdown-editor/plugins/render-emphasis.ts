@@ -53,17 +53,20 @@ const emphasisRE = /(?<![\\])([*_]{1,3}|~{2})((?!\s)[^*_]+?(?<![\s\\]))(?:[*_]{1
       switch (which) {
         case 1: // Italic
           span.style.fontStyle = 'italic'
+          span.classList.add('cm-text-italic')
           break
         case 2: // Bold or strikethrough
           if (match[1] === '~~') {
             span.style.textDecoration = 'line-through'
           } else {
             span.style.fontWeight = 'bold'
+            span.classList.add('cm-text-bold')
           }
           break
         case 3: // Both
           span.style.fontStyle = 'italic'
           span.style.fontWeight = 'bold'
+          span.classList.add('cm-text-italic-bold')
           break
       }
 
