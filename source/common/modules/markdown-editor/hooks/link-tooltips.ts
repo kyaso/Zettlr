@@ -17,6 +17,7 @@ import CodeMirror from 'codemirror'
 import tippy, { followCursor } from 'tippy.js'
 // const tippy = require('tippy.js').default
 import openMarkdownLink from '../open-markdown-link'
+const config = window.config
 
 let timeout: ReturnType<typeof setTimeout>|undefined
 
@@ -56,7 +57,7 @@ export default function linkTooltipsHook (cm: CodeMirror.Editor): void {
     timeout = setTimeout(() => {
       showTippy(a, linkTarget, cm)
       timeout = undefined
-    }, 1000) // 1s delay
+    }, config.get('zkn.tooltipDelay')) // 1s delay
   })
 }
 
