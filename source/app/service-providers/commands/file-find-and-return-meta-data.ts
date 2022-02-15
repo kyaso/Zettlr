@@ -40,9 +40,10 @@ export default class FilePathFindMetaData extends ZettlrCommand {
       // }
       // const wordCount = metaData.wordCount // The word count
       const title = metaData.name // The file name
+      const dir = metaData.dir // The absolute directory path
 
       // return ([ title, content, wordCount, metaData.modtime ])
-      return ([ title, null, null, null ])
+      return ([ title, dir, null, null ])
     }
     // We can't find it, so return Not Found
     return null

@@ -148,11 +148,19 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   // When the link is an actual file, add its title.
   // Otherwise (ID) do nothing
   if (linkIsFile) {
-    const title = document.createElement('h4')
-    title.classList.add('filename')
+    const title = document.createElement('h3')
+    title.setAttribute('id', 'zkn-link-tooltip-filename')
     title.textContent = metadata[0]
 
+    const dir = document.createElement('span')
+    dir.setAttribute('id', 'zkn-link-tooltip-dir')
+    // If we set the styles here, they can't be overridden using custom.css!
+    // dir.style.fontSize = 'small'
+    // dir.style.color = 'grey'
+    dir.textContent = metadata[1]
+
     wrapper.appendChild(title)
+    wrapper.appendChild(dir)
   }
 
   // const content = document.createElement('div')
