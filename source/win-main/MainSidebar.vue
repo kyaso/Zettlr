@@ -10,6 +10,7 @@
     <div
       v-if="currentTab === 'toc'"
       role="tabpanel"
+      id="sidebar-toc-id"
     >
       <!-- Table of Contents -->
       <h1>{{ tocLabel }}</h1>
@@ -35,18 +36,9 @@
     </div>
 
     <div
-      v-if="currentTab === 'references'"
+      v-if="currentTab === 'toc' || currentTab === 'relatedFiles'"
       role="tabpanel"
-    >
-      <!-- References -->
-      <h1>{{ referencesLabel }}</h1>
-      <!-- Will contain the actual HTML -->
-      <div v-html="referenceHTML"></div>
-    </div>
-
-    <div
-      v-if="currentTab === 'relatedFiles'"
-      role="tabpanel"
+      v-bind:class="{ 'sidebar-related-in-toc': currentTab === 'toc' }"
     >
       <h1>{{ relatedFilesLabel }}</h1>
       <div class="related-files-container">
@@ -82,6 +74,18 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="currentTab === 'references'"
+      role="tabpanel"
+    >
+      <!-- References -->
+      <h1>{{ referencesLabel }}</h1>
+      <!-- Will contain the actual HTML -->
+      <div v-html="referenceHTML"></div>
+    </div>
+
+    
 
     <div
       v-if="currentTab === 'attachments'"
@@ -178,16 +182,16 @@ export default defineComponent({
           label: this.tocLabel
         },
         {
-          icon: 'book',
-          id: 'references',
-          target: 'sidebar-bibliography',
-          label: this.referencesLabel
-        },
-        {
           icon: 'file-group',
           id: 'relatedFiles',
           target: 'sidebar-related-files',
           label: this.relatedFilesLabel
+        },
+        {
+          icon: 'book',
+          id: 'references',
+          target: 'sidebar-bibliography',
+          label: this.referencesLabel
         },
         {
           icon: 'attachment',
@@ -469,6 +473,17 @@ body {
     width: 100%;
     overflow-y: auto;
     overflow-x: hidden;
+
+    #sidebar-toc-id {
+      overflow-y: auto;
+      height: 70%;
+    }
+
+    .sidebar-related-in-toc {
+      border-top: 3px solid grey;
+      overflow-y: auto;
+      height: 30%;
+    }
 
     #open-dir-external {
       padding: @button-margin;
