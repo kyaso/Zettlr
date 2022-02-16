@@ -46,6 +46,9 @@ export default class LinkProvider extends ProviderContract {
           inbound: this.retrieveInbound(filePath),
           outbound: this.retrieveOutbound(filePath)
         }
+      } else if (command === 'get-link-database') {
+        // NOTE: We need to compact the Map into something JSONable
+        return Object.fromEntries(this._fileLinkDatabase)
       }
     })
   }
@@ -73,19 +76,14 @@ export default class LinkProvider extends ProviderContract {
       sourceID = undefined
     }
 
-    // Resolve the outboundLinks utilizing the FSAL
-    const resolved: string[] = []
+    // NOTE: To anyone who comes here thinking that one might be able to
+    // optimize the graph building below further by resolving links immediately
+    // when they arrive here: That won't work because most of the time the
+    // target files won't be loaded when the source file's links arrive here.
 
-    for (const link of outboundLinks) {
-      const found = this._app.fsal.findExact(link)
-      if (found !== undefined) {
-        resolved.push(found.path)
-      }
-    }
-
-    this._fileLinkDatabase.set(sourcePath, resolved)
+    this._fileLinkDatabase.set(sourcePath, outboundLinks)
     if (sourceID !== undefined) {
-      this._idLinkDatabase.set(sourceID, resolved)
+      this._idLinkDatabase.set(sourceID, outboundLinks)
     }
     broadcastIpcMessage('links')
   }
