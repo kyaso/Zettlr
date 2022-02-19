@@ -143,7 +143,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
 
-  const linkIsFile = metadata !== null
+  const linkIsFile = metadata !== undefined
 
   // When the link is an actual file, add its title.
   // Otherwise (ID) do nothing
