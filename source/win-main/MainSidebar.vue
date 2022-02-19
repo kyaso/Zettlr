@@ -381,6 +381,9 @@ export default defineComponent({
       tagsOnly.sort((a, b) => { return b.tags.length - a.tags.length })
 
       this.relatedFiles = [ ...backlinksAndTags, ...backlinksOnly, ...tagsOnly ]
+
+      // Filter out current file
+      this.relatedFiles = this.relatedFiles.filter(f => f.path !== this.activeFile?.path)
     },
     getIcon: function (attachmentPath: string) {
       const fileExtIcon = ClarityIcons.get('file-ext')
