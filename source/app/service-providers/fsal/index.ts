@@ -48,7 +48,6 @@ import TagProvider from '@providers/tags'
 import { hasCodeExt, hasMarkdownExt, isMdOrCodeFile } from './util/is-md-or-code-file'
 import { mdFileExtensions } from './util/valid-file-extensions'
 import getMarkdownFileParser from './util/file-parser'
-import LinkProvider from '@providers/links'
 import broadcastIpcMessage from '@common/util/broadcast-ipc-message'
 import { getIDRE } from '@common/regular-expressions'
 
@@ -68,7 +67,7 @@ interface FSALState {
 /**
  * Declares an event that happens on the FSAL
  */
-interface FSALHistoryEvent {
+export interface FSALHistoryEvent {
   event: 'add'|'change'|'remove'
   path: string
   timestamp: number
@@ -88,8 +87,7 @@ export default class FSAL extends ProviderContract {
     private readonly _logger: LogProvider,
     private readonly _config: ConfigProvider,
     private readonly _targets: TargetProvider,
-    private readonly _tags: TagProvider,
-    private readonly _links: LinkProvider
+    private readonly _tags: TagProvider
   ) {
     super()
 
@@ -218,8 +216,11 @@ export default class FSAL extends ProviderContract {
    */
   resetFiletreeHistory (): void {
     this._history = []
+    // Notify callees to also reset their history timestamp pointers
+    this._emitter.emit('fsal-state-changed', 'reset-history')
+    broadcastIpcMessage('fsal-state-changed', 'reset-history')
 
-    let timestamp = Date.now()
+    let timestamp = 1
 
     for (const descriptor of this._state.filetree) {
       this._history.push({
@@ -270,7 +271,7 @@ export default class FSAL extends ProviderContract {
       // A file or a directory has been removed.
       const descriptor = this.find(changedPath)
       let rootDirectoryIndex = -1 // Only necessary if the open dir has been removed
-      if (descriptor === null) {
+      if (descriptor === undefined) {
         // It must have been an attachment
         const parentPath = path.dirname(changedPath)
         const containingDirectory = this.find(parentPath) as DirDescriptor
@@ -327,7 +328,6 @@ export default class FSAL extends ProviderContract {
           parentDescriptor,
           changedPath,
           this._tags,
-          this._links,
           this._targets,
           this.getMarkdownFileParser(),
           sorter,
@@ -348,7 +348,6 @@ export default class FSAL extends ProviderContract {
           affectedDescriptor,
           this.getMarkdownFileParser(),
           this._tags,
-          this._links,
           this._cache
         )
       } else if (affectedDescriptor.type === 'other') {
@@ -450,7 +449,7 @@ export default class FSAL extends ProviderContract {
       this._state.filetree.push(file)
       this._recordFiletreeChange('add', filePath)
     } else if (hasMarkdownExt(filePath)) {
-      let file = await FSALFile.parse(filePath, this._cache, parser, this._targets, this._links, this._tags)
+      let file = await FSALFile.parse(filePath, this._cache, parser, this._targets, this._tags)
       this._state.filetree.push(file)
       this._recordFiletreeChange('add', filePath)
     }
@@ -475,7 +474,6 @@ export default class FSAL extends ProviderContract {
       dirPath,
       this._cache,
       this._tags,
-      this._links,
       this._targets,
       this.getMarkdownFileParser(),
       sorter,
@@ -535,8 +533,14 @@ export default class FSAL extends ProviderContract {
    * @param {String} p The path to be loaded
    */
   public async loadPath (p: string): Promise<boolean> {
+    const foundPath = this.find(p)
+    if (foundPath !== undefined) {
+      // Don't attempt to load the same path twice
+      return true
+    }
+
     // Load a path
-    let start = Date.now()
+    const start = Date.now()
     if (isFile(p)) {
       await this._loadFile(p)
       this._watchdog.watch(p)
@@ -729,13 +733,13 @@ export default class FSAL extends ProviderContract {
    *
    * @param   {number|string}       val  The value.
    *
-   * @return  {AnyDescriptor|null}       Returns either the descriptor, or null.
+   * @return  {AnyDescriptor|undefined}  Returns either the descriptor, or undefined.
    */
-  public find (val: string): AnyDescriptor|null {
+  public find (val: string): AnyDescriptor|undefined {
     const descriptor = locateByPath(this._state.filetree, val)
 
     if (descriptor === undefined) {
-      return null
+      return undefined
     } else {
       return descriptor
     }
@@ -855,7 +859,6 @@ export default class FSAL extends ProviderContract {
       options,
       this._cache,
       this._targets,
-      this._links,
       this._tags,
       this.getMarkdownFileParser(),
       sorter
@@ -887,7 +890,6 @@ export default class FSAL extends ProviderContract {
         newName,
         this.getMarkdownFileParser(),
         this._tags,
-        this._links,
         this._cache
       )
     } else if (src.type === 'code') {
@@ -1013,7 +1015,7 @@ export default class FSAL extends ProviderContract {
     // NOTE: Generates 1x add
     const absolutePath = path.join(src.path, newName)
 
-    if (this.find(absolutePath) !== null) {
+    if (this.find(absolutePath) !== undefined) {
       // We already have such a dir or file
       throw new Error(`An object already exists at path ${absolutePath}!`)
     }
@@ -1036,7 +1038,6 @@ export default class FSAL extends ProviderContract {
       newName,
       this._cache,
       this._tags,
-      this._links,
       this._targets,
       this.getMarkdownFileParser(),
       sorter
@@ -1095,7 +1096,6 @@ export default class FSAL extends ProviderContract {
       src,
       newName,
       this._tags,
-      this._links,
       this._targets,
       this.getMarkdownFileParser(),
       sorter,
@@ -1218,7 +1218,6 @@ export default class FSAL extends ProviderContract {
       src,
       target,
       this._tags,
-      this._links,
       this._targets,
       this.getMarkdownFileParser(),
       sorter,
