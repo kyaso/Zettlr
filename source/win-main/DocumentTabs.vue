@@ -406,6 +406,7 @@ export default defineComponent({
 body div#tab-container {
   width: 100%;
   height: 30px;
+  scroll-behavior: smooth;
   background-color: rgb(215, 215, 215);
   border-bottom: 1px solid grey;
   display: flex;
