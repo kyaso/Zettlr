@@ -51,6 +51,9 @@
     </div>
     <!-- Finally, display all search results, per file and line. -->
     <template v-if="searchResults.length > 0">
+      <p class="result-counter">
+        {{ individualResults }} results in {{ searchResults.length }} files
+      </p>
       <!-- First, display a filter ... -->
       <TextControl
         ref="filter"
@@ -200,6 +203,8 @@ export default defineComponent({
       filesToSearch: [] as LocalFile[],
       // All results so far received
       searchResults: [] as LocalSearchResult[],
+      // Number of files where results where found
+      individualResults: 0,
       // The number of files the search started with (for progress bar)
       sumFilesToSearch: 0,
       // A global trigger for the result set trigger. This will determine what
@@ -486,6 +491,14 @@ export default defineComponent({
           // Also make sure to sort the search results by relevancy (note the
           // b-a reversal, since we want a descending sort)
           this.searchResults.sort((a, b) => b.weight - a.weight)
+
+          // Accumulate individual results
+          this.individualResults += result.length
+          // If title/tag matched there will be a "-1" result line -> don't
+          // count that.
+          if (result[0].line === -1) {
+            this.individualResults--
+          }
         }
       }
 
@@ -497,6 +510,7 @@ export default defineComponent({
     },
     emptySearchResults: function () {
       this.searchResults = []
+      this.individualResults = 0
 
       // Clear indeces of active search result
       this.activeFileIdx = -1
@@ -663,6 +677,10 @@ body div#global-search-pane {
     div.active {
       background-color: rgb(160, 160, 160);
     }
+  }
+
+  .result-counter {
+    font-size: 11pt;
   }
 }
 
