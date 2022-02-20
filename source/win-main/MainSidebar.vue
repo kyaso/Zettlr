@@ -49,8 +49,13 @@
           <div
             v-for="fileRecord, idx in relatedFiles"
             v-bind:key="idx"
-            class="related-file"
-            v-bind:class="{ 'backlink': fileRecord.backlink }"
+            v-bind:class="{
+              'related-file': true,
+              'tags': fileRecord.tags.length > 0,
+              'inbound': fileRecord.link === 'inbound',
+              'outbound': fileRecord.link === 'outbound',
+              'bidirectional': fileRecord.link === 'bidirectional'
+            }"
           >
             <span
               class="filename"
@@ -629,10 +634,6 @@ body {
           flex-grow: 2;
           flex-shrink: 0;
           text-align: right;
-        }
-
-        &.backlink {
-          border-left: 3px solid var(--c-primary);
         }
       }
     }
