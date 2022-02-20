@@ -255,7 +255,10 @@ function getOpenButton (linkContents: String): HTMLButtonElement {
     
     ipcRenderer.invoke('application', {
       command: 'start-global-search',
-      payload: linkContents
+      payload: {
+        searchTerms: linkContents,
+        copy: false
+      }
     })
       .catch(err => console.error(err))
     
@@ -280,7 +283,10 @@ function getSearchButton (linkContents: String): HTMLButtonElement {
   const searchFunc = function (): void {
     ipcRenderer.invoke('application', {
       command: 'start-global-search',
-      payload: linkContents
+      payload: {
+        searchTerms: linkContents,
+        copy: true
+      }
     })
       .catch(err => console.error(err))
     

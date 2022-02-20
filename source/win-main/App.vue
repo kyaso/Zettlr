@@ -469,7 +469,13 @@ export default defineComponent({
     })
 
     // Added this for our custom tooltip
-    ipcRenderer.on('start-global-search', (event, searchTerms) => {
+    ipcRenderer.on('start-global-search', (event, payload) => {
+      const { searchTerms, copy } = payload
+      if (copy === true) {
+        if (this.$store.state.config['zkn.copyOnClick']) {
+          clipboard.writeText('[[' + searchTerms + ']]')
+        }
+      }
       this.startGlobalSearch(searchTerms)
     })
 

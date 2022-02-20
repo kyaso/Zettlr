@@ -83,6 +83,7 @@ interface ConfigOptions {
     customDirectory: string
     tooltipEnable: boolean
     tooltipDelay: number
+    copyOnClick: boolean
   }
   editor: {
     autocompleteAcceptSpace: boolean
