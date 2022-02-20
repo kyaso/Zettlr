@@ -60,7 +60,8 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
     }
 
     // Determine whether we have a link or a tag
-    let isLink = undefined
+    let isLink = false 
+    let isTag = false
     // We do the filtering because (for some reason) sometimes links have class
     // "zkn-link", and sometimes "zkn-link-formatting" -> so we just test for
     // "zkn-link".
@@ -68,11 +69,11 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
     if (tokenList.filter( (token) => token.includes('zkn-link') ).length > 0) {
       isLink = true
     } else if (tokenList.filter( (token) => token.includes('zkn-tag') ).length > 0) {
-      isLink = false
+      isTag = true
     }
 
     // Neither link, nor tag -> abort
-    if (isLink === undefined) {
+    if (!isLink && !isTag) {
       return
     }
 
@@ -100,33 +101,27 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
       plugins: [followCursor]
     })
 
-    if (isLink) {
-      // Find the file
-      ipcRenderer.invoke('application', { command: 'file-find-and-return-meta-data', payload: tokenInfo.string })
-        .then((metaData) => {
-          // Set the tooltip's contents to the note contents
-          const wrapper = getPreviewElement(metaData, tokenInfo.string)
+    // Find the file
+    ipcRenderer.invoke('application', { command: 'file-find-and-return-meta-data', payload: tokenInfo.string })
+      .then((metaData) => {
+        // Set the tooltip's contents to the note contents
+        const wrapper = getPreviewElement(metaData, tokenInfo.string, isLink)
 
-          ;(linkTooltip as Instance).setContent(wrapper)
+        ;(linkTooltip as Instance).setContent(wrapper)
 
-          // We now destroy the tooltips directly in the buttons event handlers
-          // Also, destroy the tooltip as soon as the button is clicked to
-          // prevent visual artifacts
-          // wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
-          //   // took this from formatting-bar.ts (TS complained about possible undefined)
-          //   ;(linkTooltip as Instance).destroy()
-          //   linkTooltip = undefined
-          // })
-          // wrapper.querySelector('#copy-id')?.addEventListener('click', (event) => {
-          //   ;(linkTooltip as Instance).destroy()
-          //   linkTooltip = undefined
-          // })
-        }).catch(err => console.error(err))
-    } else {
-      // Only show a search button for tags
-      const searchButton = getSearchButton(tokenInfo.string)
-      ;(linkTooltip as Instance).setContent(searchButton)
-    }
+        // We now destroy the tooltips directly in the buttons event handlers
+        // Also, destroy the tooltip as soon as the button is clicked to
+        // prevent visual artifacts
+        // wrapper.querySelector('#open-note')?.addEventListener('click', (event) => {
+        //   // took this from formatting-bar.ts (TS complained about possible undefined)
+        //   ;(linkTooltip as Instance).destroy()
+        //   linkTooltip = undefined
+        // })
+        // wrapper.querySelector('#copy-id')?.addEventListener('click', (event) => {
+        //   ;(linkTooltip as Instance).destroy()
+        //   linkTooltip = undefined
+        // })
+      }).catch(err => console.error(err))
   })
 }
 
@@ -139,19 +134,17 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
  *
  * @return  {Element}                 The wrapper element
  */
-function getPreviewElement (metadata: [string, string, number, number], linkContents: string): HTMLDivElement {
+function getPreviewElement (metadata: [string, string, number, number], linkContents: string, isLink: Boolean): HTMLDivElement {
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
 
   const linkIsFile = metadata !== null
+  const title: HTMLHeadingElement = getTitle(linkIsFile ? metadata[0] : linkContents)
 
-  // When the link is an actual file, add its title.
-  // Otherwise (ID) do nothing
+  wrapper.appendChild(title)
+
+  // When the link is an actual file, show also the directory.
   if (linkIsFile) {
-    const title = document.createElement('h3')
-    title.setAttribute('id', 'zkn-link-tooltip-filename')
-    title.textContent = metadata[0]
-
     const dir = document.createElement('span')
     dir.setAttribute('id', 'zkn-link-tooltip-dir')
     // If we set the styles here, they can't be overridden using custom.css!
@@ -159,7 +152,6 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
     // dir.style.color = 'grey'
     dir.textContent = metadata[1]
 
-    wrapper.appendChild(title)
     wrapper.appendChild(dir)
   }
 
@@ -181,7 +173,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   actions.style.justifyContent = 'center'
 
   // Create a "Search" button
-  const searchButton = getSearchButton(linkContents)
+  const searchButton = getSearchButton(linkContents, isLink)
   searchButton.style.marginRight = '10px'
   actions.appendChild(searchButton)
 
@@ -193,7 +185,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   }
 
   // Finally, add the copy button
-  const copyButton = getCopyButton(linkContents)
+  const copyButton = getCopyButton(linkContents, isLink)
   actions.appendChild(copyButton)
 
   // Only if preference "Avoid New Tabs" is set,
@@ -255,10 +247,7 @@ function getOpenButton (linkContents: String): HTMLButtonElement {
     
     ipcRenderer.invoke('application', {
       command: 'start-global-search',
-      payload: {
-        searchTerms: linkContents,
-        copy: false
-      }
+      payload: linkContents
     })
       .catch(err => console.error(err))
     
@@ -279,14 +268,14 @@ function getOpenButton (linkContents: String): HTMLButtonElement {
  * @param linkContents link content
  * @returns 
  */
-function getSearchButton (linkContents: String): HTMLButtonElement {
+function getSearchButton (linkContents: String, isLink: Boolean): HTMLButtonElement {
   const searchFunc = function (): void {
+    // Copy
+    copy(linkContents as string, isLink)
+
     ipcRenderer.invoke('application', {
       command: 'start-global-search',
-      payload: {
-        searchTerms: linkContents,
-        copy: true
-      }
+      payload: linkContents
     })
       .catch(err => console.error(err))
     
@@ -307,9 +296,9 @@ function getSearchButton (linkContents: String): HTMLButtonElement {
  * @param linkContents link content
  * @returns 
  */
-function getCopyButton (linkContents: String): HTMLButtonElement {
+function getCopyButton (linkContents: String, isLink: Boolean): HTMLButtonElement {
   const copyID = function (): void {
-    clipboard.writeText('[[' + linkContents + ']]')
+    copy(linkContents as string, isLink)
 
     // Destroy the tooltip instance
     maybeHideLinkTooltip()
@@ -321,4 +310,21 @@ function getCopyButton (linkContents: String): HTMLButtonElement {
   copyButton.addEventListener('click', copyID) 
 
   return copyButton
+}
+
+/**
+ * Returns a title element
+ * @param title Title
+ * @returns 
+ */
+function getTitle (title: string): HTMLHeadingElement {
+  const heading = document.createElement('h3')
+  heading.setAttribute('id', 'zkn-link-tooltip-title')
+  heading.textContent = title
+
+  return heading
+}
+
+function copy (text: string, isLink: Boolean): void {
+  clipboard.writeText(isLink ? '[[' + text + ']]' : text)
 }
