@@ -271,7 +271,9 @@ function getOpenButton (linkContents: String): HTMLButtonElement {
 function getSearchButton (linkContents: String, isLink: Boolean): HTMLButtonElement {
   const searchFunc = function (): void {
     // Copy
-    copy(linkContents as string, isLink)
+    if (window.config.get('zkn.copyOnClick')) {
+      copy(linkContents as string, isLink)
+    }
 
     ipcRenderer.invoke('application', {
       command: 'start-global-search',
