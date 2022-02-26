@@ -95,6 +95,11 @@ export default function (): any {
           label: 'Link tooltip delay (ms)',
           model: 'zkn.tooltipDelay',
           reset: 250
+        },
+        {
+          type: 'checkbox',
+          label: 'Copy ID/tag on search click',
+          model: 'zkn.copyOnClick'
         }
       ]
     ]
