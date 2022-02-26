@@ -59,6 +59,7 @@
           >
             <span
               class="filename"
+              v-bind:title="fileRecord.path"
               draggable="true"
               v-on:mousedown.stop="requestFile($event, fileRecord.path)"
               v-on:dragstart="beginDragRelatedFile($event, fileRecord.path)"
