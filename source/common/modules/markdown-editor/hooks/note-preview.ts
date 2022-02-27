@@ -138,7 +138,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
 
-  const linkIsFile = metadata !== null
+  const linkIsFile = metadata !== undefined
   const title: HTMLHeadingElement = getTitle(linkIsFile ? metadata[0] : linkContents)
 
   wrapper.appendChild(title)
