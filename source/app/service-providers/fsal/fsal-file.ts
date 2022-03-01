@@ -25,6 +25,7 @@ import FSALCache from './fsal-cache'
 import { SearchTerm } from '@dts/common/search'
 import TargetProvider, { WritingTarget } from '@providers/targets'
 import TagProvider from '@providers/tags'
+import { index } from './util/file-parser'
 
 /**
  * Applies a cached file, saving time where the file is not being parsed.
@@ -171,9 +172,21 @@ export async function parse (
   // Now it is safe to assign the parent
   file.parent = parent
 
+  // Note: originally, this was inside the !hasCache block below.
+  // But since we need the content for indexing, we have it now here
+  let content = await fs.readFile(filePath, { encoding: 'utf8' })
+
+  // Add to index
+  const id = file.hash
+  if (!index.contain(id)) {
+    // console.log('fsal-file: adding to file index: '+file.name)
+    index.add(id, file.name)   // The file name
+    index.append(id, content)  // The file content
+  }
+
   if (!hasCache) {
     // Read in the file, parse the contents and make sure to cache the file
-    let content = await fs.readFile(filePath, { encoding: 'utf8' })
+    // let content = await fs.readFile(filePath, { encoding: 'utf8' })
     parser(file, content)
     if (cache !== null) {
       cacheFile(file, cache)

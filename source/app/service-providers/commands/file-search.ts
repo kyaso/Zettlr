@@ -14,9 +14,11 @@
 
 import ZettlrCommand from './zettlr-command'
 
+import { index } from '../fsal/util/file-parser'
+
 export default class FileSearch extends ZettlrCommand {
   constructor (app: any) {
-    super(app, 'file-search')
+    super(app, [ 'file-search', 'query-index' ])
   }
 
   /**
@@ -26,6 +28,18 @@ export default class FileSearch extends ZettlrCommand {
    * @return {Boolean}     Whether the call succeeded.
    */
   async run (evt: string, arg: any): Promise<boolean> {
+    // Handle a query index event
+    if (evt === 'query-index') {
+      console.log('[file-search]: query-index event received. Query: '+arg.query)
+      try {
+        let result = await index.search(arg.query)
+        return result
+      } catch (e: any) {
+        this._app.log.error('[file-search] Error: Could not index.')
+        return false
+      }
+    }
+
     // arg.content contains a hash of the file to be searched
     // and the prepared terms.
     let file = this._app.fsal.findFile(arg.path)

@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git://github.com/Zettlr/Zettlr.git"
   },
-  "version": "2.2.3+custom.17",
+  "version": "2.2.3+custom.18",
   "license": "GPL-3.0",
   "description": "A Markdown Editor for the 21st century.",
   "main": ".webpack/main",
@@ -58,6 +58,7 @@
     "codemirror": "^5.65.1",
     "command-exists": "^1.2.9",
     "d3": "^7.0.0",
+    "flexsearch": "^0.7.21",
     "got": "^11.8.3",
     "joplin-turndown-plugin-gfm": "^1.0.12",
     "katex": "^0.15.2",

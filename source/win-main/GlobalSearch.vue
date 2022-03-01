@@ -140,7 +140,8 @@ interface LocalFile {
   path: string
   relativeDirectoryPath: string
   filename: string
-  displayName: string
+  displayName: string,
+  hash: number
 }
 
 /**
@@ -396,7 +397,8 @@ export default defineComponent({
             path: treeItem.path,
             relativeDirectoryPath: '',
             filename: treeItem.name,
-            displayName: displayName
+            displayName: displayName,
+            hash: treeItem.hash
           })
           continue
         }
@@ -417,7 +419,8 @@ export default defineComponent({
             // app-internal relative path remains. Also, we're removing the leading (back)slash
             relativeDirectoryPath: item.dir.replace(treeItem.dir, '').substr(1),
             filename: item.name,
-            displayName: displayName
+            displayName: displayName,
+            hash: item.hash
           }
         })
 
@@ -464,6 +467,56 @@ export default defineComponent({
     singleSearchRun: async function () {
       // Take the file to be searched ...
       const terms = compileSearchTerms(this.query)
+
+      // Query the index
+      let res: SearchResult[] = []
+      // This array will hold all the NOT matches
+      // It is later used to filter out the NOT matches
+      let notRes: SearchResult[] = []
+
+      console.log('[GlobalSearch] Terms: '+terms)
+
+      // Loop over the search terms
+      for (let i = 0; i < terms.length; i++) {
+        // Loop over the words of the current term
+        for (let j = 0; j < terms[i].words.length; j++) {
+          // Query the search index for the word
+          const tmp: [] = await ipcRenderer.invoke('application', {
+            command: 'query-index',
+            payload: {
+              query: terms[i].words[j]
+            }
+          })
+
+          if (terms[i].operator !== 'NOT') {
+            // If the corresponding operator of the current terms is not NOT,
+            // add the query result to the res array.
+            res = res.concat(tmp)
+          } else {
+            // If the operator is NOT, add the result to the notRes array.
+            notRes = notRes.concat(tmp)
+          }
+        }
+      }
+
+      // I added this initially for testing, so it can be removed in the future
+      // const res: [] = await ipcRenderer.invoke('application', {
+      //   command: 'query-index',
+      //   payload: {
+      //     query: terms[0].words[0]
+      //   }
+      // })
+
+      console.log('[GlobalSearch] Query result: '+res)
+      console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
+
+      // First filter out all NOT files
+      this.filesToSearch = this.filesToSearch.filter(f => !notRes.includes(f.hash))
+      // Then filter "in" the matched index files
+      this.filesToSearch = this.filesToSearch.filter(f => res.includes(f.hash))
+
+      console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
+
       while (this.filesToSearch.length > 0) {
         const fileToSearch = this.filesToSearch.shift() as LocalFile
         // Now start the search
