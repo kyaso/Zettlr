@@ -86,7 +86,7 @@ export default function (): any {
       ],
       [
         {
-          type: 'checkbox',
+          type: 'switch',
           label: 'Enable link tooltips',
           model: 'zkn.tooltipEnable'
         },
