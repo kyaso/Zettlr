@@ -144,4 +144,17 @@ interface ConfigOptions {
   }
   checkForBeta: boolean
   uuid: string
+  custom: {
+    ctrlNum: {
+      file1: string
+      file2: string
+      file3: string
+      file4: string
+      file5: string
+      file6: string
+      file7: string
+      file8: string
+      file9: string
+    }
+  }
 }

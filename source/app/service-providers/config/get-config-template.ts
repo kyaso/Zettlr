@@ -227,6 +227,19 @@ export default function getConfigTemplate (): ConfigOptions {
       checkForUpdates: true
     },
     checkForBeta: false, // Should the user be notified of beta releases?
-    uuid: uuid4() // The app's unique anonymous identifier
+    uuid: uuid4(), // The app's unique anonymous identifier
+    custom: { // Custom options
+      ctrlNum: { // Favorite files
+        file1: 'foo1',
+        file2: 'foo2',
+        file3: 'foo3',
+        file4: 'foo4',
+        file5: 'foo5',
+        file6: 'foo6',
+        file7: 'foo7',
+        file8: 'foo8',
+        file9: 'foo9'
+      }
+    }
   }
 }

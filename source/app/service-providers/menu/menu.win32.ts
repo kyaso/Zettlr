@@ -45,6 +45,31 @@ export default function getMenu (
     }]
   }
 
+  const favDocsIds: number[] = [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+  const favoriteDocsItem: MenuItemConstructorOptions = {
+    id: 'menu.fav_docs',
+    label: 'Favorites',
+    submenu: [
+      ...favDocsIds.map(id => {
+        const idStr = id.toString()
+        const ret: MenuItemConstructorOptions = {
+          id: 'menu.fav_docs.file' + idStr,
+          label: config.get('custom.ctrlNum.file' + idStr),
+          accelerator: 'Ctrl+' + idStr,
+          click: function (menuitem, focusedWindow) {
+            const file: string = config.get('custom.ctrlNum.file' + idStr)
+            commands.run('open-file', {
+              path: file,
+              newTab: true
+            }).catch((e: any) => logger.error(`[Menu] Could not open favorite document ${file}`, e))
+          }
+        }
+
+        return ret
+      })
+    ]
+  }
+
   // ... if we're somewhere else, display our custom implementation of recent docs.
   if (process.platform !== 'win32') {
     const docs = recentDocs.get()
@@ -152,6 +177,7 @@ export default function getMenu (
           }
         },
         recentDocsItem,
+        favoriteDocsItem,
         {
           type: 'separator'
         },

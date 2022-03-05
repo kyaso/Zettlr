@@ -56,6 +56,7 @@ import displaySchema from './schema/display'
 import spellcheckingSchema from './schema/spellchecking'
 import autocorrectSchema from './schema/autocorrect'
 import advancedSchema from './schema/advanced'
+import customSchema from './schema/custom'
 import { defineComponent } from 'vue'
 import { WindowTab } from '@dts/renderer/window'
 
@@ -171,6 +172,11 @@ export default defineComponent({
           controls: 'tab-advanced',
           id: 'tab-advanced-control',
           icon: 'tools'
+        },
+        {
+          label: 'Custom',
+          controls: 'tab-custom',
+          id: 'tab-custom-control'
         }
       ] as WindowTab[],
       // Will be populated afterwards, contains the user dict
@@ -374,6 +380,8 @@ export default defineComponent({
         case 'tab-advanced':
           this.schema = advancedSchema()
           break
+        case 'tab-custom':
+          this.schema = customSchema()
       }
 
       // Populate the appLang field with available options
