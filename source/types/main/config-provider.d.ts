@@ -94,6 +94,7 @@ interface ConfigOptions {
     homeEndBehaviour: boolean
     enableTableHelper: boolean
     indentUnit: number
+    indentWithTabs: boolean
     fontSize: number
     countChars: boolean
     inputMode: 'default'|'vim'|'emacs'
@@ -141,6 +142,7 @@ interface ConfigOptions {
     avoidNewTabs: boolean
     iframeWhitelist: string[]
     checkForUpdates: boolean
+    zoomBehavior: 'gui'|'editor'
   }
   checkForBeta: boolean
   uuid: string

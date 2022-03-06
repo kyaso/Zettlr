@@ -119,6 +119,7 @@ export default function getConfigTemplate (): ConfigOptions {
       homeEndBehaviour: false, // If true, Home/End goes to start/end of a paragraph, false means start/end of line.
       enableTableHelper: true, // Enable the table helper plugin
       indentUnit: 4, // The number of spaces to be added
+      indentWithTabs: false,
       fontSize: 16, // The editor's font size in pixels
       countChars: false, // Set to true to enable counting characters instead of words
       inputMode: 'default', // Can be default, vim, emacs
@@ -224,7 +225,8 @@ export default function getConfigTemplate (): ConfigOptions {
       leaveAppRunning: false, // Whether to leave app running in the notification area (tray)
       avoidNewTabs: true, // Whether to avoid opening new tabs for documents if possible
       iframeWhitelist: [ 'www.youtube.com', 'player.vimeo.com' ], // Contains a list of whitelisted iFrame prerendering domains
-      checkForUpdates: true
+      checkForUpdates: true,
+      zoomBehavior: 'gui' // Used to determine what gets zoomed: The GUI or the editor
     },
     checkForBeta: false, // Should the user be notified of beta releases?
     uuid: uuid4(), // The app's unique anonymous identifier

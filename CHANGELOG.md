@@ -1,19 +1,55 @@
 # 2.2.4
 
+This update changes the scroll effect on the document tab bar to be smooth
+instead of snappy. To revert to the old behavior, you can use the following
+Custom CSS:
+
+```
+body div#tab-container {
+  scroll-behavior: auto;
+}
+```
+
 ## GUI and Functionality
 
+- **New Feature**: You can now switch between zooming the whole GUI or just the
+  editor font size when using the zoom menu items/shortcuts
 - Restores the display of links in the related files section of the sidebar
 - Differentiate between inbound, outbound, and bidirectional links in the
   related files section
 - Fix related files display and link reporting
+- Added a smooth scrolling effect for the tab bar
 - Added classes in order to conditionally style the related files section based
   on the type of relation, the classes are `tags` if the relation is based on
   keywords, `inbound` for incoming links, `outbound` for outgoing links, and
   `bidirectional` for links from and to the said file
+- Clicking on math now places the cursor correctly, reducing friction
+- Select the image markup when clearing a rendered image by clicking on it
+- Image captions do not disappear anymore while you are editing it, even if you
+  move the mouse out of the image area
+- Improve icon alignment in the related files section
+- Relaxed conditions for emphasis rendering by just excluding word-characters
+- Tab characters are no longer detected as spelling errors
+- You can now choose to indent using tab characters instead of spaces
+- Do not close the file left to a new usaved file upon saving the file
+- Fixed a weird race condition in which the file manager would remain ignorant
+  of an in-memory file after it has been saved to disk
+- Changes to your files should now be detected immediately also on macOS
+- Fixed a bug that would disable both types of magic quotes (single + double)
+  if you disabled only one type
+- Improve styling of progress bars on all platforms
 
 ## Under the Hood
 
 - Resolve links on-demand in the link provider
+- Factor out the `clickAndClear` functionality to its own helper
+- Improve editor image CSS
+- Factor out the checks to see if we can render some element to unify behavior
+  across rendering plugins
+- Update most pure Node scripts from CommonJS to ESM in order to support the new
+  versions of csso, chalk, and got
+- FINALLY managed to get fsevents to run! After about three years or so.
+- Add support for JabRef `fileDirectory`-style comments
 
 # 2.2.3
 

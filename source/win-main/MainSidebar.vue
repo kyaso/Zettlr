@@ -616,6 +616,7 @@ body {
       div.related-file {
         margin-bottom: 10px;
         display: flex;
+        align-items: center;
 
         span.filename {
           display: inline-block;

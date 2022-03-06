@@ -76,6 +76,17 @@ export default function (): any {
       ],
       [
         {
+          type: 'radio',
+          model: 'system.zoomBehavior',
+          label: trans('dialog.preferences.zoom_behavior.label'),
+          options: {
+            'gui': trans('dialog.preferences.zoom_behavior.gui'),
+            'editor': trans('dialog.preferences.zoom_behavior.editor')
+          }
+        }
+      ],
+      [
+        {
           type: 'list',
           label: trans('dialog.preferences.whitelist'),
           model: 'system.iframeWhitelist',
