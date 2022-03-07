@@ -32,7 +32,7 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
     const a = event.target as HTMLElement
 
     // Only for note links or tags
-    if (!a.classList.contains('cm-zkn-link') && !a.classList.contains('cm-zkn-tag')) {
+    if (!a.classList.contains('cm-zkn-link') && !a.classList.contains('cm-zkn-tag') && !a.classList.contains('cm-zkn-id')) {
       return
     }
 
@@ -69,6 +69,8 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
     if (tokenList.filter( (token) => token.includes('zkn-link') ).length > 0) {
       isLink = true
     } else if (tokenList.filter( (token) => token.includes('zkn-tag') ).length > 0) {
+      isTag = true
+    } else if (tokenList.filter( (token) => token.includes('zkn-id') ).length > 0) {
       isTag = true
     }
 
@@ -138,7 +140,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
 
-  const linkIsFile = metadata !== undefined
+  const linkIsFile = isLink && (metadata !== undefined)
   const title: HTMLHeadingElement = getTitle(linkIsFile ? metadata[0] : linkContents)
 
   wrapper.appendChild(title)
