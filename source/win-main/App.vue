@@ -391,7 +391,7 @@ export default defineComponent({
     }
   },
   mounted: function () {
-    ipcRenderer.on('shortcut', (event, shortcut, state) => {
+    ipcRenderer.on('shortcut', (event, shortcut, base62, state) => {
       if (shortcut === 'toggle-sidebar') {
         (global as any).config.set('window.sidebarVisible', !this.sidebarVisible)
       } else if (shortcut === 'insert-id') {
@@ -405,7 +405,11 @@ export default defineComponent({
         let rtf = clipboard.readRTF()
 
         // Write an ID to the clipboard
-        clipboard.writeText(generateId((global as any).config.get('zkn.idGen')))
+        if (!base62) {
+          clipboard.writeText(generateId((global as any).config.get('zkn.idGen')))
+        } else {
+          clipboard.writeText('[[' + generateId('%base62') + ']]')
+        }
         // Paste the ID
         ipcRenderer.send('window-controls', { command: 'paste' })
 

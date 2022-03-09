@@ -434,15 +434,16 @@ export default function getMenu (
           label: trans('menu.generate_id'),
           accelerator: 'Ctrl+L',
           click: function (menuitem, focusedWindow) {
-            focusedWindow?.webContents.send('shortcut', 'insert-id')
+            focusedWindow?.webContents.send('shortcut', 'insert-id', false) // false for base62
           }
         },
         {
           id: 'menu.copy_id',
-          label: trans('menu.copy_id'),
+          // label: trans('menu.copy_id'),
+          label: 'Insert base62 ID',
           accelerator: 'Ctrl+Shift+L',
           click: function (menuitem, focusedWindow) {
-            focusedWindow?.webContents.send('shortcut', 'copy-current-id')
+            focusedWindow?.webContents.send('shortcut', 'insert-id', true) // true for base62
           }
         }
       ]
