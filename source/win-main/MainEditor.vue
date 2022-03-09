@@ -757,6 +757,7 @@ export default defineComponent({
       }
 
       const fileDatabase: any = {}
+      let wikiLinks = []
 
       for (const file of this.fsalFiles) {
         const fname = file.name.substr(0, file.name.lastIndexOf('.'))
@@ -779,9 +780,13 @@ export default defineComponent({
           displayText: displayText,
           id: (file.id !== '' && !this.filenameOnly) ? file.id : ''
         }
+
+        // Add non-ZKN links
+        wikiLinks.push(...file.links)
       }
 
       mdEditor.setCompletionDatabase('files', fileDatabase)
+      mdEditor.setCompletionDatabase('wikiLinks', wikiLinks)
     },
     toggleQueryRegexp () {
       const isRegexp = /^\/.+\/[gimy]{0,4}$/.test(this.query.trim())

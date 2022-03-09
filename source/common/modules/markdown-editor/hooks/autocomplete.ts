@@ -27,6 +27,7 @@ interface AutocompleteDatabaseEntry {
   displayText?: string
   className?: string
   matches?: number
+  isWikiLink?: boolean
 }
 
 interface TextSnippetTextMarker {
@@ -68,6 +69,10 @@ const availableDatabases = {
   files: [] as AutocompleteDatabaseEntry[],
   snippets: [] as AutocompleteDatabaseEntry[],
   headings: [] as AutocompleteDatabaseEntry[],
+  wikiLinks: [
+    { text: 'foo', displayText: 'foo', isWikiLink: true },
+    { text: 'bar', displayText: 'bar', isWikiLink: true }
+  ] as AutocompleteDatabaseEntry[],
   syntaxHighlighting: [
     { text: '', displayText: 'No highlighting' }, // TODO: translate
     { text: 'javascript', displayText: 'JavaScript/Node.JS' },
@@ -277,6 +282,21 @@ export function setAutocompleteDatabase (type: string, database: any): void {
     })
 
     availableDatabases[type] = fileHints
+  } else if (type === 'wikiLinks') {
+    for (const link of database) {
+      // If the link is already in the database, skip
+      if (availableDatabases.wikiLinks.some(e => e.text === link)) {
+        continue
+      }
+
+      availableDatabases.wikiLinks.push(
+        {
+          text: link,
+          displayText: link,
+          isWikiLink: true
+        }
+      )
+    }
   } else {
     const types = Object.keys(availableDatabases)
     console.error('Unsupported autocomplete database type! Supported are: ' + types.join(', '))
@@ -398,7 +418,12 @@ function getHints (term: string): any[] {
     return []
   }
 
-  let results = availableDatabases[currentDatabase].filter((entry) => {
+  let db = availableDatabases[currentDatabase]
+  if (currentDatabase === 'files') {
+    db = db.concat(availableDatabases.wikiLinks)
+  }
+
+  let results = db.filter((entry) => {
     // First search the display text, then the entry text itself
     if (entry.displayText?.toLowerCase().includes(term) === true) {
       return true
@@ -501,7 +526,11 @@ function hintFunction (cm: CodeMirror.Editor, opt: CodeMirror.ShowHintOptions): 
 
       if (!fnameOnly && (linkPref === 'always' || (linkPref === 'withID' && completion.id !== ''))) {
         // We need to add the text after the link.
-        cm.replaceSelection(prefix + text)
+        if (!completion.isWikiLink) {
+          cm.replaceSelection(prefix + text)
+        } else {
+          cm.replaceSelection(prefix)
+        }
       }
     } else if (currentDatabase === 'syntaxHighlighting') {
       // In the case of an accepted syntax highlighting, we can assume the user
