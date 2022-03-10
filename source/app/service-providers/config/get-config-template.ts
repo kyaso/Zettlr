@@ -239,6 +239,13 @@ export default function getConfigTemplate (): ConfigOptions {
         file7: 'foo7',
         file8: 'foo8',
         file9: 'foo9'
+      },
+      test: {
+        val1: 0,
+        val2: 0,
+        val3: 0,
+        val4: 0,
+        val5: 0
       }
     }
   }
