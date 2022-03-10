@@ -672,9 +672,10 @@ export default defineComponent({
         }
       }, 1000)
     },
-    jtl (lineNumber: number, setCursor: boolean = false) {
+    jtl (lineNumber: number, setCursor: boolean = false, flash: boolean = false, lineToFlash: number = lineNumber) {
+      // console.log('maineditor jtl')
       if (mdEditor !== null) {
-        mdEditor.jtl(lineNumber, setCursor)
+        mdEditor.jtl(lineNumber, setCursor, flash, lineToFlash)
       }
     },
     /**

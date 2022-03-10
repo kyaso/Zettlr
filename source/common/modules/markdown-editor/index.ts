@@ -333,7 +333,11 @@ export default class MarkdownEditor extends EventEmitter {
    * @param  {number} line The line to pull into view
    * @param {boolean} setCursor If set to true, will also change the cursor position to line
    */
-  jtl (line: number, setCursor: boolean = false): void {
+  jtl (line: number, setCursor: boolean = false, flash: boolean = false, lineToFlash: number = line): void {
+    // console.log('line = ', line)
+    // console.log('setCursor = ', setCursor)
+    // console.log('flash = ', flash)
+    // console.log('lineToFlash = ', lineToFlash)
     const { from, to } = this._instance.getViewport()
     const viewportSize = to - from
     // scrollIntoView first and foremost pulls something simply into view, but
@@ -352,9 +356,18 @@ export default class MarkdownEditor extends EventEmitter {
       to: { line: lastLine, ch: 0 }
     })
 
+    // Flash
+    if (flash) {
+      const foo = this._instance.addLineClass(lineToFlash, 'background', 'flash')
+      setTimeout(() => {
+        this._instance.removeLineClass(lineToFlash, 'background', 'flash')
+      }, 1000) // Give some time before removing the class, so animations work properly
+      // console.table(foo)
+    }
+
     if (setCursor) {
-      console.log('Setting cursor!')
-      this._instance.setCursor({ line: line, ch: 0 })
+      // console.log('Setting cursor!')
+      this._instance.setCursor({ line: flash ? lineToFlash : line, ch: 0 })
       this._instance.focus()
     }
   }

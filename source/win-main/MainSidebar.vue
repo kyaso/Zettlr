@@ -22,7 +22,7 @@
         v-bind:style="{
           'margin-left': `${entry.level * 10}px`
         }"
-        v-on:click="($root as any).jtl(entry.line, true)"
+        v-on:click="($root as any).jtl(entry.line, true, true)"
       >
         <div class="toc-level">
           {{ entry.renderedLevel }}

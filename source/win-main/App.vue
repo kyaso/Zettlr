@@ -25,7 +25,7 @@
         <GlobalSearch
           v-show="mainSplitViewVisibleComponent === 'globalSearch'"
           ref="global-search"
-          v-on:jtl="($refs.editor as any).jtl($event)"
+          v-on:jtl="($refs.editor as any).jtl(...$event)"
         >
         </GlobalSearch>
       </template>
@@ -484,8 +484,9 @@ export default defineComponent({
     }
   },
   methods: {
-    jtl: function (lineNumber: number, setCursor: boolean = false) {
-      (this.$refs.editor as any).jtl(lineNumber, setCursor)
+    jtl: function (lineNumber: number, setCursor: boolean = false, flash: boolean = false, lineToFlash: number = lineNumber) {
+      // console.log('appvue jtl');
+      (this.$refs.editor as any).jtl(lineNumber, setCursor, flash, lineToFlash)
     },
     startGlobalSearch: function (terms: string) {
       this.mainSplitViewVisibleComponent = 'globalSearch'
