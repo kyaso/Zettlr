@@ -400,9 +400,9 @@ export default defineComponent({
 
         // First we need to backup the existing clipboard contents
         // so that they are not lost during the operation.
-        let text = clipboard.readText()
-        let html = clipboard.readHTML()
-        let rtf = clipboard.readRTF()
+        // let text = clipboard.readText()
+        // let html = clipboard.readHTML()
+        // let rtf = clipboard.readRTF()
 
         // Write an ID to the clipboard
         if (!base62) {
@@ -414,13 +414,13 @@ export default defineComponent({
         ipcRenderer.send('window-controls', { command: 'paste' })
 
         // Now restore the clipboard's original contents
-        setTimeout((e) => {
-          clipboard.write({
-            'text': text,
-            'html': html,
-            'rtf': rtf
-          })
-        }, 10) // Why do a timeout? Because the paste event is asynchronous.
+        // setTimeout((e) => {
+        //   clipboard.write({
+        //     'text': text,
+        //     'html': html,
+        //     'rtf': rtf
+        //   })
+        // }, 10) // Why do a timeout? Because the paste event is asynchronous.
       } else if (shortcut === 'copy-current-id') {
         const activeFile = this.$store.state.activeFile
 
