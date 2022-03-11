@@ -105,31 +105,31 @@ export default function (): any {
       [
         {
           type: 'number',
-          label: 'Test value 1',
+          label: 'custom.test.val1',
           model: 'custom.test.val1',
           reset: 0
         },
         {
           type: 'number',
-          label: 'Test value 2',
+          label: 'custom.test.val2',
           model: 'custom.test.val2',
           reset: 0
         },
         {
           type: 'number',
-          label: 'Test value 3',
+          label: 'custom.test.val3',
           model: 'custom.test.val3',
           reset: 0
         },
         {
           type: 'number',
-          label: 'Test value 4',
+          label: 'custom.test.val4',
           model: 'custom.test.val4',
           reset: 0
         },
         {
           type: 'number',
-          label: 'Test value 5',
+          label: 'custom.test.val5',
           model: 'custom.test.val5',
           reset: 0
         }
