@@ -340,6 +340,7 @@ export default class MarkdownEditor extends EventEmitter {
     // console.log('lineToFlash = ', lineToFlash)
     const { from, to } = this._instance.getViewport()
     const viewportSize = to - from
+    const lineIsInBottomHalf = line > (from + Math.floor(viewportSize / 2))
     // scrollIntoView first and foremost pulls something simply into view, but
     // we want it to be at the top of the window as expected by the user, so
     // we need to pull in a full viewport, beginning at the corresponding line
@@ -351,10 +352,12 @@ export default class MarkdownEditor extends EventEmitter {
       lastLine = this._instance.lineCount() - 1
     }
 
-    this._instance.scrollIntoView({
-      from: { line: line, ch: 0 },
-      to: { line: lastLine, ch: 0 }
-    })
+    if (lineIsInBottomHalf) {
+      this._instance.scrollIntoView({
+        from: { line: line, ch: 0 },
+        to: { line: lastLine, ch: 0 }
+      })
+    }
 
     // Flash
     if (flash) {
