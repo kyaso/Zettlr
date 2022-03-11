@@ -69,6 +69,7 @@ import displayContextMenu from './display-context-menu'
 
 const ipcRenderer = window.ipc
 const clipboard = window.clipboard
+const config = window.config
 
 export default class MarkdownEditor extends EventEmitter {
   private readonly _instance: CodeMirror.Editor
@@ -340,7 +341,8 @@ export default class MarkdownEditor extends EventEmitter {
     // console.log('lineToFlash = ', lineToFlash)
     const { from, to } = this._instance.getViewport()
     const viewportSize = to - from
-    const lineIsInBottomHalf = line > (from + Math.floor(viewportSize / 2))
+    const lineIsInBottomHalf = lineToFlash + (config.get('custom.test.val2') as number) > (from + Math.floor(viewportSize / 2))
+    // console.log(line, lineToFlash, from, to, viewportSize, lineIsInBottomHalf)
     // scrollIntoView first and foremost pulls something simply into view, but
     // we want it to be at the top of the window as expected by the user, so
     // we need to pull in a full viewport, beginning at the corresponding line
