@@ -8,6 +8,7 @@
     v-bind:toolbar-controls="toolbarControls"
     v-on:toolbar-toggle="handleToggle($event)"
     v-on:toolbar-click="handleClick($event)"
+    v-on:mousedown="handleMousedown($event)"
   >
     <SplitView
       ref="file-manager-split"
@@ -674,6 +675,12 @@ export default defineComponent({
           // Set the shown component to the correct one
           this.mainSplitViewVisibleComponent = state
         }
+      }
+    },
+    handleMousedown: function (event: MouseEvent) {
+      if (event.button === 3 || event.button === 4) {
+        ipcRenderer.invoke('application', { command: 'switch-file' })
+          .catch(e => console.error(e))
       }
     },
     startPomodoro: function () {
