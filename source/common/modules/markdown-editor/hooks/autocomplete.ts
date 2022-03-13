@@ -426,7 +426,7 @@ function getHints (term: string): any[] {
 
   // Apply fuzzy search for files and tags
   if (currentDatabase === 'files' || currentDatabase === 'tags') {
-    const results = fuzzysort.go(term, db, { threshold: -50000, keys: [ 'displayText', 'text' ] })
+    const results = fuzzysort.go(term, db, { threshold: -window.config.get('custom.test.val3'), keys: [ 'displayText', 'text' ] })
     // console.log(results)
     // Extract the `obj` field out of each result and return
     return results.map(r => r.obj).slice(0, 50)
