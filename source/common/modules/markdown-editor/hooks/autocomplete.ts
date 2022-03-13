@@ -17,6 +17,7 @@ import CodeMirror, { on } from 'codemirror'
 import { DateTime } from 'luxon'
 import { v4 as uuid } from 'uuid'
 import generateId from '@common/util/generate-id'
+import fuzzysort from 'fuzzysort'
 
 // We need two code block REs: First the line-wise, and then the full one.
 const codeBlockRE = getCodeBlockRE(false)
@@ -421,6 +422,14 @@ function getHints (term: string): any[] {
   let db = availableDatabases[currentDatabase]
   if (currentDatabase === 'files') {
     db = db.concat(availableDatabases.wikiLinks)
+  }
+
+  // Apply fuzzy search for files and tags
+  if (currentDatabase === 'files' || currentDatabase === 'tags') {
+    const results = fuzzysort.go(term, db, { threshold: -50000, keys: [ 'displayText', 'text' ] })
+    // console.log(results)
+    // Extract the `obj` field out of each result and return
+    return results.map(r => r.obj).slice(0, 50)
   }
 
   let results = db.filter((entry) => {
