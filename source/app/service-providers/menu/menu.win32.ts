@@ -236,7 +236,7 @@ export default function getMenu (
         {
           id: 'menu.print',
           label: trans('menu.print'),
-          accelerator: 'Ctrl+P',
+          accelerator: 'Ctrl+Shift+T',
           click: function (menuItem, focusedWindow) {
             commands.run('print', undefined)
               .catch(e => logger.error(String(e.message), e))
@@ -421,7 +421,7 @@ export default function getMenu (
         {
           id: 'menu.filter_files',
           label: trans('menu.filter_files'),
-          accelerator: 'Ctrl+Shift+T',
+          accelerator: 'Ctrl+P',
           click: function (menuitem, focusedWindow) {
             focusedWindow?.webContents.send('shortcut', 'filter-files')
           }
