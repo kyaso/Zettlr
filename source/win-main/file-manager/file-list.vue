@@ -196,13 +196,15 @@ export default defineComponent({
     getFilteredDirectoryContents: function () {
       // Whenever the directory contents change, reset the active file if it's
       // no longer in the list
-      const foundDescriptor = this.getFilteredDirectoryContents.find((elem) => {
-        return elem.props === this.activeDescriptor
-      })
+      const list = this.getFilteredDirectoryContents.map(e => e.props)
+      this.activeDescriptor = list[0]
+      // const foundDescriptor = this.getFilteredDirectoryContents.find((elem) => {
+      //   return elem.props === this.activeDescriptor
+      // })
 
-      if (foundDescriptor === undefined) {
-        this.activeDescriptor = null
-      }
+      // if (foundDescriptor === undefined) {
+      //   this.activeDescriptor = null
+      // }
     },
     selectedFile: function () {
       this.scrollIntoView()
