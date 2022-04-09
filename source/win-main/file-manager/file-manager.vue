@@ -190,7 +190,10 @@ export default defineComponent({
         // the file manager is hidden, or the global search is visible. In both
         // cases we need to wait for the app to display the file manager.
         nextTick()
-          .then(() => { (this.$refs['quickFilter'] as any).focus() })
+          // When switching from the global search, the focus might not work properly.
+          // Using a timeout indeed helps.
+          // Thanks Stackoverflow (https://stackoverflow.com/a/1096938)
+          .then(() => { setTimeout(() => (this.$refs['quickFilter'] as any).focus(), 0) })
           .catch(err => console.error(err))
       }
     })
