@@ -18,6 +18,7 @@
  */
 
 import { AnyMetaDescriptor } from '@dts/common/fsal'
+import fuzzysort from 'fuzzysort'
 
 /**
  * Returns a function that can be used as a filter (i.e. in Array.filter) to match
@@ -32,11 +33,18 @@ import { AnyMetaDescriptor } from '@dts/common/fsal'
 export default function matchQuery (query: string, includeTitle: boolean, includeH1: boolean): (item: AnyMetaDescriptor) => boolean {
   const queries = query.split(' ').map(q => q.trim()).filter(q => q !== '')
 
+  const fuzzyThreshold = -window.config.get('custom.test.val4')
+
+  // Returns true if q fuzzy matches item
+  function fuzzyMatch (q: string, item: string): boolean {
+    return fuzzysort.go(q, [item], { threshold: fuzzyThreshold }).length > 0
+  }
+
   // Returns a function that takes a Meta descriptor and returns whether it matches or not
   return function (item: AnyMetaDescriptor): boolean {
     for (const q of queries) {
       // First, see if the name gives a match since that's what all descriptors have.
-      if (item.name.toLowerCase().includes(q)) {
+      if (fuzzyMatch(q, item.name.toLowerCase())) {
         return true
       }
 
@@ -52,7 +60,7 @@ export default function matchQuery (query: string, includeTitle: boolean, includ
 
       // Let's check for tag matches
       if (q.startsWith('#')) {
-        const tagMatch = item.tags.find(tag => tag.includes(q.substr(1)))
+        const tagMatch = item.tags.find(tag => fuzzyMatch(q.substr(1), tag))
         if (tagMatch !== undefined) {
           return true
         }
@@ -68,7 +76,7 @@ export default function matchQuery (query: string, includeTitle: boolean, includ
 
       // Third, should we use headings 1 and, if so, does it match?
       if (includeH1 && item.firstHeading !== null) {
-        if (item.firstHeading.toLowerCase().includes(q)) {
+        if (fuzzyMatch(q, item.firstHeading.toLowerCase())) {
           return true
         }
       }
