@@ -603,7 +603,7 @@ export default function getMenu (
         {
           id: 'menu.tab_close',
           label: trans('menu.tab_close'),
-          accelerator: 'Ctrl+W',
+          accelerator: 'Ctrl+Shift+X',
           click: function (menuitem, focusedWindow) {
             focusedWindow?.webContents.send('shortcut', 'close-window')
           }
