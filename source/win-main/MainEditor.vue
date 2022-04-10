@@ -583,7 +583,7 @@ export default defineComponent({
         .catch(err => console.error(err))
 
       if (this.$store.state.config['zkn.autoSearch'] === true) {
-        (this.$root as any).startGlobalSearch(linkContents)
+        (this.$root as any).startGlobalSearch('"' + linkContents + '"')
       }
     })
 
