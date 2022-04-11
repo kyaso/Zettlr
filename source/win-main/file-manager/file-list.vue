@@ -97,6 +97,7 @@ import matchQuery from './util/match-query'
 
 import { nextTick, defineComponent } from 'vue'
 import { MDFileMeta, CodeFileMeta, DirMeta, OtherFileMeta } from '@dts/common/fsal'
+import { mdEditor } from '../MainEditor.vue'
 
 const ipcRenderer = window.ipc
 
@@ -234,12 +235,18 @@ export default defineComponent({
      */
     navigate: function (evt: KeyboardEvent) {
       // Only capture arrow movements
-      if (![ 'ArrowDown', 'ArrowUp', 'Enter' ].includes(evt.key)) {
+      if (![ 'ArrowDown', 'ArrowUp', 'Enter', 'Escape' ].includes(evt.key)) {
         return
       }
 
       evt.stopPropagation()
       evt.preventDefault()
+
+      // Focus editor when Escape key was pressed
+      if (evt.key === 'Escape') {
+        mdEditor?.focus()
+        return
+      }
 
       const shift = evt.shiftKey === true
       const cmd = evt.metaKey === true && process.platform === 'darwin'

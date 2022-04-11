@@ -112,7 +112,7 @@ interface DocumentWrapper {
  *
  * @var {MarkdownEditor|null}
  */
-let mdEditor: MarkdownEditor|null = null
+export let mdEditor: MarkdownEditor|null = null
 
 /**
  * Contains all loaded and currently open documents. Needs to be defined outside
