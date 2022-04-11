@@ -284,9 +284,25 @@ export function setAutocompleteDatabase (type: string, database: any): void {
 
     availableDatabases[type] = fileHints
   } else if (type === 'wikiLinks') {
+    // Reset database
+    availableDatabases.wikiLinks = []
+
     for (const link of database) {
       // If the link is already in the database, skip
       if (availableDatabases.wikiLinks.some(e => e.text === link)) {
+        // console.log(link, 'already in wikilinks db')
+        continue
+      } else if (availableDatabases.files.some(e => {
+        // Either the displayText machtes exactly (when file-name only links)
+        // or we split the "ID: file-name" displayText
+        return (e.displayText === link || e.displayText?.split(':')[1]?.replace(/\s/g, '') === link)
+      })) {
+        // If the link is the name of a existing file, skip
+        // displayText is what is shown in the autocomplete pop-up. If the file
+        // has an ID it is in the form "ID: file-name". Where "file-name" can either
+        // be the actual file name, or the yaml title, or L1 heading, depending
+        // on what the user has selected in the settings.
+        // console.log(link, 'already in file db')
         continue
       }
 
