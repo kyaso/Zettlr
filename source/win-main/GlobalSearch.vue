@@ -136,7 +136,7 @@ import { AnyMenuItem } from '@dts/renderer/context'
 const path = window.path
 const ipcRenderer = window.ipc
 
-interface LocalFile {
+export interface LocalFile {
   path: string
   relativeDirectoryPath: string
   filename: string
@@ -150,7 +150,7 @@ interface LocalFile {
  * weight of all the search results and a toggle to indicate whether we should
  * hide the result set.
  */
-interface LocalSearchResult {
+export interface LocalSearchResult {
   file: LocalFile
   result: SearchResult[]
   hideResultSet: boolean

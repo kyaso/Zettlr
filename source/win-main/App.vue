@@ -51,7 +51,9 @@
           </template>
           <template #view2>
             <!-- Second side: Sidebar -->
-            <MainSidebar></MainSidebar>
+            <MainSidebar
+              v-on:jtl="($refs.editor as any).jtl(...$event)"
+            ></MainSidebar>
           </template>
         </SplitView>
       </template>
