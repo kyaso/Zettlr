@@ -284,28 +284,39 @@ export function setAutocompleteDatabase (type: string, database: any): void {
 
     availableDatabases[type] = fileHints
   } else if (type === 'wikiLinks') {
+    const fileDB: any[] = []
+
+    // Extract the files names out of the file database
+    for (let file of availableDatabases.files) {
+      fileDB.push(file.displayText)
+
+      // Extract the filename from "ID: filename" links.
+      // Will only be defined when ID-based linking is enabled.
+      const fileName = file.displayText?.split(':')[1]?.replace(/\s/g, '')
+      if (fileName !== undefined) {
+        // First, we pop the file.displayText we pushed ealier (that will be
+        // the text in the form "ID: filename")
+        fileDB.pop()
+        // Then we push the filename only
+        fileDB.push(fileName)
+      }
+    }
+
+    // Remove duplicates in Wikilinks
+    database = database.filter((val: any, idx: number) => {
+      return database.indexOf(val) === idx
+    })
+
+    // Remove Wikilinks that match file names
+    database = database.filter((val: any) => {
+      return !fileDB.includes(val)
+    })
+
     // Reset database
     availableDatabases.wikiLinks = []
 
+    // Build new Wikilinks database
     for (const link of database) {
-      // If the link is already in the database, skip
-      if (availableDatabases.wikiLinks.some(e => e.text === link)) {
-        // console.log(link, 'already in wikilinks db')
-        continue
-      } else if (availableDatabases.files.some(e => {
-        // Either the displayText machtes exactly (when file-name only links)
-        // or we split the "ID: file-name" displayText
-        return (e.displayText === link || e.displayText?.split(':')[1]?.replace(/\s/g, '') === link)
-      })) {
-        // If the link is the name of a existing file, skip
-        // displayText is what is shown in the autocomplete pop-up. If the file
-        // has an ID it is in the form "ID: file-name". Where "file-name" can either
-        // be the actual file name, or the yaml title, or L1 heading, depending
-        // on what the user has selected in the settings.
-        // console.log(link, 'already in file db')
-        continue
-      }
-
       availableDatabases.wikiLinks.push(
         {
           text: link,
