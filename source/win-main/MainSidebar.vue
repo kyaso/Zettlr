@@ -22,7 +22,7 @@
         v-bind:style="{
           'margin-left': `${entry.level * 10}px`
         }"
-        v-on:click="($root as any).jtl(entry.line, true)"
+        v-on:click="($root as any).jtl(entry.line, true, true)"
       >
         <div class="toc-level">
           {{ entry.renderedLevel }}
@@ -139,6 +139,118 @@
         </a>
       </template>
     </div>
+
+    <!-- Linked/Unlinked Mentions -->
+    <div
+      v-if="currentTab === 'mentions'"
+      role="tabpanel"
+    >
+      <h1 class="backlinks-title" v-on:click="hideBacklinks = !hideBacklinks">
+        Backlinks ({{ numBacklinks }})
+      </h1>
+
+      <div v-if="!hideBacklinks">
+        <ButtonControl
+          class="mentions-toggle"
+          v-bind:label="'Toggle'"
+          v-bind:inline="true"
+          v-on:click="toggleResults('backlinks')"
+        ></ButtonControl>
+
+        <!-- Copied and adapted from GlobalSearch.vue -->
+        <div
+          v-for="result, idx in backlinks"
+          v-bind:key="idx"
+          class="backlinks-container"
+        >
+          <div class="filename" v-on:click="result.hideResultSet = !result.hideResultSet">
+            <!--
+              NOTE: This DIV is just here due to the parent item's "display: flex",
+              such that the filename plus indicator icon are floated to the left,
+              while the collapse icon is floated to the right.
+            -->
+            <div class="overflow-hidden">
+              <clr-icon v-if="result.weight / maxWeight < 0.3" shape="dot-circle" style="fill: #aaaaaa"></clr-icon>
+              <clr-icon v-else-if="result.weight / maxWeight < 0.7" shape="dot-circle" style="fill: #2975d9"></clr-icon>
+              <clr-icon v-else shape="dot-circle" style="fill: #33aa33"></clr-icon>
+              {{ result.file.displayName }}
+            </div>
+
+            <div class="collapse-icon">
+              <clr-icon v-bind:shape="(result.hideResultSet) ? 'caret left' : 'caret down'"></clr-icon>
+            </div>
+          </div>
+          <div class="filepath">
+            {{ result.file.relativeDirectoryPath }}{{ (result.file.relativeDirectoryPath !== '') ? sep : '' }}{{ result.file.filename }}
+          </div>
+          <div v-if="!result.hideResultSet" class="results-container">
+            <div
+              v-for="singleRes, idx2 in result.result"
+              v-bind:key="idx2"
+              class="result-line"
+              v-on:mousedown.stop.prevent="onResultClick($event, idx, idx2, result.file.path, singleRes.line)"
+            >
+              <span v-if="singleRes.line !== -1"><strong>{{ singleRes.line }}</strong>: </span>
+              <span v-html="markText(singleRes)"></span>
+            </div>
+          </div>
+        </div> <!-- v-for -->
+      </div> <!-- hideBacklinks -->
+
+      <hr>
+
+      <h1 class="backlinks-title" v-on:click="hideUnlinkedMentions = !hideUnlinkedMentions">
+        Unlinked Mentions ({{ numUnlinkedMentions }})
+      </h1>
+
+      <div v-if="!hideUnlinkedMentions">
+        <ButtonControl
+          class="mentions-toggle"
+          v-bind:label="'Toggle'"
+          v-bind:inline="true"
+          v-on:click="toggleResults('unlinked')"
+        ></ButtonControl>
+
+        <!-- Copied and adapted from GlobalSearch.vue -->
+        <div
+          v-for="result, idx in unlinkedMentions"
+          v-bind:key="idx"
+          class="backlinks-container"
+        >
+          <div class="filename" v-on:click="result.hideResultSet = !result.hideResultSet">
+            <!--
+              NOTE: This DIV is just here due to the parent item's "display: flex",
+              such that the filename plus indicator icon are floated to the left,
+              while the collapse icon is floated to the right.
+            -->
+            <div class="overflow-hidden">
+              <clr-icon v-if="result.weight / maxWeight < 0.3" shape="dot-circle" style="fill: #aaaaaa"></clr-icon>
+              <clr-icon v-else-if="result.weight / maxWeight < 0.7" shape="dot-circle" style="fill: #2975d9"></clr-icon>
+              <clr-icon v-else shape="dot-circle" style="fill: #33aa33"></clr-icon>
+              {{ result.file.displayName }}
+            </div>
+
+            <div class="collapse-icon">
+              <clr-icon v-bind:shape="(result.hideResultSet) ? 'caret left' : 'caret down'"></clr-icon>
+            </div>
+          </div>
+          <div class="filepath">
+            {{ result.file.relativeDirectoryPath }}{{ (result.file.relativeDirectoryPath !== '') ? sep : '' }}{{ result.file.filename }}
+          </div>
+          <div v-if="!result.hideResultSet" class="results-container">
+            <div
+              v-for="singleRes, idx2 in result.result"
+              v-bind:key="idx2"
+              class="result-line"
+              v-on:mousedown.stop.prevent="onResultClick($event, idx, idx2, result.file.path, singleRes.line)"
+            >
+              <span v-if="singleRes.line !== -1"><strong>{{ singleRes.line }}</strong>: </span>
+              <span v-html="markText(singleRes)"></span>
+            </div>
+          </div>
+        </div> <!-- v-for -->
+      </div> <!-- hideUnlinkedMentions -->
+    </div>
   </div>
 </template>
 
@@ -160,9 +272,15 @@
 import { trans } from '@common/i18n-renderer'
 import { ClarityIcons } from '@clr/icons'
 import TabBar from '@common/vue/TabBar.vue'
+import ButtonControl from '@common/vue/form/elements/Button.vue'
 import { defineComponent } from 'vue'
-import { DirMeta, MDFileMeta, OtherFileMeta } from '@dts/common/fsal'
+import { CodeFileMeta, DirMeta, MDFileMeta, OtherFileMeta } from '@dts/common/fsal'
 import { TabbarControl } from '@dts/renderer/window'
+
+import { LocalSearchResult, LocalFile } from 'source/win-main/GlobalSearch.vue'
+import { SearchResult, SearchTerm } from '@dts/common/search'
+import compileSearchTerms from '@common/util/compile-search-terms'
+import objectToArray from '@common/util/object-to-array'
 
 const path = window.path
 const ipcRenderer = window.ipc
@@ -177,12 +295,22 @@ interface RelatedFile {
 export default defineComponent({
   name: 'MainSidebar',
   components: {
-    TabBar
+    TabBar,
+    ButtonControl
   },
+  emits: ['jtl'],
   data: function () {
     return {
       bibContents: undefined as undefined|any[],
-      relatedFiles: [] as RelatedFile[]
+      relatedFiles: [] as RelatedFile[],
+      backlinks: [] as LocalSearchResult[],
+      hideBacklinks: true,
+      unlinkedMentions: [] as LocalSearchResult[],
+      hideUnlinkedMentions: true,
+      maxWeight: 0,
+      jtlIntent: undefined as undefined|number,
+      jtlIntentFlash: undefined as undefined|number,
+      toggleState: false
     }
   },
   computed: {
@@ -214,6 +342,12 @@ export default defineComponent({
           id: 'attachments',
           target: 'sidebar-files',
           label: this.otherFilesLabel
+        },
+        {
+          icon: 'link',
+          id: 'mentions',
+          target: 'sidebar-mentions',
+          label: 'Mentions'
         }
       ]
     },
@@ -251,6 +385,12 @@ export default defineComponent({
     activeFile: function (): MDFileMeta|null {
       return this.$store.state.activeFile
     },
+    activeFileName: function (): string|undefined {
+      return this.activeFile?.name.slice(0, -3)
+    },
+    activeDocumentInfo: function (): any|null {
+      return this.$store.state.activeDocumentInfo
+    },
     modifiedFiles: function (): string[] {
       return this.$store.state.modifiedDocuments
     },
@@ -283,6 +423,22 @@ export default defineComponent({
     },
     displayMdExtensions: function (): boolean {
       return this.$store.state.config['display.markdownFileExtensions']
+    },
+    sep: function (): string {
+      return path.sep
+    },
+    fileTree: function (): Array<MDFileMeta|CodeFileMeta|DirMeta> {
+      return this.$store.state.fileTree
+    },
+    numBacklinks: function (): number {
+      let sum = 0
+      this.backlinks.forEach(x => { sum += x.result.length })
+      return sum
+    },
+    numUnlinkedMentions: function (): number {
+      let sum = 0
+      this.unlinkedMentions.forEach(x => { sum += x.result.length })
+      return sum
     }
   },
   watch: {
@@ -292,6 +448,7 @@ export default defineComponent({
     },
     activeFile: function () {
       this.updateRelatedFiles().catch(e => console.error('Could not update related files', e))
+      this.updateMentions()
     },
     modifiedFiles: function () {
       if (this.activeFile == null) {
@@ -303,6 +460,23 @@ export default defineComponent({
       const activePath = this.activeFile.path
       if (!(activePath in this.modifiedFiles)) {
         this.updateRelatedFiles().catch(e => console.error('Could not update related files', e))
+        // this.updateMentions() // If we enable this it will update on first change, and every save
+      }
+    },
+    // Copied from GlobalSearch.vue
+    //
+    // We are sneaky here: The activeDocumentInfo is being updated *after* the
+    // editor has completed switching to a new document. If we have a jtl
+    // intent then, it is guaranteed that this means that our document has
+    // finished loading and the editor is able to handle our request as it is
+    // supposed to.
+    activeDocumentInfo: function (newValue, oldValue) {
+      // If we have an intention of jumping to a line,
+      // do so and unset the intent again.
+      if (this.jtlIntent !== undefined) {
+        this.$emit('jtl', [ this.jtlIntent, true, true, this.jtlIntentFlash ])
+        this.jtlIntent = undefined
+        this.jtlIntentFlash = undefined
       }
     }
   },
@@ -315,6 +489,7 @@ export default defineComponent({
 
     ipcRenderer.on('links', () => {
       this.updateRelatedFiles().catch(err => console.error(err))
+      this.updateMentions()
     })
 
     try {
@@ -323,6 +498,7 @@ export default defineComponent({
       console.error(err)
     }
     this.updateRelatedFiles().catch(e => console.error('Could not update related files', e))
+    this.updateMentions()
   },
   methods: {
     setCurrentTab: function (which: string) {
@@ -419,6 +595,283 @@ export default defineComponent({
 
       // Filter out current file
       this.relatedFiles = this.relatedFiles.filter(f => f.path !== this.activeFile?.path)
+    },
+    updateMentions: async function () {
+      // console.warn('updateMentions()')
+      this.backlinks = []
+      this.unlinkedMentions = []
+
+      this.maxWeight = 0
+
+      const fileNameLink = '[[' + this.activeFileName + ']]'
+      const fileNameExact = '"' + this.activeFileName + '"'
+      const fileNameMd = this.activeFile?.name
+
+      this.unlinkedMentions = await this.search(fileNameExact)
+
+      // Separate backlinks from rest
+      let skipMe = false
+      for (let i = this.unlinkedMentions.length - 1; i >= 0; i--) {
+        this.maxWeight = 0
+
+        // Current result set
+        const x = this.unlinkedMentions[i]
+
+        // Remove if the result set is from the current file itself
+        if (!skipMe && (x.file.filename === fileNameMd)) {
+          this.unlinkedMentions.splice(i, 1)
+          // This is an optimization since this if statement can only evaluate
+          // to true at most once.
+          skipMe = true
+          continue
+        }
+
+        let tmpBacklinks: any[] = []
+
+        // Iterate over the lines of the current result set
+        for (let j = x.result.length - 1; j >= 0; j--) {
+          const isBacklink = x.result[j].restext.includes(fileNameLink)
+          const isNegOne = x.result[j].line === -1
+
+          if (isBacklink || isNegOne) {
+            if (isBacklink) {
+              // unshift because we are iterating backwards
+              // So we have to push it to the front
+              tmpBacklinks.unshift(x.result[j])
+            }
+
+            // Remove the result line
+            x.result.splice(j, 1)
+
+            // If there are no more result lines left, we can
+            // remove the entire result set
+            if (x.result.length === 0) {
+              this.unlinkedMentions.splice(i, 1)
+              break
+            }
+          }
+        }
+
+        // There were backlinks in the current result set
+        if (tmpBacklinks.length > 0) {
+          const newResult = {
+            file: x.file,
+            result: tmpBacklinks,
+            hideResultSet: false,
+            weight: tmpBacklinks.reduce((accumulator: number, currentValue: SearchResult) => {
+              return accumulator + currentValue.weight
+            }, 0)
+          }
+          this.backlinks.unshift(newResult)
+          if (newResult.weight > this.maxWeight) {
+            this.maxWeight = newResult.weight
+          }
+
+          // sort
+          this.backlinks.sort((a, b) => b.weight - a.weight)
+        }
+      }
+    },
+    toggleResults (foo: string): void {
+      if (foo === 'backlinks') {
+        this.toggleState = !this.toggleState
+        for (const b of this.backlinks) {
+          b.hideResultSet = this.toggleState
+        }
+      } else if (foo === 'unlinked') {
+        this.toggleState = !this.toggleState
+        for (const u of this.unlinkedMentions) {
+          u.hideResultSet = this.toggleState
+        }
+      }
+    },
+    // **** Adapted from GlobalSearch.vue ****
+    search: async function (query: string): Promise<LocalSearchResult[]> {
+      let filesToSearch: LocalFile[] = []
+      const results: LocalSearchResult[] = []
+
+      // Get files we need to search
+      for (const treeItem of this.fileTree) {
+        if (treeItem.type !== 'directory') {
+          let displayName = treeItem.name
+          if (treeItem.type === 'file') {
+            if (this.useTitle && typeof treeItem.frontmatter?.title === 'string') {
+              displayName = treeItem.frontmatter.title
+            } else if (this.useH1 && treeItem.firstHeading !== null) {
+              displayName = treeItem.firstHeading
+            }
+          }
+
+          filesToSearch.push({
+            path: treeItem.path,
+            relativeDirectoryPath: '',
+            filename: treeItem.name,
+            displayName: displayName,
+            hash: treeItem.hash
+          })
+          continue
+        }
+
+        let dirContents = objectToArray(treeItem, 'children')
+        dirContents = dirContents.filter(item => item.type !== 'directory')
+        dirContents = dirContents.map(item => {
+          let displayName = item.name
+          if (this.useTitle && item.frontmatter != null && typeof item.frontmatter.title === 'string') {
+            displayName = item.frontmatter.title
+          } else if (this.useH1 && item.firstHeading !== null) {
+            displayName = item.firstHeading
+          }
+
+          return {
+            path: item.path,
+            // Remove the workspace directory path itself so only the
+            // app-internal relative path remains. Also, we're removing the leading (back)slash
+            relativeDirectoryPath: item.dir.replace(treeItem.dir, '').substr(1),
+            filename: item.name,
+            displayName: displayName,
+            hash: item.hash
+          }
+        })
+
+        filesToSearch = filesToSearch.concat(dirContents)
+      }
+
+      // We have to compile because the 'file-search' command only accepts those
+      const term: SearchTerm[] = compileSearchTerms(query)
+
+      // Query index
+      const tmp: [] = await ipcRenderer.invoke('application', {
+        command: 'query-index',
+        payload: {
+          query: query
+        }
+      })
+
+      // Filter filesToSearch
+      filesToSearch = filesToSearch.filter(f => tmp.includes(f.hash))
+      // console.log('filesToSearch after query filter: ', filesToSearch)
+
+      // For each file to search, run the 'file-search' command
+      while (filesToSearch.length > 0) {
+        const fileToSearch = filesToSearch.shift() as LocalFile
+        // Do search
+        const result: SearchResult[] = await ipcRenderer.invoke('application', {
+          command: 'file-search',
+          payload: {
+            path: fileToSearch.path,
+            terms: term
+          }
+        })
+        if (result.length > 0) {
+          const newResult = {
+            file: fileToSearch,
+            result: result,
+            hideResultSet: false,
+            weight: result.reduce((accumulator: number, currentValue: SearchResult) => {
+              return accumulator + currentValue.weight
+            }, 0)
+          }
+          results.push(newResult)
+          if (newResult.weight > this.maxWeight) {
+            this.maxWeight = newResult.weight
+          }
+
+          // sort
+          results.sort((a, b) => b.weight - a.weight)
+        }
+      }
+
+      return results
+    },
+    // **** Copied/adapted from GlobalSearch.vue ****
+    onResultClick: function (event: MouseEvent, idx: number, idx2: number, filePath: string, lineNumber: number) {
+      // This intermediary function is needed to make sure that jumpToLine can
+      // also be called from within the context menu (see above).
+      if (event.button === 2) {
+        return // Do not handle right-clicks
+      }
+
+      // Update indeces so we can keep track of the most recently clicked
+      // search result.
+      // this.activeFileIdx = idx
+      // this.activeLineIdx = idx2
+
+      const isMiddleClick = (event.type === 'mousedown' && event.button === 1)
+      // The value we are subtracting is the amount of lines we want to
+      // show above the target line
+      const lineToScroll = Math.max(lineNumber - this.$store.state.config['custom.test.val1'], 0)
+      this.jumpToLine(filePath, lineToScroll, isMiddleClick, lineNumber)
+      // this.jumpToLine(filePath, lineNumber, isMiddleClick)
+    },
+    // Copied from GlobalSearch.vue
+    jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false, lineToFlash: number = lineNumber) {
+      const isActiveFile = (this.activeFile !== null) ? this.activeFile.path === filePath : false
+
+      if (isActiveFile) {
+        // App.vue will receive the event, and pass it on to MainEditor.vue::jtl().
+        // That in turn calls the jtl() function in markdown-editor::index.ts. 
+        this.$emit('jtl', [ lineNumber, true, true, lineToFlash ])
+      } else {
+        // The wanted file is not yet active -> Do so and then jump to the correct line
+        ipcRenderer.invoke('application', {
+          command: 'open-file',
+          payload: {
+            path: filePath,
+            newTab: openInNewTab // Open in a new tab if wanted
+          }
+        })
+          .then(() => {
+            // As soon as the file becomes active, jump to that line. But only
+            // if it's >= 0. If lineNumber === -1 it means just the file should
+            // be open.
+            if (lineNumber >= 0) {
+              this.jtlIntent = lineNumber
+              this.jtlIntentFlash = lineToFlash
+            }
+            // this.$emit('jtl', [ lineNumber, true, true, lineToFlash ])
+          })
+          .catch(e => console.error(e))
+      }
+    },
+    // Copied from GlobalSearch.vue
+    markText: function (resultObject: SearchResult) {
+      const startTag = '<span class="search-result-highlight">'
+      const endTag = '</span>'
+      // We receive a result object and should return an HTML string containing
+      // highlighting (we're using <strong>) where the result works. We have
+      // access to restext, weight, line, and an array of from-to-ranges
+      // indicating all matches on the given line. NOTE that all results are
+      // being sorted correctly by the main process, so we can just assume the
+      // results to be non-overlapping and from beginning to the end of the
+      // line.
+      let marked = resultObject.restext
+
+      // "Why are you deep-cloning this array?" you may ask. Well, well. The
+      // reason is that Vue will observe the original array. And, whenever an
+      // observed thing -- be it an array or object -- is mutated, this will
+      // cause Vue to update the whole component state. Array.prototype.reverse
+      // actually mutates the array. So in order to prevent Vue from endlessly
+      // updating the component, we'll pull out the values into an unobserved
+      // cloned array that we can reverse without Vue getting stuck in an
+      // infinite loop.
+      const unobserved = resultObject.ranges.map(range => {
+        return {
+          from: range.from,
+          to: range.to
+        }
+      })
+      // Addendum Sun, 16 Jan 2022: If I had paid more attention to this little
+      // curious fact here, I could've saved myself a lot of trouble with the
+      // new Proxies of Vue3. For a short summary of my odyssee, see
+      // https://www.hendrik-erz.de/post/death-by-proxy
+
+      // Because it shifts positions, we need to insert the closing tag first
+      for (const range of unobserved.reverse()) {
+        marked = marked.substring(0, range.to) + endTag + marked.substring(range.to)
+        marked = marked.substring(0, range.from) + startTag + marked.substring(range.from)
+      }
+
+      return marked
     },
     getIcon: function (attachmentPath: string) {
       const fileExtIcon = ClarityIcons.get('file-ext')
@@ -638,6 +1091,50 @@ body {
           text-align: right;
         }
       }
+    }
+
+    div.backlinks-container {
+      border-bottom: 1px solid rgb(180, 180, 180);
+      padding: 10px;
+      overflow: hidden;
+      font-size: 14px;
+
+      div.filename {
+        white-space: nowrap;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+
+        div.overflow-hidden {
+          overflow: hidden;
+        }
+      }
+
+      div.filepath {
+        color: rgb(131, 131, 131);
+        font-size: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        margin-bottom: 5px;
+      }
+
+      div.result-line {
+        padding: 5px;
+        font-size: 12px;
+
+        &:hover {
+          background-color: rgb(180, 180, 180);
+        }
+
+        .search-result-highlight {
+          font-weight: bold;
+          color: var(--system-accent-color);
+        }
+      }
+    }
+
+    .mentions-toggle {
+      padding-left: 10px;
     }
   }
 

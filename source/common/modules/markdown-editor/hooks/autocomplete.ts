@@ -17,6 +17,7 @@ import CodeMirror, { on } from 'codemirror'
 import { DateTime } from 'luxon'
 import { v4 as uuid } from 'uuid'
 import generateId from '@common/util/generate-id'
+import fuzzysort from 'fuzzysort'
 
 // We need two code block REs: First the line-wise, and then the full one.
 const codeBlockRE = getCodeBlockRE(false)
@@ -28,6 +29,9 @@ interface AutocompleteDatabaseEntry {
   className?: string
   matches?: number
   isWikiLink?: boolean
+  // The title will either contain the filename, the YAML title,
+  // or the first L1 heading; depending on what the user selected.
+  title?: string
 }
 
 interface TextSnippetTextMarker {
@@ -277,18 +281,35 @@ export function setAutocompleteDatabase (type: string, database: any): void {
         text: database[key].text,
         displayText: database[key].displayText,
         className: database[key].className,
-        id: database[key].id // We need to add the ID property (if applicable)
+        id: database[key].id, // We need to add the ID property (if applicable)
+        title: database[key].title
       }
     })
 
     availableDatabases[type] = fileHints
   } else if (type === 'wikiLinks') {
-    for (const link of database) {
-      // If the link is already in the database, skip
-      if (availableDatabases.wikiLinks.some(e => e.text === link)) {
-        continue
-      }
+    const fileDB: any[] = []
 
+    // Extract the files names out of the file database
+    for (let file of availableDatabases.files) {
+      fileDB.push(file.title)
+    }
+
+    // Remove duplicates in Wikilinks
+    database = database.filter((val: any, idx: number) => {
+      return database.indexOf(val) === idx
+    })
+
+    // Remove Wikilinks that match file names
+    database = database.filter((val: any) => {
+      return !fileDB.includes(val)
+    })
+
+    // Reset database
+    availableDatabases.wikiLinks = []
+
+    // Build new Wikilinks database
+    for (const link of database) {
       availableDatabases.wikiLinks.push(
         {
           text: link,
@@ -421,6 +442,14 @@ function getHints (term: string): any[] {
   let db = availableDatabases[currentDatabase]
   if (currentDatabase === 'files') {
     db = db.concat(availableDatabases.wikiLinks)
+  }
+
+  // Apply fuzzy search for files and tags
+  if (currentDatabase === 'files' || currentDatabase === 'tags') {
+    const results = fuzzysort.go(term, db, { threshold: -window.config.get('custom.test.val3'), keys: [ 'displayText', 'text' ] })
+    // console.log(results)
+    // Extract the `obj` field out of each result and return
+    return results.map(r => r.obj).slice(0, 50)
   }
 
   let results = db.filter((entry) => {

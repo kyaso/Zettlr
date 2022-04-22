@@ -69,6 +69,7 @@ import displayContextMenu from './display-context-menu'
 
 const ipcRenderer = window.ipc
 const clipboard = window.clipboard
+const config = window.config
 
 export default class MarkdownEditor extends EventEmitter {
   private readonly _instance: CodeMirror.Editor
@@ -333,9 +334,15 @@ export default class MarkdownEditor extends EventEmitter {
    * @param  {number} line The line to pull into view
    * @param {boolean} setCursor If set to true, will also change the cursor position to line
    */
-  jtl (line: number, setCursor: boolean = false): void {
+  jtl (line: number, setCursor: boolean = false, flash: boolean = false, lineToFlash: number = line): void {
+    // console.log('line = ', line)
+    // console.log('setCursor = ', setCursor)
+    // console.log('flash = ', flash)
+    // console.log('lineToFlash = ', lineToFlash)
     const { from, to } = this._instance.getViewport()
     const viewportSize = to - from
+    const lineIsInBottomHalf = lineToFlash + (config.get('custom.test.val2') as number) > (from + Math.floor(viewportSize / 2))
+    // console.log(line, lineToFlash, from, to, viewportSize, lineIsInBottomHalf)
     // scrollIntoView first and foremost pulls something simply into view, but
     // we want it to be at the top of the window as expected by the user, so
     // we need to pull in a full viewport, beginning at the corresponding line
@@ -347,14 +354,25 @@ export default class MarkdownEditor extends EventEmitter {
       lastLine = this._instance.lineCount() - 1
     }
 
-    this._instance.scrollIntoView({
-      from: { line: line, ch: 0 },
-      to: { line: lastLine, ch: 0 }
-    })
+    if (lineIsInBottomHalf) {
+      this._instance.scrollIntoView({
+        from: { line: line, ch: 0 },
+        to: { line: lastLine, ch: 0 }
+      })
+    }
+
+    // Flash
+    if (flash) {
+      const foo = this._instance.addLineClass(lineToFlash, 'background', 'flash')
+      setTimeout(() => {
+        this._instance.removeLineClass(lineToFlash, 'background', 'flash')
+      }, 1000) // Give some time before removing the class, so animations work properly
+      // console.table(foo)
+    }
 
     if (setCursor) {
-      console.log('Setting cursor!')
-      this._instance.setCursor({ line: line, ch: 0 })
+      // console.log('Setting cursor!')
+      this._instance.setCursor({ line: flash ? lineToFlash : line, ch: 0 })
       this._instance.focus()
     }
   }

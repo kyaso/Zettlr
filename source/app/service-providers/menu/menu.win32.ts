@@ -238,7 +238,7 @@ export default function getMenu (
         {
           id: 'menu.print',
           label: trans('menu.print'),
-          accelerator: 'Ctrl+P',
+          accelerator: 'Ctrl+Shift+T',
           click: function (menuItem, focusedWindow) {
             commands.run('print', undefined)
               .catch(e => logger.error(String(e.message), e))
@@ -423,7 +423,7 @@ export default function getMenu (
         {
           id: 'menu.filter_files',
           label: trans('menu.filter_files'),
-          accelerator: 'Ctrl+Shift+T',
+          accelerator: 'Ctrl+P',
           click: function (menuitem, focusedWindow) {
             focusedWindow?.webContents.send('shortcut', 'filter-files')
           }
@@ -436,15 +436,16 @@ export default function getMenu (
           label: trans('menu.generate_id'),
           accelerator: 'Ctrl+L',
           click: function (menuitem, focusedWindow) {
-            focusedWindow?.webContents.send('shortcut', 'insert-id')
+            focusedWindow?.webContents.send('shortcut', 'insert-id', false) // false for base62
           }
         },
         {
           id: 'menu.copy_id',
-          label: trans('menu.copy_id'),
+          // label: trans('menu.copy_id'),
+          label: 'Insert base62 ID',
           accelerator: 'Ctrl+Shift+L',
           click: function (menuitem, focusedWindow) {
-            focusedWindow?.webContents.send('shortcut', 'copy-current-id')
+            focusedWindow?.webContents.send('shortcut', 'insert-id', true) // true for base62
           }
         }
       ]
@@ -609,7 +610,7 @@ export default function getMenu (
         {
           id: 'menu.tab_close',
           label: trans('menu.tab_close'),
-          accelerator: 'Ctrl+W',
+          accelerator: 'Ctrl+Shift+X',
           click: function (menuitem, focusedWindow) {
             focusedWindow?.webContents.send('shortcut', 'close-window')
           }

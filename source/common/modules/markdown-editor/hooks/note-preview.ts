@@ -85,6 +85,7 @@ export default function noteTooltipsHook (elem: CodeMirror.Editor): void {
     // Create a tippy. This will display the loading values
     linkTooltip = tippy(a, {
       content: trans('gui.preview_searching_label'),
+      theme: 'myTheme',
       allowHTML: true, // Obviously
       interactive: true,
       animation: 'shift-away',

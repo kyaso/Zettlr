@@ -32,7 +32,7 @@ export default class FileSearch extends ZettlrCommand {
     if (evt === 'query-index') {
       console.log('[file-search]: query-index event received. Query: '+arg.query)
       try {
-        let result = await index.search(arg.query)
+        let result = await index.search(arg.query, 100000)
         return result
       } catch (e: any) {
         this._app.log.error('[file-search] Error: Could not index.')

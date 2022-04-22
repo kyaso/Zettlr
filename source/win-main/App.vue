@@ -8,6 +8,7 @@
     v-bind:toolbar-controls="toolbarControls"
     v-on:toolbar-toggle="handleToggle($event)"
     v-on:toolbar-click="handleClick($event)"
+    v-on:mousedown="handleMousedown($event)"
   >
     <SplitView
       ref="file-manager-split"
@@ -25,7 +26,7 @@
         <GlobalSearch
           v-show="mainSplitViewVisibleComponent === 'globalSearch'"
           ref="global-search"
-          v-on:jtl="($refs.editor as any).jtl($event)"
+          v-on:jtl="($refs.editor as any).jtl(...$event)"
         >
         </GlobalSearch>
       </template>
@@ -50,7 +51,9 @@
           </template>
           <template #view2>
             <!-- Second side: Sidebar -->
-            <MainSidebar></MainSidebar>
+            <MainSidebar
+              v-on:jtl="($refs.editor as any).jtl(...$event)"
+            ></MainSidebar>
           </template>
         </SplitView>
       </template>
@@ -391,7 +394,7 @@ export default defineComponent({
     }
   },
   mounted: function () {
-    ipcRenderer.on('shortcut', (event, shortcut, state) => {
+    ipcRenderer.on('shortcut', (event, shortcut, base62, state) => {
       if (shortcut === 'toggle-sidebar') {
         (global as any).config.set('window.sidebarVisible', !this.sidebarVisible)
       } else if (shortcut === 'insert-id') {
@@ -400,23 +403,27 @@ export default defineComponent({
 
         // First we need to backup the existing clipboard contents
         // so that they are not lost during the operation.
-        let text = clipboard.readText()
-        let html = clipboard.readHTML()
-        let rtf = clipboard.readRTF()
+        // let text = clipboard.readText()
+        // let html = clipboard.readHTML()
+        // let rtf = clipboard.readRTF()
 
         // Write an ID to the clipboard
-        clipboard.writeText(generateId((global as any).config.get('zkn.idGen')))
+        if (!base62) {
+          clipboard.writeText(generateId((global as any).config.get('zkn.idGen')))
+        } else {
+          clipboard.writeText('[[' + generateId('%base62') + ']]')
+        }
         // Paste the ID
         ipcRenderer.send('window-controls', { command: 'paste' })
 
         // Now restore the clipboard's original contents
-        setTimeout((e) => {
-          clipboard.write({
-            'text': text,
-            'html': html,
-            'rtf': rtf
-          })
-        }, 10) // Why do a timeout? Because the paste event is asynchronous.
+        // setTimeout((e) => {
+        //   clipboard.write({
+        //     'text': text,
+        //     'html': html,
+        //     'rtf': rtf
+        //   })
+        // }, 10) // Why do a timeout? Because the paste event is asynchronous.
       } else if (shortcut === 'copy-current-id') {
         const activeFile = this.$store.state.activeFile
 
@@ -470,7 +477,7 @@ export default defineComponent({
 
     // Added this for our custom tooltip
     ipcRenderer.on('start-global-search', (event, searchTerms) => {
-      this.startGlobalSearch(searchTerms)
+      this.startGlobalSearch('"' + searchTerms + '"')
     })
 
     // Initially, we need to hide the sidebar, since the view will be visible
@@ -480,8 +487,9 @@ export default defineComponent({
     }
   },
   methods: {
-    jtl: function (lineNumber: number, setCursor: boolean = false) {
-      (this.$refs.editor as any).jtl(lineNumber, setCursor)
+    jtl: function (lineNumber: number, setCursor: boolean = false, flash: boolean = false, lineToFlash: number = lineNumber) {
+      // console.log('appvue jtl');
+      (this.$refs.editor as any).jtl(lineNumber, setCursor, flash, lineToFlash)
     },
     startGlobalSearch: function (terms: string) {
       this.mainSplitViewVisibleComponent = 'globalSearch'
@@ -669,6 +677,12 @@ export default defineComponent({
           // Set the shown component to the correct one
           this.mainSplitViewVisibleComponent = state
         }
+      }
+    },
+    handleMousedown: function (event: MouseEvent) {
+      if (event.button === 3 || event.button === 4) {
+        ipcRenderer.invoke('application', { command: 'switch-file' })
+          .catch(e => console.error(e))
       }
     },
     startPomodoro: function () {

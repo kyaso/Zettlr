@@ -112,7 +112,7 @@ interface DocumentWrapper {
  *
  * @var {MarkdownEditor|null}
  */
-let mdEditor: MarkdownEditor|null = null
+export let mdEditor: MarkdownEditor|null = null
 
 /**
  * Contains all loaded and currently open documents. Needs to be defined outside
@@ -584,7 +584,7 @@ export default defineComponent({
         .catch(err => console.error(err))
 
       if (this.$store.state.config['zkn.autoSearch'] === true) {
-        (this.$root as any).startGlobalSearch(linkContents)
+        (this.$root as any).startGlobalSearch('"' + linkContents + '"')
       }
     })
 
@@ -673,9 +673,10 @@ export default defineComponent({
         }
       }, 1000)
     },
-    jtl (lineNumber: number, setCursor: boolean = false) {
+    jtl (lineNumber: number, setCursor: boolean = false, flash: boolean = false, lineToFlash: number = lineNumber) {
+      // console.log('maineditor jtl')
       if (mdEditor !== null) {
-        mdEditor.jtl(lineNumber, setCursor)
+        mdEditor.jtl(lineNumber, setCursor, flash, lineToFlash)
       }
     },
     /**
@@ -770,6 +771,16 @@ export default defineComponent({
           displayText = file.firstHeading
         }
 
+        // The title will either be one of these:
+        //
+        // * filename
+        // * yaml title
+        // * first heading 1
+        //
+        // When linking using IDs, it is the part coming
+        // after the [[ID]]
+        const title = displayText
+
         if (file.id !== '' && !this.filenameOnly) {
           displayText = `${file.id}: ${displayText}`
         }
@@ -778,7 +789,8 @@ export default defineComponent({
           // Use the ID, if given, or the filename
           text: (file.id !== '' && !this.filenameOnly) ? file.id : fname,
           displayText: displayText,
-          id: (file.id !== '' && !this.filenameOnly) ? file.id : ''
+          id: (file.id !== '' && !this.filenameOnly) ? file.id : '',
+          title: title
         }
 
         // Add non-ZKN links

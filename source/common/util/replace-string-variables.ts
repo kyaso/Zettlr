@@ -36,4 +36,18 @@ export default function replaceStringVariables (string: string): string {
     .replace(/%s/g, d.format('ss'))
     .replace(/%X/g, d.format('X'))
     .replace(/%uuid4/g, uuid4())
+    .replace(/%base62/g, getBase62ID(6))
+}
+
+function getBase62ID (len: number): string {
+  let result = ''
+  // const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+
+  for (let i = 0; i < len; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+
+  return result
 }

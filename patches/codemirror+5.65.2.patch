@@ -2,9 +2,12 @@ diff --git a/node_modules/codemirror/keymap/vim.js b/node_modules/codemirror/key
 index b2da1c1..279a32c 100644
 --- a/node_modules/codemirror/keymap/vim.js
 +++ b/node_modules/codemirror/keymap/vim.js
-@@ -84,9 +84,9 @@
+@@ -82,11 +82,11 @@
+     { keys: '<S-Space>', type: 'keyToKey', toKeys: 'w' },
+     { keys: '<S-BS>', type: 'keyToKey', toKeys: 'b', context: 'normal' },
      { keys: '<C-n>', type: 'keyToKey', toKeys: 'j' },
-     { keys: '<C-p>', type: 'keyToKey', toKeys: 'k' },
+-    { keys: '<C-p>', type: 'keyToKey', toKeys: 'k' },
++    // { keys: '<C-p>', type: 'keyToKey', toKeys: 'k' },
      { keys: '<C-[>', type: 'keyToKey', toKeys: '<Esc>' },
 -    { keys: '<C-c>', type: 'keyToKey', toKeys: '<Esc>' },
 +    // { keys: '<C-c>', type: 'keyToKey', toKeys: '<Esc>' },

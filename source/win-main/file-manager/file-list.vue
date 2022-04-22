@@ -97,6 +97,7 @@ import matchQuery from './util/match-query'
 
 import { nextTick, defineComponent } from 'vue'
 import { MDFileMeta, CodeFileMeta, DirMeta, OtherFileMeta } from '@dts/common/fsal'
+import { mdEditor } from '../MainEditor.vue'
 
 const ipcRenderer = window.ipc
 
@@ -196,13 +197,15 @@ export default defineComponent({
     getFilteredDirectoryContents: function () {
       // Whenever the directory contents change, reset the active file if it's
       // no longer in the list
-      const foundDescriptor = this.getFilteredDirectoryContents.find((elem) => {
-        return elem.props === this.activeDescriptor
-      })
+      const list = this.getFilteredDirectoryContents.map(e => e.props)
+      this.activeDescriptor = list[0]
+      // const foundDescriptor = this.getFilteredDirectoryContents.find((elem) => {
+      //   return elem.props === this.activeDescriptor
+      // })
 
-      if (foundDescriptor === undefined) {
-        this.activeDescriptor = null
-      }
+      // if (foundDescriptor === undefined) {
+      //   this.activeDescriptor = null
+      // }
     },
     selectedFile: function () {
       this.scrollIntoView()
@@ -232,12 +235,18 @@ export default defineComponent({
      */
     navigate: function (evt: KeyboardEvent) {
       // Only capture arrow movements
-      if (![ 'ArrowDown', 'ArrowUp', 'Enter' ].includes(evt.key)) {
+      if (![ 'ArrowDown', 'ArrowUp', 'Enter', 'Escape' ].includes(evt.key)) {
         return
       }
 
       evt.stopPropagation()
       evt.preventDefault()
+
+      // Focus editor when Escape key was pressed
+      if (evt.key === 'Escape') {
+        mdEditor?.focus()
+        return
+      }
 
       const shift = evt.shiftKey === true
       const cmd = evt.metaKey === true && process.platform === 'darwin'

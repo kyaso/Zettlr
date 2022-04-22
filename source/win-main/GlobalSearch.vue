@@ -136,7 +136,7 @@ import { AnyMenuItem } from '@dts/renderer/context'
 const path = window.path
 const ipcRenderer = window.ipc
 
-interface LocalFile {
+export interface LocalFile {
   path: string
   relativeDirectoryPath: string
   filename: string
@@ -150,7 +150,7 @@ interface LocalFile {
  * weight of all the search results and a toggle to indicate whether we should
  * hide the result set.
  */
-interface LocalSearchResult {
+export interface LocalSearchResult {
   file: LocalFile
   result: SearchResult[]
   hideResultSet: boolean
@@ -216,6 +216,7 @@ export default defineComponent({
       // Is set to a line number if this component is waiting for a file to
       // become active.
       jtlIntent: undefined as undefined|number,
+      jtlIntentFlash: undefined as undefined|number,
       // The file list index of the most recently clicked search result.
       activeFileIdx: undefined as undefined|number,
       // The result line index of the most recently clicked search result.
@@ -327,8 +328,9 @@ export default defineComponent({
       // If we have an intention of jumping to a line,
       // do so and unset the intent again.
       if (this.jtlIntent !== undefined) {
-        this.$emit('jtl', this.jtlIntent)
+        this.$emit('jtl', [ this.jtlIntent, true, true, this.jtlIntentFlash ])
         this.jtlIntent = undefined
+        this.jtlIntentFlash = undefined
       }
     },
     fileTree: function () {
@@ -609,13 +611,19 @@ export default defineComponent({
       this.activeLineIdx = idx2
 
       const isMiddleClick = (event.type === 'mousedown' && event.button === 1)
-      this.jumpToLine(filePath, lineNumber, isMiddleClick)
+      // The value we are subtracting is the amount of lines we want to
+      // show above the target line
+      const lineToScroll = Math.max(lineNumber - this.$store.state.config['custom.test.val1'], 0)
+      this.jumpToLine(filePath, lineToScroll, isMiddleClick, lineNumber)
+      // this.jumpToLine(filePath, lineNumber, isMiddleClick)
     },
-    jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
+    jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false, lineToFlash: number = lineNumber) {
       const isActiveFile = (this.activeFile !== null) ? this.activeFile.path === filePath : false
 
       if (isActiveFile) {
-        this.$emit('jtl', lineNumber)
+        // App.vue will receive the event, and pass it on to MainEditor.vue::jtl().
+        // That in turn calls the jtl() function in markdown-editor::index.ts. 
+        this.$emit('jtl', [ lineNumber, true, true, lineToFlash ])
       } else {
         // The wanted file is not yet active -> Do so and then jump to the correct line
         ipcRenderer.invoke('application', {
@@ -631,6 +639,7 @@ export default defineComponent({
             // be open.
             if (lineNumber >= 0) {
               this.jtlIntent = lineNumber
+              this.jtlIntentFlash = lineToFlash
             }
           })
           .catch(e => console.error(e))
