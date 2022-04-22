@@ -770,6 +770,16 @@ export default defineComponent({
           displayText = file.firstHeading
         }
 
+        // The title will either be one of these:
+        //
+        // * filename
+        // * yaml title
+        // * first heading 1
+        //
+        // When linking using IDs, it is the part coming
+        // after the [[ID]]
+        const title = displayText
+
         if (file.id !== '' && !this.filenameOnly) {
           displayText = `${file.id}: ${displayText}`
         }
@@ -778,7 +788,8 @@ export default defineComponent({
           // Use the ID, if given, or the filename
           text: (file.id !== '' && !this.filenameOnly) ? file.id : fname,
           displayText: displayText,
-          id: (file.id !== '' && !this.filenameOnly) ? file.id : ''
+          id: (file.id !== '' && !this.filenameOnly) ? file.id : '',
+          title: title
         }
 
         // Add non-ZKN links

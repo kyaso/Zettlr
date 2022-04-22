@@ -29,6 +29,9 @@ interface AutocompleteDatabaseEntry {
   className?: string
   matches?: number
   isWikiLink?: boolean
+  // The title will either contain the filename, the YAML title,
+  // or the first L1 heading; depending on what the user selected.
+  title?: string
 }
 
 interface TextSnippetTextMarker {
@@ -278,7 +281,8 @@ export function setAutocompleteDatabase (type: string, database: any): void {
         text: database[key].text,
         displayText: database[key].displayText,
         className: database[key].className,
-        id: database[key].id // We need to add the ID property (if applicable)
+        id: database[key].id, // We need to add the ID property (if applicable)
+        title: database[key].title
       }
     })
 
@@ -288,18 +292,7 @@ export function setAutocompleteDatabase (type: string, database: any): void {
 
     // Extract the files names out of the file database
     for (let file of availableDatabases.files) {
-      fileDB.push(file.displayText)
-
-      // Extract the filename from "ID: filename" links.
-      // Will only be defined when ID-based linking is enabled.
-      const fileName = file.displayText?.split(':')[1]?.replace(/\s/g, '')
-      if (fileName !== undefined) {
-        // First, we pop the file.displayText we pushed ealier (that will be
-        // the text in the form "ID: filename")
-        fileDB.pop()
-        // Then we push the filename only
-        fileDB.push(fileName)
-      }
+      fileDB.push(file.title)
     }
 
     // Remove duplicates in Wikilinks
