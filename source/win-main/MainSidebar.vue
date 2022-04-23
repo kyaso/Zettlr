@@ -277,8 +277,7 @@ import { defineComponent } from 'vue'
 import { CodeFileMeta, DirMeta, MDFileMeta, OtherFileMeta } from '@dts/common/fsal'
 import { TabbarControl } from '@dts/renderer/window'
 
-import { LocalSearchResult, LocalFile } from 'source/win-main/GlobalSearch.vue'
-import { SearchResult, SearchTerm } from '@dts/common/search'
+import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
 import compileSearchTerms from '@common/util/compile-search-terms'
 import objectToArray from '@common/util/object-to-array'
 
@@ -303,9 +302,9 @@ export default defineComponent({
     return {
       bibContents: undefined as undefined|any[],
       relatedFiles: [] as RelatedFile[],
-      backlinks: [] as LocalSearchResult[],
+      backlinks: [] as SearchResultWrapper[],
       hideBacklinks: true,
-      unlinkedMentions: [] as LocalSearchResult[],
+      unlinkedMentions: [] as SearchResultWrapper[],
       hideUnlinkedMentions: true,
       maxWeight: 0,
       jtlIntent: undefined as undefined|number,
@@ -654,7 +653,7 @@ export default defineComponent({
 
         // There were backlinks in the current result set
         if (tmpBacklinks.length > 0) {
-          const newResult = {
+          const newResult: SearchResultWrapper = {
             file: x.file,
             result: tmpBacklinks,
             hideResultSet: false,
@@ -686,9 +685,9 @@ export default defineComponent({
       }
     },
     // **** Adapted from GlobalSearch.vue ****
-    search: async function (query: string): Promise<LocalSearchResult[]> {
-      let filesToSearch: LocalFile[] = []
-      const results: LocalSearchResult[] = []
+    search: async function (query: string): Promise<SearchResultWrapper[]> {
+      let filesToSearch: any[] = []
+      const results: SearchResultWrapper[] = []
 
       // Get files we need to search
       for (const treeItem of this.fileTree) {
@@ -763,7 +762,7 @@ export default defineComponent({
           }
         })
         if (result.length > 0) {
-          const newResult = {
+          const newResult: SearchResultWrapper = {
             file: fileToSearch,
             result: result,
             hideResultSet: false,

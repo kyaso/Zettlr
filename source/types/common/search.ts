@@ -52,6 +52,7 @@ export interface SearchResultWrapper {
     relativeDirectoryPath: string
     filename: string
     displayName: string
+    hash: number
   }
   result: SearchResult[]
   hideResultSet: boolean
