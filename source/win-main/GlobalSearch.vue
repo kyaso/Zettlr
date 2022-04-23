@@ -455,7 +455,7 @@ export default defineComponent({
       // It is later used to filter out the NOT matches
       let notRes: SearchResult[] = []
 
-      console.log('[GlobalSearch] Terms: '+terms)
+      // console.log('[GlobalSearch] Terms: '+terms)
 
       // Loop over the search terms
       for (let i = 0; i < terms.length; i++) {
@@ -488,15 +488,15 @@ export default defineComponent({
       //   }
       // })
 
-      console.log('[GlobalSearch] Query result: '+res)
-      console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
+      // console.log('[GlobalSearch] Query result: '+res)
+      // console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
 
       // First filter out all NOT files
       this.filesToSearch = this.filesToSearch.filter(f => !notRes.includes(f.hash))
       // Then filter "in" the matched index files
       this.filesToSearch = this.filesToSearch.filter(f => res.includes(f.hash))
 
-      console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
+      // console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
 
       while (this.filesToSearch.length > 0) {
         const fileToSearch = this.filesToSearch.shift() as any

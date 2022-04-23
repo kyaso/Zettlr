@@ -30,7 +30,7 @@ export default class FileSearch extends ZettlrCommand {
   async run (evt: string, arg: any): Promise<boolean> {
     // Handle a query index event
     if (evt === 'query-index') {
-      console.log('[file-search]: query-index event received. Query: '+arg.query)
+      // console.log('[file-search]: query-index event received. Query: '+arg.query)
       try {
         let result = await index.search(arg.query, 100000)
         return result
