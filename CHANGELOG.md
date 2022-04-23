@@ -1,3 +1,53 @@
+# 2.2.6
+
+## GUI and Functionality
+
+- A malformed directory settings file now does not prevent loading the
+  directory; instead the malformed file is now removed
+
+## Under the Hood
+
+- Simplify the codeblock class hook again to significantly improve typing speed
+
+# 2.2.5
+
+## GUI and Functionality
+
+- Localized Previous/next file menu items
+- Fixed selection of words on right-click in the editor
+- Editor word selection on right-click now accepts both `'` and `’`
+- Add Fortran syntax highlighting (keyword `fortran`)
+- Fix a bug that could lead to data loss when changing documents while a table
+  has focus
+- Added an extra check so that unexpected values of `openDirectory` would not
+  prevent Zettlr from starting
+- Make the vim command line visible and style it according to the Zettlr themes
+- Clicking on the toolbar now doesn't steal the focus from other elements,
+  making it more comfortable to drag the window and immediately continue writing
+- Added slight transparency to the inline code background color so that block
+  cursors are visible inside that code
+- Resizing an image upon pasting from clipboard now works better, since the
+  aspect ratio will only be recalculated once you leave the input field (i.e. by
+  tabbing into another input); this way you can just type in a specific number
+- Disabling "render task lists" will now also disable the application of task
+  lists; this helps speed up editing long documents with many tasks
+- The main editor search now no longer automatically searches
+- When opening the main editor search, anything in the search input will now be
+  selected
+- Fix unintended global search start
+- Highlight results from global search in the main editor text
+- The code editor in the assets manager now scales with the size of the window
+- Added an option to prevent Zettlr from checking for updated translations
+
+## Under the Hood
+
+- Switched to the new code signing certificate for the windows installers
+- Write errors which are logged properly to disk
+- Display errors in the log viewer
+- Added the default Homebrew installation directory for Apple Silicon Macs in
+  order for Zettlr to find Pandoc installed via brew.
+- Improve global search typings
+
 # 2.2.4
 
 This update changes the scroll effect on the document tab bar to be smooth

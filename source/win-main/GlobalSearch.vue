@@ -8,7 +8,7 @@
       v-bind:label="queryInputLabel"
       v-bind:autocomplete-values="recentGlobalSearches"
       v-bind:placeholder="queryInputPlaceholder"
-      v-on:confirm="startSearch()"
+      v-on:keydown.enter="startSearch()"
     ></AutocompleteText>
     <AutocompleteText
       v-model="restrictToDir"
@@ -128,34 +128,13 @@ import ProgressControl from '@common/vue/form/elements/Progress.vue'
 import AutocompleteText from '@common/vue/form/elements/AutocompleteText.vue'
 import { trans } from '@common/i18n-renderer'
 import { defineComponent } from 'vue'
-import { SearchResult, SearchTerm } from '@dts/common/search'
+import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
 import { CodeFileMeta, DirMeta, MDFileMeta } from '@dts/common/fsal'
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
 import { AnyMenuItem } from '@dts/renderer/context'
 
 const path = window.path
 const ipcRenderer = window.ipc
-
-export interface LocalFile {
-  path: string
-  relativeDirectoryPath: string
-  filename: string
-  displayName: string,
-  hash: number
-}
-
-/**
- * This interface describes a local search result that is composed of a
- * LocalFile interface, its search results, and, as specialties, a cumulative
- * weight of all the search results and a toggle to indicate whether we should
- * hide the result set.
- */
-export interface LocalSearchResult {
-  file: LocalFile
-  result: SearchResult[]
-  hideResultSet: boolean
-  weight: number
-}
 
 // Again: We have a side effect that trans() cannot be executed during import
 // stage. It needs to be executed after the window registration ran for now. It
@@ -200,12 +179,9 @@ export default defineComponent({
       directorySuggestions: [] as string[],
       // The compiled search terms
       compiledTerms: null as null|SearchTerm[],
-      // All files that we need to search. Will be emptied during a search.
-      filesToSearch: [] as LocalFile[],
-      // All results so far received
-      searchResults: [] as LocalSearchResult[],
       // Number of files where results where found
       individualResults: 0,
+      filesToSearch: [] as any[],
       // The number of files the search started with (for progress bar)
       sumFilesToSearch: 0,
       // A global trigger for the result set trigger. This will determine what
@@ -283,6 +259,9 @@ export default defineComponent({
     },
     sep: function (): string {
       return path.sep
+    },
+    searchResults: function (): SearchResultWrapper[] {
+      return this.$store.state.searchResults
     },
     /**
      * Allows search results to be further filtered
@@ -382,7 +361,7 @@ export default defineComponent({
       // 2. The compiled search terms.
       // Let's do that first.
 
-      let fileList: LocalFile[] = []
+      let fileList: any[] = []
 
       for (const treeItem of this.fileTree) {
         if (treeItem.type !== 'directory') {
@@ -520,7 +499,7 @@ export default defineComponent({
       console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
 
       while (this.filesToSearch.length > 0) {
-        const fileToSearch = this.filesToSearch.shift() as LocalFile
+        const fileToSearch = this.filesToSearch.shift() as any
         // Now start the search
         const result: SearchResult[] = await ipcRenderer.invoke('application', {
           command: 'file-search',
@@ -530,7 +509,7 @@ export default defineComponent({
           }
         })
         if (result.length > 0) {
-          const newResult = {
+          const newResult: SearchResultWrapper = {
             file: fileToSearch,
             result: result,
             hideResultSet: false, // If true, the individual results won't be displayed
@@ -538,14 +517,10 @@ export default defineComponent({
               return accumulator + currentValue.weight
             }, 0) // This is the initialValue, b/c we're summing up props
           }
-          this.searchResults.push(newResult)
+          this.$store.commit('addSearchResult', newResult)
           if (newResult.weight > this.maxWeight) {
             this.maxWeight = newResult.weight
           }
-
-          // Also make sure to sort the search results by relevancy (note the
-          // b-a reversal, since we want a descending sort)
-          this.searchResults.sort((a, b) => b.weight - a.weight)
 
           // Accumulate individual results
           this.individualResults += result.length
@@ -564,7 +539,7 @@ export default defineComponent({
       this.filesToSearch = [] // Reset, in case the search was aborted.
     },
     emptySearchResults: function () {
-      this.searchResults = []
+      this.$store.commit('clearSearchResults')
       this.individualResults = 0
 
       // Clear indeces of active search result
@@ -657,27 +632,10 @@ export default defineComponent({
       // line.
       let marked = resultObject.restext
 
-      // "Why are you deep-cloning this array?" you may ask. Well, well. The
-      // reason is that Vue will observe the original array. And, whenever an
-      // observed thing -- be it an array or object -- is mutated, this will
-      // cause Vue to update the whole component state. Array.prototype.reverse
-      // actually mutates the array. So in order to prevent Vue from endlessly
-      // updating the component, we'll pull out the values into an unobserved
-      // cloned array that we can reverse without Vue getting stuck in an
-      // infinite loop.
-      const unobserved = resultObject.ranges.map(range => {
-        return {
-          from: range.from,
-          to: range.to
-        }
-      })
-      // Addendum Sun, 16 Jan 2022: If I had paid more attention to this little
-      // curious fact here, I could've saved myself a lot of trouble with the
-      // new Proxies of Vue3. For a short summary of my odyssee, see
-      // https://www.hendrik-erz.de/post/death-by-proxy
-
-      // Because it shifts positions, we need to insert the closing tag first
-      for (const range of unobserved.reverse()) {
+      // We go through the ranges in reverse order so that the range positions
+      // remain valid as we highlight parts of the string
+      for (let i = resultObject.ranges.length - 1; i > -1; i--) {
+        const range = resultObject.ranges[i]
         marked = marked.substring(0, range.to) + endTag + marked.substring(range.to)
         marked = marked.substring(0, range.from) + startTag + marked.substring(range.from)
       }

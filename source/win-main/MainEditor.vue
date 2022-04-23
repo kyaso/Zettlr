@@ -284,6 +284,9 @@ export default defineComponent({
       }
 
       return files
+    },
+    globalSearchResults: function () {
+      return this.$store.state.searchResults
     }
   },
   watch: {
@@ -373,6 +376,9 @@ export default defineComponent({
       }
       mdEditor.setCompletionDatabase('tags', unproxy)
     },
+    globalSearchResults: function () {
+      this.maybeHighlightSearchResults()
+    },
     activeFile: function () {
       if (mdEditor === null) {
         console.error('Received a file update but the editor was not yet initiated!')
@@ -400,6 +406,9 @@ export default defineComponent({
         mdEditor.readOnly = false
         this.$store.commit('updateTableOfContents', mdEditor.tableOfContents)
         this.$store.commit('activeDocumentInfo', mdEditor.documentInfo)
+        // Check if there are search results available for this file that we can
+        // pull in and highlight
+        this.maybeHighlightSearchResults()
         // Update the citation keys
         this.updateCitationKeys()
       } else if (this.currentlyFetchingFiles.includes(this.activeFile.path) === false) {
@@ -497,23 +506,6 @@ export default defineComponent({
       } else if (!isRegexp && this.regexpSearch === true) {
         this.regexpSearch = false
       }
-
-      // Begin a search
-      if (this.findTimeout !== undefined) {
-        clearTimeout(this.findTimeout)
-        this.findTimeout = undefined
-      }
-
-      if (this.regexpSearch === true) {
-        // Don't automatically start a search b/c certain expressions will crash
-        // the process (such as searching for /.*/ in a large document)
-        return
-      }
-
-      this.findTimeout = setTimeout(() => {
-        this.searchNext()
-        this.findTimeout = undefined
-      }, 1000)
     },
     showSearch: function (newValue, oldValue) {
       if (newValue === true && oldValue === false) {
@@ -522,7 +514,7 @@ export default defineComponent({
         nextTick()
           .then(() => {
             (this.$refs['search-input'] as HTMLInputElement).focus()
-            this.searchNext()
+            ;(this.$refs['search-input'] as HTMLInputElement).select()
           })
           .catch(err => console.error(err))
       } else if (newValue === false) {
@@ -870,6 +862,29 @@ export default defineComponent({
       }
 
       mdEditor.replaceAll(this.query, this.replaceString)
+    },
+    maybeHighlightSearchResults () {
+      const doc = this.activeFile
+      if (doc === null || mdEditor === null) {
+        return // No open file/no editor
+      }
+
+      const result = this.globalSearchResults.find((r: any) => r.file.path === doc.path)
+      if (result !== undefined) {
+        // Construct CodeMirror.Ranges from the results
+        const rangesToHighlight = []
+        for (const res of result.result) {
+          const line: number = res.line
+          for (const range of res.ranges) {
+            const { from, to } = range
+            rangesToHighlight.push({
+              anchor: { line: line, ch: from },
+              head: { line: line, ch: to }
+            })
+          }
+        }
+        mdEditor.highlightRanges(rangesToHighlight as any)
+      }
     },
     /**
      * Scrolls the editor according to the value if the user scrolls left of the

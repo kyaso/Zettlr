@@ -7,7 +7,7 @@
             "Huey"
         ],
         "license": "GNU GPL v3",
-        "updated_at": "2022-02-10T22:20:19.000000Z"
+        "updated_at": "2022-04-04T08:42:20.000000Z"
     },
     "dialog": {
         "about": {
@@ -196,6 +196,7 @@
             },
             "avoid_new_tabs": "Avoid opening files in new tabs if possible",
             "checkForBeta": "Notify me about beta releases",
+            "check_translation_updates": "Check for updated translations on start",
             "check_updates": "Automatically check for updates",
             "choose_file": "Choose file \u2026",
             "citation_database": "Citation Database (CSL JSON or BibTex)",
@@ -273,6 +274,7 @@
             "hide_dirs": "Hide directories during global search",
             "homeEndBehaviour": "Use the CodeMirror default actions for \u003Ckbd\u003EHome\u003C/kbd\u003E and \u003Ckbd\u003EEnd\u003C/kbd\u003E.",
             "indent_unit": "Indent by the following number of spaces",
+            "indent_with_tabs": "Indent using tabs",
             "input_mode": "Editor input mode",
             "leave_app_running_in_the_notification_area": "Leave app running in the notification area",
             "modtime": "Last modification time",
@@ -405,6 +407,11 @@
                 "var_week_number": "Week of the year (leading zeroes)",
                 "var_year": "Year (four digit)",
                 "var_year_two": "Year (two digits)"
+            },
+            "zoom_behavior": {
+                "editor": "Zoom changes the editor font size",
+                "gui": "Zoom resizes the whole GUI",
+                "label": "Zoom behavior"
             }
         },
         "snippets": {
@@ -641,6 +648,7 @@
         "new_dir": "New directory\u2026",
         "new_file": "New File\u2026",
         "new_project": "Create Project",
+        "next_file": "Next file",
         "no_suggestions": "No suggestions",
         "open": "Open\u2026",
         "open_attachment": "Open Attachment",
@@ -655,6 +663,7 @@
         "paste_plain": "Paste without style",
         "pdf_preferences": "PDF Preferences\u2026",
         "preferences": "Preferences",
+        "previous_file": "Previous file",
         "print": "Print\u2026",
         "project_build": "Export Project",
         "project_properties": "Project Settings\u2026",

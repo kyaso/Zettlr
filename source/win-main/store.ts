@@ -20,6 +20,7 @@ import { getConverter } from '@common/util/md-to-html'
 import getSorter from '@providers/fsal/util/sort'
 import { AnyMetaDescriptor, CodeFileMeta, DirMeta, MDFileMeta, OtherFileMeta } from '@dts/common/fsal'
 import { ColouredTag, TagDatabase } from '@dts/common/tag-provider'
+import { SearchResultWrapper } from '@dts/common/search'
 
 const path = window.path
 const ipcRenderer = window.ipc
@@ -225,6 +226,10 @@ export interface ZettlrState {
    * All CSL items available in the currently loaded database
    */
   cslItems: any[]
+  /**
+   * This variable stores search results from the global search
+   */
+  searchResults: SearchResultWrapper[]
 }
 
 function getConfig (): StoreOptions<ZettlrState> {
@@ -249,7 +254,8 @@ function getConfig (): StoreOptions<ZettlrState> {
         modifiedDocuments: [],
         tableOfContents: null,
         citationKeys: [],
-        cslItems: []
+        cslItems: [],
+        searchResults: []
       }
     },
     getters: {
@@ -446,6 +452,15 @@ function getConfig (): StoreOptions<ZettlrState> {
       },
       updateCSLItems: function (state, newItems: any[]) {
         state.cslItems = newItems
+      },
+      clearSearchResults: function (state) {
+        state.searchResults = []
+      },
+      addSearchResult: function (state, result: SearchResultWrapper) {
+        state.searchResults.push(result)
+        // Also make sure to sort the search results by relevancy (note the
+        // b-a reversal, since we want a descending sort)
+        state.searchResults.sort((a, b) => b.weight - a.weight)
       }
     },
     actions: {
@@ -548,7 +563,6 @@ function getConfig (): StoreOptions<ZettlrState> {
           return // Can only generate suggestions for Markdown files
         }
 
-        console.log(context.state.activeFile.path)
         const descriptor = await ipcRenderer.invoke('application', {
           command: 'get-file-contents',
           payload: context.state.activeFile.path
