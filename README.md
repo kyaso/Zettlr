@@ -1,3 +1,71 @@
+This is my **personal fork** of **Zettlr** containing some customizations that are specific to my day-to-day workflow. Some features might also be interesting for the upstream version, so I might plan to open some pull-requests once everything is tested and mature enough.
+
+Currently, I have implemented the following customizations (might not be a complete list; see Releases for more details):
+
+* Switch between **current and previous tab** using `Ctrl+Tab`
+    - Clicking the _forward/backwards_ buttons on a mouse does the same
+    - _relevant versions: custom.2, custom.25_
+* Patches for the **Vim mode** of CodeMirror:
+    - Override `Ctrl+C` to perform regular copy (works in both Normal and Insert mode)
+    - `jk` for ESC
+    - Mapped `j` and `k` to `gj` and `gk`, respectively
+        - Useful when the line is wrapped
+    - _added in custom.3_
+* Zettelkasten link **tooltip** customizations:
+    - Tooltip does not show content anymore, just title
+    * Tooltip does not show any metadata (words, modified date)
+    * Tooltip now also works on non-file links (aka general IDs)
+        * A simple search button is shown
+    * Tooltips are also shown for tags
+    * Clicking the open/search button will now also trigger a global search (same as with `Ctrl+click`)
+    * Tooltips contain a "Copy" button to copy the content of the link
+    * Tooltip follows cursor and buttons are placed centered for even faster access
+    * Added settings:
+        * Enable/disable tooltips
+        * Tooltip delay
+    - _relevant versions: custom.4, custom.5, custom.6, custom.7, custom.8, custom.9, custom.12, custom.13, custom.16, custom.17, custom.27, custom.31_
+* **Recent documents** buffer (Linux) increased to 20
+    - _added in custom.7_
+* The **formatting bar** now also contains an option to turn the selection into a ZKN link (`[[ ]]`)
+    - _added in custom.7_
+* **Sidebar** customizations:
+    * ToC and Related files tabs are shown stacked
+        * I wanted to see both at once glance
+        * _added in custom.14_
+    * Related files: show file path on hover
+        * _added in custom.17_
+    - Added **Backlinks/Unlinked Mentions** tab (similar to Obsidian's)
+        - Basically, I recycled part from the GlobalSearch module
+        - _relevant versions: custom.30_
+* **Global search** (full-text search) customizations
+    - Display number of search results
+        - _added in custom.15_
+    - Massive search speed improvement by using **search index**
+        - I used the [flexsearch](https://github.com/nextapps-de/flexsearch) library
+        - The search is now basically _instant_, however, some additional memory is required
+        - I need the fast search speed, as my workflow is heavily reliant on internal links which I also use as a kind of _block reference_
+        - _relevant versions: custom.18, custom.26_
+    - Don't scroll the clicked result line to the top, instead show a couple of lines above that for context (_custom.23_)
+    - The clicked line will be briefly highlighted with a "flash" to make it easier to spot (_custom.23_)
+* Added **file quick switch** shortcuts
+    - One can assign `Ctrl+<num>`, where `<num>` is 1..9, to different files
+    - _added in custom.19_
+* Show any kind of **Wikilink** (aka ZKN, internal link) in the link **autocomplete**
+    - Also, added **fuzzy search** for that (using the [fuzzysort](https://github.com/farzher/fuzzysort) library)
+        - This is still experimental, as there are some parameters that need to be tweaked for a reliable operation, but so far it worked fine for me
+    - Clicking a link with multiple, space-separated words in it will force an exact search, i.e. the search terms will be surrounded by quotes
+    - _relevant versions: custom.20, custom.24, custom.28, custom.29_
+* Disable parsing of YAML frontmatters, as I don't use those
+    - _added in custom.27_
+* **File filter** customizations
+    - Filter can now be focussed using `Ctrl+P`
+        - I'm used to that keybinding from VSCode
+    - **Fuzzy search** (using the fuzzysort lib)
+    - Auto-select the first element so pressing Enter will immediately open it
+    - _relevant versions: custom.28, custom.29_
+
+---
+
 <h1 align="center">
   <a href="https://github.com/Zettlr/Zettlr">
     <img src="https://raw.githubusercontent.com/Zettlr/Zettlr/master/resources/icons/png/256x256.png" alt="Zettlr"/>
