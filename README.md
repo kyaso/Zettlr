@@ -1,6 +1,19 @@
 This is my **personal fork** of **Zettlr** containing some customizations that are specific to my day-to-day workflow. Some features might also be interesting for the upstream version, so I might plan to open some pull-requests once everything is tested and mature enough.
 
-Currently, I have implemented the following customizations (might not be a complete list; see Releases for more details):
+## Highlights
+
+Here are some of the highlighted customizations (more details on them can be found below):
+
+- Backlinks / Unlinked mentions
+- Fuzzysearch for link autocompletes and file filter
+- Search index for insanely fast full-text search
+- Support any kind of Wikilink in autocomplete
+- Favorite files keyboard shortcuts
+- Link tooltips optimized for keyboardless navigation
+
+## Detailed Documentation
+
+In the following, every customization so far is listed, as well as the related versions. The versioning follows this schema: `<Zettlr-base>+custom.<custom-ver>`.
 
 * Switch between **current and previous tab** using `Ctrl+Tab`
     - Clicking the _forward/backwards_ buttons on a mouse does the same
