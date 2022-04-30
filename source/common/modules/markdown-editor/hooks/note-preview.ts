@@ -177,24 +177,24 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
 
   // Create a "Search" button
   const searchButton = getSearchButton(linkContents, isLink)
-  searchButton.style.marginRight = '10px'
   actions.appendChild(searchButton)
+
+  // Add the copy button
+  const copyButton = getCopyButton(linkContents, isLink)
+  copyButton.style.marginLeft = '10px'
+  actions.appendChild(copyButton)
 
   // If it is a file, add an "Open" button
   if (linkIsFile) {
     const openButton = getOpenButton(linkContents)
-    openButton.style.marginRight = '10px'
+    openButton.style.marginLeft = '10px'
     actions.appendChild(openButton)
   }
-
-  // Finally, add the copy button
-  const copyButton = getCopyButton(linkContents, isLink)
-  actions.appendChild(copyButton)
 
   // Only if preference "Avoid New Tabs" is set,
   // offer an additional button on preview tooltip
   // to open the file in a new tab
-  if (window.config.get('system.avoidNewTabs') === true) {
+  if (linkIsFile && window.config.get('system.avoidNewTabs') === true) {
     const openFuncNewTab = function (): void {
       ipcRenderer.invoke('application', {
         command: 'force-open',
@@ -204,11 +204,18 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
         }
       })
         .catch(err => console.error(err))
+      
+      ipcRenderer.invoke('application', {
+        command: 'start-global-search',
+        payload: linkContents
+      })
+        .catch(err => console.error(err))
     }
 
     const openButtonNT = document.createElement('button')
     openButtonNT.setAttribute('id', 'open-note-new-tab')
-    openButtonNT.textContent = trans('menu.open_new_tab')
+    // openButtonNT.textContent = trans('menu.open_new_tab')
+    openButtonNT.innerHTML = '<clr-icon shape="pop-out"></clr-icon>'
     openButtonNT.addEventListener('click', openFuncNewTab)
     openButtonNT.style.marginLeft = '10px'
     actions.appendChild(openButtonNT)
@@ -260,7 +267,7 @@ function getOpenButton (linkContents: String): HTMLButtonElement {
 
   const openButton = document.createElement('button')
   openButton.setAttribute('id', 'open-note')
-  openButton.innerHTML = '<clr-icon shape="pop-out"></clr-icon>'
+  openButton.innerHTML = '<clr-icon shape="arrow" style="transform: rotate(45deg);"></clr-icon>'
   openButton.addEventListener('click', openFunc)
 
   return openButton

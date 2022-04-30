@@ -680,8 +680,16 @@ export default defineComponent({
       }
     },
     handleMousedown: function (event: MouseEvent) {
-      if (event.button === 3 || event.button === 4) {
-        ipcRenderer.invoke('application', { command: 'switch-file' })
+      // if (event.button === 3 || event.button === 4) {
+      //   ipcRenderer.invoke('application', { command: 'switch-file' })
+      //     .catch(e => console.error(e))
+      // }
+
+      if (event.button === 3) {
+        ipcRenderer.invoke('application', { command: 'previous-file' })
+          .catch(e => console.error(e))
+      } else if (event.button === 4) {
+        ipcRenderer.invoke('application', { command: 'next-file' })
           .catch(e => console.error(e))
       }
     },
