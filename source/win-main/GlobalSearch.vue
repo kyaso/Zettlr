@@ -132,6 +132,7 @@ import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/searc
 import { CodeFileMeta, DirMeta, MDFileMeta } from '@dts/common/fsal'
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
 import { AnyMenuItem } from '@dts/renderer/context'
+import { markText, jumpToLine } from './shared'
 
 const path = window.path
 const ipcRenderer = window.ipc
@@ -621,26 +622,7 @@ export default defineComponent({
       }
     },
     markText: function (resultObject: SearchResult) {
-      const startTag = '<span class="search-result-highlight">'
-      const endTag = '</span>'
-      // We receive a result object and should return an HTML string containing
-      // highlighting (we're using <strong>) where the result works. We have
-      // access to restext, weight, line, and an array of from-to-ranges
-      // indicating all matches on the given line. NOTE that all results are
-      // being sorted correctly by the main process, so we can just assume the
-      // results to be non-overlapping and from beginning to the end of the
-      // line.
-      let marked = resultObject.restext
-
-      // We go through the ranges in reverse order so that the range positions
-      // remain valid as we highlight parts of the string
-      for (let i = resultObject.ranges.length - 1; i > -1; i--) {
-        const range = resultObject.ranges[i]
-        marked = marked.substring(0, range.to) + endTag + marked.substring(range.to)
-        marked = marked.substring(0, range.from) + startTag + marked.substring(range.from)
-      }
-
-      return marked
+      return markText(resultObject)
     },
     focusQueryInput: function () {
       this.queryInputElement?.focus()
