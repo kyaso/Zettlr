@@ -291,19 +291,22 @@ export function setAutocompleteDatabase (type: string, database: any): void {
   } else if (type === 'wikiLinks') {
     const fileDB: any[] = []
 
+    // Make Wikilinks lowercase
+    const databaseLC = database.map((val: string) => val.toLowerCase())
+
     // Extract the files names out of the file database
     for (let file of availableDatabases.files) {
-      fileDB.push(file.title)
+      fileDB.push(file.title?.toLowerCase())
     }
 
     // Remove duplicates in Wikilinks
     database = database.filter((val: any, idx: number) => {
-      return database.indexOf(val) === idx
+      return databaseLC.indexOf(val.toLowerCase()) === idx
     })
 
     // Remove Wikilinks that match file names
     database = database.filter((val: any) => {
-      return !fileDB.includes(val)
+      return !fileDB.includes(val.toLowerCase())
     })
 
     // Reset database

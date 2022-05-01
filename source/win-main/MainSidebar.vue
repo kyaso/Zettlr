@@ -633,7 +633,7 @@ export default defineComponent({
 
         // Iterate over the lines of the current result set
         for (let j = x.result.length - 1; j >= 0; j--) {
-          const isBacklink = x.result[j].restext.includes(fileNameLink)
+          const isBacklink = x.result[j].restext.toLowerCase().includes(fileNameLink.toLowerCase())
           const isNegOne = x.result[j].line === -1
 
           if (isBacklink || isNegOne) {
