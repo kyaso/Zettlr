@@ -1,4 +1,4 @@
-This is my **personal fork** of **Zettlr** containing some customizations that are specific to my day-to-day workflow. Some features might also be interesting for the upstream version, so I might plan to open some pull-requests once everything is tested and mature enough.
+This is my **personal fork** of **Zettlr** containing some customizations that are specific to my day-to-day workflow. I mostly use Zettlr as my _personal knowledge base_, similar to Obsidian. Some features might also be interesting for the upstream version, so I might plan to open some pull-requests once everything is tested and mature enough.
 
 ## Highlights
 
@@ -16,8 +16,8 @@ Here are some of the highlighted customizations (more details on them can be fou
 In the following, every customization so far is listed, as well as the related versions. The versioning follows this schema: `<Zettlr-base>+custom.<custom-ver>`.
 
 * Switch between **current and previous tab** using `Ctrl+Tab`
-    - Clicking the _forward/backwards_ buttons on a mouse does the same
-    - _relevant versions: custom.2, custom.25_
+* **Mouse forward/backwards** buttons for next/previous files
+    - _relevant versions: custom.25, custom.32_
 * Patches for the **Vim mode** of CodeMirror:
     - Override `Ctrl+C` to perform regular copy (works in both Normal and Insert mode)
     - `jk` for ESC
@@ -49,7 +49,7 @@ In the following, every customization so far is listed, as well as the related v
         * _added in custom.17_
     - Added **Backlinks/Unlinked Mentions** tab (similar to Obsidian's)
         - Basically, I recycled part from the GlobalSearch module
-        - _relevant versions: custom.30_
+        - _relevant versions: custom.30, custom.32_
 * **Global search** (full-text search) customizations
     - Display number of search results
         - _added in custom.15_
@@ -67,7 +67,7 @@ In the following, every customization so far is listed, as well as the related v
     - Also, added **fuzzy search** for that (using the [fuzzysort](https://github.com/farzher/fuzzysort) library)
         - This is still experimental, as there are some parameters that need to be tweaked for a reliable operation, but so far it worked fine for me
     - Clicking a link with multiple, space-separated words in it will force an exact search, i.e. the search terms will be surrounded by quotes
-    - _relevant versions: custom.20, custom.24, custom.28, custom.29_
+    - _relevant versions: custom.20, custom.24, custom.28, custom.29, custom.32_
 * Disable parsing of YAML frontmatters, as I don't use those
     - _added in custom.27_
 * **File filter** customizations
