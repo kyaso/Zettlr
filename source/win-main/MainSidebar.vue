@@ -188,6 +188,7 @@
               v-for="singleRes, idx2 in result.result"
               v-bind:key="idx2"
               class="result-line"
+              v-on:contextmenu.stop.prevent="fileContextMenu($event, result.file.path, singleRes.line)"
               v-on:mousedown.stop.prevent="onResultClick($event, idx, idx2, result.file.path, singleRes.line)"
             >
               <span v-if="singleRes.line !== -1"><strong>{{ singleRes.line }}</strong>: </span>
@@ -242,6 +243,7 @@
               v-for="singleRes, idx2 in result.result"
               v-bind:key="idx2"
               class="result-line"
+              v-on:contextmenu.stop.prevent="fileContextMenu($event, result.file.path, singleRes.line)"
               v-on:mousedown.stop.prevent="onResultClick($event, idx, idx2, result.file.path, singleRes.line)"
             >
               <span v-if="singleRes.line !== -1"><strong>{{ singleRes.line }}</strong>: </span>
@@ -276,10 +278,12 @@ import ButtonControl from '@common/vue/form/elements/Button.vue'
 import { defineComponent } from 'vue'
 import { CodeFileMeta, DirMeta, MDFileMeta, OtherFileMeta } from '@dts/common/fsal'
 import { TabbarControl } from '@dts/renderer/window'
+import showPopupMenu from '@common/modules/window-register/application-menu-helper'
 
 import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
 import compileSearchTerms from '@common/util/compile-search-terms'
 import objectToArray from '@common/util/object-to-array'
+import { AnyMenuItem } from '@dts/renderer/context'
 
 const path = window.path
 const ipcRenderer = window.ipc
@@ -684,6 +688,25 @@ export default defineComponent({
         }
       }
     },
+    fileContextMenu: function (event: MouseEvent, filePath: string, lineNumber: number) {
+      const point = { x: event.clientX, y: event.clientY }
+
+      const menu: AnyMenuItem[] = [{
+        label: trans('menu.open_new_tab'),
+        id: 'new-tab',
+        type: 'normal',
+        enabled: true
+      }]
+
+      showPopupMenu(point, menu, (clickedID: string) => {
+        switch (clickedID) {
+          case 'new-tab':
+            // this.jumpToLine(filePath, lineNumber, true)
+            this.onResultClick({} as MouseEvent, 0, 0, filePath, lineNumber, true)
+            break
+        }
+      })
+    },
     // **** Adapted from GlobalSearch.vue ****
     search: async function (query: string): Promise<SearchResultWrapper[]> {
       let filesToSearch: any[] = []
@@ -783,24 +806,30 @@ export default defineComponent({
       return results
     },
     // **** Copied/adapted from GlobalSearch.vue ****
-    onResultClick: function (event: MouseEvent, idx: number, idx2: number, filePath: string, lineNumber: number) {
-      // This intermediary function is needed to make sure that jumpToLine can
-      // also be called from within the context menu (see above).
-      if (event.button === 2) {
-        return // Do not handle right-clicks
-      }
-
-      // Update indeces so we can keep track of the most recently clicked
-      // search result.
-      // this.activeFileIdx = idx
-      // this.activeLineIdx = idx2
-
-      const isMiddleClick = (event.type === 'mousedown' && event.button === 1)
+    onResultClick: function (event: MouseEvent, idx: number, idx2: number, filePath: string, lineNumber: number, newTab = false) {
       // The value we are subtracting is the amount of lines we want to
       // show above the target line
       const lineToScroll = Math.max(lineNumber - this.$store.state.config['custom.test.val1'], 0)
-      this.jumpToLine(filePath, lineToScroll, isMiddleClick, lineNumber)
-      // this.jumpToLine(filePath, lineNumber, isMiddleClick)
+
+      // This branch will be taking for all non-right clicks
+      if (!newTab) {
+        // This intermediary function is needed to make sure that jumpToLine can
+        // also be called from within the context menu (see above).
+        if (event.button === 2) {
+          return // Do not handle right-clicks
+        }
+
+        // Update indeces so we can keep track of the most recently clicked
+        // search result.
+        // this.activeFileIdx = idx
+        // this.activeLineIdx = idx2
+
+        const isMiddleClick = (event.type === 'mousedown' && event.button === 1)
+        this.jumpToLine(filePath, lineToScroll, isMiddleClick, lineNumber)
+        // this.jumpToLine(filePath, lineNumber, isMiddleClick)
+      } else {
+        this.jumpToLine(filePath, lineToScroll, true, lineNumber)
+      }
     },
     // Copied from GlobalSearch.vue
     jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false, lineToFlash: number = lineNumber) {
