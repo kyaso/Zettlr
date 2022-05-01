@@ -7,7 +7,7 @@ Here are some of the highlighted customizations (more details on them can be fou
 - Backlinks / Unlinked mentions
 - Fuzzysearch for link autocompletes and file filter
 - Search index for insanely fast full-text search
-- Support any kind of Wikilink in autocomplete
+- Support any kind of Wikilink (not just files) in autocomplete
 - Favorite files keyboard shortcuts
 - Link tooltips optimized for keyboardless navigation
 
