@@ -15,17 +15,14 @@ showHelp() {
 }
 
 # Parse args
-while [ $# -ne 0 ]; do
-    ARG=$1
-    if [ $ARG == "-f" ]; then
-        FORCE=true
-    elif [ $ARG == "-p" ]; then
-        PUSH=true
-    elif [ $ARG == "-h" ]; then
-        showHelp
-    fi
-
-    shift
+while getopts "fph" opt
+do
+    case $opt in
+        f) FORCE=true;;
+        p) PUSH=true;;
+        h) showHelp;;
+        *) showHelp;;
+    esac
 done
 
 # The branch we should be in
