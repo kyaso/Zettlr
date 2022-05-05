@@ -107,7 +107,8 @@ export default function getConfigTemplate (): ConfigOptions {
       customDirectory: '', // If present, saves auto-created files here
       tooltipEnable: true, // Whether link tooltips are enabled
       tooltipDelay: 250, // Tooltip popup delay (ms) 
-      copyOnClick: true // Whether to copy the ID/tag on click (search)
+      copyOnClick: true, // Whether to copy the ID/tag on click (search)
+      copyIDWithBrackets: false // Whether to copy the ID with "[[ ]]"
     },
     // Editor related stuff
     editor: {

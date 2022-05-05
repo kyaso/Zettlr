@@ -84,6 +84,7 @@ interface ConfigOptions {
     tooltipEnable: boolean
     tooltipDelay: number
     copyOnClick: boolean
+    copyIDWithBrackets: boolean
   }
   editor: {
     autocompleteAcceptSpace: boolean

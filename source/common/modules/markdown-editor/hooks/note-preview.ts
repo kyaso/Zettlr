@@ -338,5 +338,11 @@ function getTitle (title: string): HTMLHeadingElement {
 }
 
 function copy (text: string, isLink: Boolean): void {
-  clipboard.writeText(isLink ? '[[' + text + ']]' : text)
+  let copyText = text
+
+  if (isLink && config.get('zkn.copyIDWithBrackets')) {
+    copyText = '[[' + text + ']]'
+  }
+
+  clipboard.writeText(copyText)
 }

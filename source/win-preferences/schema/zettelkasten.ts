@@ -100,6 +100,11 @@ export default function (): any {
           type: 'checkbox',
           label: 'Copy ID/tag on search click',
           model: 'zkn.copyOnClick'
+        },
+        {
+          type: 'checkbox',
+          label: 'Add "[[ ]]" when copying ID',
+          model: 'zkn.copyIDWithBrackets'
         }
       ]
     ]

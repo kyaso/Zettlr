@@ -36,7 +36,7 @@ In the following, every customization so far is listed, as well as the related v
     * Added settings:
         * Enable/disable tooltips
         * Tooltip delay
-    - _relevant versions: custom.4, custom.5, custom.6, custom.7, custom.8, custom.9, custom.12, custom.13, custom.16, custom.17, custom.27, custom.31_
+    - _relevant versions: custom.4, custom.5, custom.6, custom.7, custom.8, custom.9, custom.12, custom.13, custom.16, custom.17, custom.27, custom.31, custom.33_
 * **Recent documents** buffer (Linux) increased to 20
     - _added in custom.7_
 * The **formatting bar** now also contains an option to turn the selection into a ZKN link (`[[ ]]`)
