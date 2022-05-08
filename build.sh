@@ -1,6 +1,10 @@
 #!/usr/bin/bash
 
+# Make sure the script exits whenever a command fails
+set -e
+
 FORCE=false
+INSTALL=true
 PUSH=false
 
 # Show help function
@@ -58,21 +62,34 @@ fi
 ######################
 
 # Run yarn package
+echo "**** Running yarn package..."
 yarn package:linux-x64
 
 # Run yarn release
+echo "**** Running yarn release..."
 yarn release:linux-x64
 
 # Rename binary
 OLD_NAME="Zettlr*"
-NEW_NAME="Zettlr-${NEW_VER:1}.AppImage"
+COMMIT_SHA=`git rev-parse --short HEAD`
+NEW_NAME="Zettlr-${NEW_VER:1}_$COMMIT_SHA.AppImage"
+echo "**** Renaming output binary..."
 mv release/$OLD_NAME release/$NEW_NAME
 
 # Tag new version
+echo "**** Adding git tag..."
 git tag -f $NEW_VER
+
+# Install
+if [ $INSTALL == true ]; then
+    INSTALL_DIR=/home/kyaso/Applications
+    echo "**** Installing $NEW_NAME to $INSTALL_DIR..."
+    mv release/Zettlr* $INSTALL_DIR
+    ln -sf $INSTALL_DIR/$NEW_NAME $INSTALL_DIR/zettlr
+fi
 
 # Push
 if [ $PUSH == true ]; then
+    echo "**** Pushing..."
     ./push.sh
 fi
-
