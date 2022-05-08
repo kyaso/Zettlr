@@ -101,6 +101,16 @@ export default function (): any {
         }
       ],
 
+      [
+        // How the mouse forward/back buttons should behave
+        {
+          type: 'checkbox',
+          label: 'Mouse forward/back buttons should switch between current and last file',
+          model: 'custom.mousePrevBack',
+          reset: false
+        }
+      ],
+
       // Custom values for testing
       [
         {

@@ -168,6 +168,9 @@ export default defineComponent({
     }
   },
   computed: {
+    mousePrevBackShouldSwitch: function (): boolean {
+      return this.$store.state.config['custom.mousePrevBack']
+    },
     sidebarVisible: function (): boolean {
       return this.$store.state.config['window.sidebarVisible']
     },
@@ -680,17 +683,20 @@ export default defineComponent({
       }
     },
     handleMousedown: function (event: MouseEvent) {
-      // if (event.button === 3 || event.button === 4) {
-      //   ipcRenderer.invoke('application', { command: 'switch-file' })
-      //     .catch(e => console.error(e))
-      // }
-
-      if (event.button === 3) {
-        ipcRenderer.invoke('application', { command: 'previous-file' })
-          .catch(e => console.error(e))
-      } else if (event.button === 4) {
-        ipcRenderer.invoke('application', { command: 'next-file' })
-          .catch(e => console.error(e))
+      // Switch files or back/forward
+      if (this.mousePrevBackShouldSwitch) {
+        if (event.button === 3 || event.button === 4) {
+          ipcRenderer.invoke('application', { command: 'switch-file' })
+            .catch(e => console.error(e))
+        }
+      } else {
+        if (event.button === 3) {
+          ipcRenderer.invoke('application', { command: 'previous-file' })
+            .catch(e => console.error(e))
+        } else if (event.button === 4) {
+          ipcRenderer.invoke('application', { command: 'next-file' })
+            .catch(e => console.error(e))
+        }
       }
     },
     startPomodoro: function () {

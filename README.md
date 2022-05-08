@@ -17,13 +17,14 @@ In the following, every customization so far is listed, as well as the related v
 
 * Switch between **current and previous tab** using `Ctrl+Tab`
 * **Mouse forward/backwards** buttons for next/previous files
-    - _relevant versions: custom.25, custom.32_
+    - _relevant versions: custom.25, custom.32, custom.35_
 * Patches for the **Vim mode** of CodeMirror:
     - Override `Ctrl+C` to perform regular copy (works in both Normal and Insert mode)
     - `jk` for ESC
     - Mapped `j` and `k` to `gj` and `gk`, respectively
         - Useful when the line is wrapped
-    - _added in custom.3_
+    - Disabled some bindings: `Ctrl+P`, `Ctrl+N`
+    - _relevant versions: custom.3, custom.35_
 * Zettelkasten link **tooltip** customizations:
     - Tooltip does not show content anymore, just title
     * Tooltip does not show any metadata (words, modified date)

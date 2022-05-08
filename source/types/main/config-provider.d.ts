@@ -160,6 +160,7 @@ interface ConfigOptions {
       file8: string
       file9: string
     }
+    mousePrevBack: boolean
     test: {
       val1: number
       val2: number

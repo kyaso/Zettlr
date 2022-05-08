@@ -244,6 +244,7 @@ export default function getConfigTemplate (): ConfigOptions {
         file8: 'foo8',
         file9: 'foo9'
       },
+      mousePrevBack: false, // false = switch, true = back/forward
       test: {
         val1: 0,
         val2: 0,
