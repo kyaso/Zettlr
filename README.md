@@ -13,7 +13,7 @@ Here are some of the highlighted customizations (more details on them can be fou
 
 ## Detailed Documentation
 
-In the following, every customization so far is listed, as well as the related versions. The versioning follows this schema: `<Zettlr-base>+custom.<custom-ver>`.
+In the following, every customization so far is listed, as well as the related versions where the feature was touched. The versioning follows this schema: `<Zettlr-base>+custom.<custom-ver>`.
 
 * Switch between **current and previous tab** using `Ctrl+Tab`
 * **Mouse forward/backwards** buttons for next/previous files
