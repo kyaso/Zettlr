@@ -1,8 +1,12 @@
-name: Build
+name: Build Custom
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
 #                    ZETTLR MAIN BUILD GITHUB ACTIONS FILE                    #
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                                             #
+#      !!! Modified by @kyaso to only build Linux AppImages !!!               #
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
@@ -55,16 +59,14 @@ name: Build
 on:
   push:
     branches:
-      - master
+      - custom
   workflow_dispatch: # Used to manually trigger a nightly build.
     inputs:
       target:
         # Access using github.event.inputs.target
         description: 'Target ("nightly"/"stable")'     
         required: false
-        default: 'nightly'
-  schedule: # Every Monday at noon (UTC) we run a scheduled nightly build
-    - cron: '0 12 * * 1'
+        default: 'stable'
 
 # Defaults for every job and step in this workflow
 defaults:
@@ -90,150 +92,6 @@ env:
 jobs:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #                                                                           #
-  #                              WINDOWS BUILDS                               #
-  #                                                                           #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  build_win:
-    name: Windows build
-    runs-on: windows-latest
-    steps:
-      # Check out master for a regular release, or develop branch for a nightly
-      - name: Clone repository (master branch)
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') }}
-        uses: actions/checkout@v2
-        with:
-          ref: 'master'
-      - name: Clone repository (develop branch)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        uses: actions/checkout@v2
-        with:
-          ref: 'develop'
-      - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Set up build environment
-        run: yarn install --frozen-lockfile
-      - name: Set tag version to nightly
-        # If this a scheduled workflow, we know that we should build a nightly
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        run: node ./scripts/set-nightly-version.js
-      - name: Retrieve tag version
-        id: ref
-        run: |
-          pkgver=$(node ./scripts/get-pkg-version.js)
-          echo ::set-output name=version::$pkgver
-      # Create the windows binaries. First package both for x64 and arm64, then
-      # make an NSIS installer. Make sure to sign the windows installer using
-      # the corresponding SSL EV.
-      - name: Package Windows (x64)
-        run: yarn package:win-x64
-        env:
-          CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
-      - name: Package Windows (arm64)
-        run: yarn package:win-arm
-        env:
-          CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
-      - name: Build NSIS installer (x64)
-        run: yarn release:win-x64
-        env:
-          CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
-      - name: Build NSIS installer (arm64)
-        run: yarn release:win-arm
-        env:
-          CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
-      # The ARM64 artifact is being output simply as .exe w/o arch, since we
-      # have to include --ia32 in the build flags for ARM builds (thus,
-      # strictly speaking it has two architectures).
-      - name: Rename arm64 artifact
-        run: mv ./release/Zettlr-${{steps.ref.outputs.version}}.exe ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.exe
-      # Now we need to cache all artifacts. We create one artifact per build
-      # step. It should be noted that "artifacts" are more like file shares.
-      # Thus they can contain multiple files.
-      - name: Cache installers
-        uses: actions/upload-artifact@v2
-        with:
-          name: win32
-          path: |
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.exe
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #                                                                           #
-  #                               MACOS BUILDS                                #
-  #                                                                           #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  build_macos:
-    name: macOS build
-    runs-on: macos-latest
-    steps:
-      # Check out master for a regular release, or develop branch for a nightly
-      - name: Clone repository (master branch)
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') }}
-        uses: actions/checkout@v2
-        with:
-          ref: 'master'
-      - name: Clone repository (develop branch)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        uses: actions/checkout@v2
-        with:
-          ref: 'develop'
-      - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Set up build environment
-        run: yarn install --frozen-lockfile
-      - name: Set tag version to nightly
-        # If this a scheduled workflow, we know that we should build a nightly
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        run: node ./scripts/set-nightly-version.js
-      - name: Retrieve tag version
-        id: ref
-        run: |
-          pkgver=$(node ./scripts/get-pkg-version.js)
-          echo ::set-output name=version::$pkgver
-      # Save the macOS certificate on this runner for forge to access it in the
-      # next step below.
-      - name: Retrieve code signing certificate
-        run: ./scripts/add-osx-cert.sh
-        env:
-          MACOS_CERT: ${{ secrets.MACOS_CERT }}
-          MACOS_CERT_PASS: ${{ secrets.MACOS_CERT_PASS }}
-      # Now, finally build the app itself. This is done in four steps: First,
-      # two steps make sure that the app is correctly bundled in ./out, then
-      # the next two steps use electron builder to create the DMG files.
-      # This step also signs and notarizes the app. NOTE that forge does this,
-      # as we shall not notarize and/or sign the resulting DMG file as well!
-      - name: Package macOS (arm64)
-        run: yarn package:mac-arm
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
-      - name: Package macOS (x64)
-        run: yarn package:mac-x64
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
-      - name: Build macOS image file (arm64)
-        run: yarn release:mac-arm
-      - name: Build macOS image file (x64)
-        run: yarn release:mac-x64
-      # Finally upload both
-      - name: Cache image files
-        uses: actions/upload-artifact@v2
-        with:
-          name: darwin
-          path: |
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.dmg
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.dmg
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #                                                                           #
   #                               LINUX BUILDS                                #
   #                                                                           #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -241,27 +99,16 @@ jobs:
     name: Linux build
     runs-on: ubuntu-latest
     steps:
-      # Check out master for a regular release, or develop branch for a nightly
-      - name: Clone repository (master branch)
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') }}
+      - name: Clone repo (custom branch)
         uses: actions/checkout@v2
         with:
-          ref: 'master'
-      - name: Clone repository (develop branch)
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        uses: actions/checkout@v2
-        with:
-          ref: 'develop'
+          ref: 'custom'
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Set up build environment
         run: yarn install --frozen-lockfile
-      - name: Set tag version to nightly
-        # If this a scheduled workflow, we know that we should build a nightly
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        run: node ./scripts/set-nightly-version.js
       - name: Retrieve tag version
         id: ref
         run: |
@@ -271,22 +118,15 @@ jobs:
         run: yarn package:linux-x64
       - name: Create Linux installers (x64)
         run: yarn release:linux-x64
-      - name: Package Linux targets (arm64)
-        run: yarn package:linux-arm
-      - name: Create Linux installers (arm64)
-        run: yarn release:linux-arm
       # After everything has been created, now we need to cache them.
       - name: Cache installers
         uses: actions/upload-artifact@v2
         with:
           name: linux
           path: |
-            ./release/Zettlr-${{steps.ref.outputs.version}}-amd64.deb
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.rpm
+            #./release/Zettlr-${{steps.ref.outputs.version}}-amd64.deb
+            #./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.rpm
             ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.deb
-            ./release/Zettlr-${{steps.ref.outputs.version}}-aarch64.rpm
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.AppImage
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #                                                                           #
@@ -301,7 +141,7 @@ jobs:
   prepare_release:
     name: Prepare release draft
     # Make sure (and wait until) the builds have succeeded
-    needs: [build_win, build_macos, build_linux]
+    needs: [build_linux]
     runs-on: ubuntu-latest
     steps:
       # NOTE: Here we do not care about which branch is checked out since we
@@ -314,10 +154,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: Set up build environment
         run: yarn install --frozen-lockfile
-      - name: Set tag version to nightly
-        # If this a scheduled workflow, we know that we should build a nightly
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        run: node ./scripts/set-nightly-version.js
       - name: Retrieve tag version
         id: ref
         run: |
@@ -326,84 +162,39 @@ jobs:
       - name: Make release directory
         run: mkdir ./release
       # First, download all resulting assets from the previous steps.
-      - name: Retrieve windows installers
-        uses: actions/download-artifact@v2
-        with:
-          name: win32
-          path: ./release
-      - name: Retrieve macOS images
-        uses: actions/download-artifact@v2
-        with:
-          name: darwin
-          path: ./release
       - name: Retrieve Linux installers
         uses: actions/download-artifact@v2
         with:
           name: linux
           path: ./release
-      # Now we are set, we have all five release assets on the VM. It's time to
+      # Now we are set, we have all release assets on the VM. It's time to
       # create the SHA-checksums file and then upload everything!
       - name: Generate SHA256 checksums
         run: |
           cd ./release
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x64.exe" > "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-arm64.exe" >> "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x64.dmg" >> "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-arm64.dmg" >> "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-amd64.deb" >> "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x86_64.rpm" >> "SHA256SUMS.txt"
+          #sha256sum "Zettlr-${{steps.ref.outputs.version}}-amd64.deb" >> "SHA256SUMS.txt"
+          #sha256sum "Zettlr-${{steps.ref.outputs.version}}-x86_64.rpm" >> "SHA256SUMS.txt"
           sha256sum "Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage" >> "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-arm64.deb" >> "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-aarch64.rpm" >> "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-arm64.AppImage" >> "SHA256SUMS.txt"
           cd ..
       - name: Verify checksums
         run: |
           cd ./release
           sha256sum -c SHA256SUMS.txt
           cd ..
-      # IF WE BUILD A NIGHTLY, AT THIS POINT JUST UPLOAD TO THE SERVER.
-      # We must make sure to copy the three additional files
-      # to the release folder because of the --delete flag in rsync below.
-      - name: Copy Nightly Static Files
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        run: |
-          cp ./scripts/assets/nightly-index.php ./release/index.php
-          cp ./scripts/assets/nightly-sm_preview.png ./release/sm_preview.png
-          cp ./resources/icons/png/512x512.png ./release/logo.png
-      - name: Upload nightlies to the server
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        uses: easingthemes/ssh-deploy@v2.0.7
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.NIGHTLY_SSH_PRIVATE_KEY }}
-          # --delete so that no old releases remain on the server. Each iteration is approx. 1GB in size.
-          ARGS: "-vzhr --delete" # verbose, compress, human-readble, recursive, delete
-          SOURCE: "release/"
-          REMOTE_HOST: ${{ secrets.NIGHTLY_REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.NIGHTLY_REMOTE_USER }}
-          TARGET: ${{ secrets.NIGHTLY_TARGET }}
-      # OTHERWISE: Create a new release draft
+      # Create a new release draft
       - name: Create release draft
-        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') }}
         uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #env:
+        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # Populate the inputs of the release we already know
           tag_name: v${{steps.ref.outputs.version}}
-          name: Release v${{steps.ref.outputs.version}}
+          name: v${{steps.ref.outputs.version}}
           body: If you can read this, we have forgotten to fill in the changelog. Sorry!
           draft: true # Always create as draft, so that we can populate the remaining values easily
           # Gosh, is that convenient as opposed to earlier!
           files: |
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.exe
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.dmg
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.dmg
-            ./release/Zettlr-${{steps.ref.outputs.version}}-amd64.deb
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.rpm
+            #./release/Zettlr-${{steps.ref.outputs.version}}-amd64.deb
+            #./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.rpm
             ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.deb
-            ./release/Zettlr-${{steps.ref.outputs.version}}-aarch64.rpm
-            ./release/Zettlr-${{steps.ref.outputs.version}}-arm64.AppImage
             ./release/SHA256SUMS.txt
