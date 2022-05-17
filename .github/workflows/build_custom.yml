@@ -119,7 +119,7 @@ jobs:
           tag=$(git describe --tags --abbrev=0)
           echo ::set-output name=latestTag::$tag
       - name: No new version detected
-        if: ${{ steps.ref.outputs.version == steps.ref.outputs.latestTag }}
+        if: ${{ format('v{0}', steps.ref.outputs.version) == steps.ref.outputs.latestTag }}
         run: |
           echo "::error file=package.json::Did you forget to update the version in package.json?"
           exit 1
