@@ -85,6 +85,7 @@ env:
   # environment variable, thus rendering this approach unusable. We have to
   # manually copy this into the appropriate places.
   # BUILD_NIGHTLY: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+  BRANCH: 'custom'
 
 # This workflow file contains four jobs, three to build the corresponding
 # releases on all three supported platforms, and a last one, which will
@@ -102,7 +103,7 @@ jobs:
       - name: Clone repo (custom branch)
         uses: actions/checkout@v2
         with:
-          ref: 'custom'
+          ref: ${{ env.BRANCH }}
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v2
         with:
@@ -144,10 +145,10 @@ jobs:
     needs: [build_linux]
     runs-on: ubuntu-latest
     steps:
-      # NOTE: Here we do not care about which branch is checked out since we
-      # just need the two scripts which are present in both.
       - name: Clone repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BRANCH }}
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v2
         with:
