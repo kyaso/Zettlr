@@ -161,7 +161,9 @@ jobs:
           pkgver=$(node ./scripts/get-pkg-version.js)
           echo ::set-output name=version::$pkgver
       - name: Add Git tag
-        run: git tag ${{steps.ref.outputs.version}}
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{steps.ref.outputs.version}}
       - name: Make release directory
         run: mkdir ./release
       # First, download all resulting assets from the previous steps.
