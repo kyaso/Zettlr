@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git://github.com/Zettlr/Zettlr.git"
   },
-  "version": "2.2.6+custom.35",
+  "version": "2.2.6+custom.36",
   "license": "GPL-3.0",
   "description": "A Markdown Editor for the 21st century.",
   "main": ".webpack/main",
@@ -109,7 +109,7 @@
     "@types/showdown": "^2.0.0",
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.20.0",
-    "@typescript-eslint/parser": "^5.20.0",
+    "@typescript-eslint/parser": "^5.25.0",
     "@vercel/webpack-asset-relocator-loader": "^1.7.0",
     "copy-webpack-plugin": "^10.2.4",
     "cross-env": "^7.0.3",
