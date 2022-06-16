@@ -28,6 +28,13 @@
         v-on:mousedown="handleClickClose($event, file)"
       >&times;</span>
     </div>
+    <!-- Add scroller arrows so that users can click to scroll -->
+    <div class="scroller left" v-on:click="scrollLeft()">
+      <clr-icon shape="caret left"></clr-icon>
+    </div>
+    <div class="scroller right">
+      <clr-icon shape="caret right" v-on:click="scrollRight()"></clr-icon>
+    </div>
   </div>
 </template>
 
@@ -51,6 +58,7 @@ import tippy from 'tippy.js'
 import { nextTick, defineComponent } from 'vue'
 
 const ipcRenderer = window.ipc
+const clipboard = window.clipboard
 
 export default defineComponent({
   name: 'DocumentTabs',
@@ -175,7 +183,7 @@ export default defineComponent({
   methods: {
     scrollActiveFileIntoView: function () {
       // First, we need to find the tab displaying the active file
-      const elem = (this.$refs.container as HTMLDivElement).querySelector('.active') as HTMLDivElement|null
+      const elem = this.container.querySelector('.active') as HTMLDivElement|null
       if (elem === null) {
         return // The container is not yet present
       }
@@ -193,6 +201,46 @@ export default defineComponent({
       } else if (right > rightEdge) {
         // The active tab is (partially) hidden to the right -> Increase scrollLeft
         this.container.scrollLeft += right - rightEdge
+      }
+    },
+    scrollLeft: function () {
+      if (this.container.scrollLeft === 0) {
+        return // Can't scroll further
+      }
+
+      // Get the first partially hidden file from the right. For that we first
+      // need a list of all tabs. NOTE that we have to convert the nodelist to
+      // an array manually. Also, we know every element will be a DIV.
+      const tabs = [...this.container.querySelectorAll('[role="tab"]')] as HTMLDivElement[]
+
+      // Then, get the first one for which the left edge is less than the scrollLeft
+      // property, but the right edge is bigger.
+      for (const tab of tabs) {
+        const left = tab.offsetLeft
+        const right = left + tab.getBoundingClientRect().width
+        const leftEdge = this.container.scrollLeft
+
+        if (left < leftEdge && right >= leftEdge) {
+          tab.scrollIntoView()
+          break
+        }
+      }
+    },
+    scrollRight: function () {
+      // Similar to scrollLeft, this does the same for the right hand side
+      const tabs = [...this.container.querySelectorAll('[role="tab"]')] as HTMLDivElement[]
+
+      // Then, get the first one for which the right edge is less than the scrollLeft
+      // property, but the right edge is bigger.
+      const rightEdge = this.container.scrollLeft + this.container.getBoundingClientRect().width + 1
+      for (const tab of tabs) {
+        const left = tab.offsetLeft
+        const right = left + tab.getBoundingClientRect().width
+
+        if (left <= rightEdge && right > rightEdge) {
+          tab.scrollIntoView()
+          break
+        }
       }
     },
     getTabText: function (file: any) {
@@ -282,7 +330,7 @@ export default defineComponent({
         .catch(e => console.error(e))
     },
     handleContextMenu: function (event: MouseEvent, file: any) {
-      displayTabsContextMenu(event, (clickedID: string) => {
+      displayTabsContextMenu(event, file, (clickedID: string) => {
         if (clickedID === 'close-this') {
           // Close only this
           ipcRenderer.invoke('application', {
@@ -309,6 +357,15 @@ export default defineComponent({
               payload: openFile.path
             }).catch(e => console.error(e))
           }
+        } else if (clickedID === 'copy-filename') {
+          // Copy the filename to the clipboard
+          clipboard.writeText(file.name)
+        } else if (clickedID === 'copy-path') {
+          // Copy path to the clipboard
+          clipboard.writeText(file.path)
+        } else if (clickedID === 'copy-id') {
+          // Copy the ID to the clipboard
+          clipboard.writeText(file.id)
         }
       })
     },
@@ -406,7 +463,7 @@ export default defineComponent({
 body div#tab-container {
   width: 100%;
   height: 30px;
-  scroll-behavior: smooth;
+  padding: 0 20px; // Necessary for the scroll buttons
   background-color: rgb(215, 215, 215);
   border-bottom: 1px solid grey;
   display: flex;
@@ -419,6 +476,19 @@ body div#tab-container {
   // remains possible, but no thicc scrollbar in the way!
   &::-webkit-scrollbar { display: none; }
   scroll-behavior: smooth;
+
+  div.scroller {
+    position: absolute;
+    line-height: 30px;
+    width: 20px;
+    text-align: center;
+    background-color: inherit;
+
+    &:hover { background-color: rgb(200, 200, 210); }
+
+    &.left { left: 0px; }
+    &.right { right: 0px; }
+  }
 
   div[role="tab"] {
     display: inline-block;
@@ -469,6 +539,17 @@ body div#tab-container {
 body.darwin {
   div#tab-container {
     border-bottom: 1px solid rgb(220, 220, 220);
+
+    div.scroller {
+      background-color: rgb(230, 230, 230);
+      color: rgb(83, 83, 83);
+      box-shadow: inset 0px 5px 4px -5px rgba(0, 0, 0, .4);
+
+      &:hover { background-color: rgb(214, 214, 214); }
+
+      &.left { border-right: 1px solid rgb(200, 200, 200); }
+      &.right { border-left: 1px solid rgb(200, 200, 200); }
+    }
 
     div[role="tab"] {
       text-align: center;
@@ -526,6 +607,16 @@ body.darwin {
     div#tab-container {
       border-bottom-color: rgb(11, 11, 11);
 
+      div.scroller {
+        background-color: rgb(22, 22, 22);
+        color: rgb(233, 233, 233);
+
+        &:hover { background-color: rgb(32, 34, 36); }
+
+        &.left { border-color: rgb(32, 34, 36); }
+        &.right { border-color: rgb(32, 34, 36); }
+      }
+
       div[role="tab"] {
         color: rgb(233, 233, 233);
         background-color: rgb(22, 22, 22);
@@ -547,6 +638,11 @@ body.darwin {
 body.win32 {
   div#tab-container {
     border-bottom: none;
+
+    div.scroller {
+      &.left { border-right: 1px solid rgb(180, 180, 180); }
+      &.right { border-left: 1px solid rgb(180, 180, 180); }
+    }
 
     div[role="tab"] {
       font-size: 12px;
@@ -571,6 +667,13 @@ body.win32 {
     div#tab-container {
       background-color: rgb(11, 11, 11);
 
+      div.scroller {
+        &:hover { background-color: rgb(53, 53, 53); }
+
+        &.left { border-color: rgb(120, 120, 120); }
+        &.right { border-color: rgb(120, 120, 120) }
+      }
+
       div[role="tab"] {
         border-color: rgb(120, 120, 120);
 
@@ -586,6 +689,15 @@ body.win32 {
 
 body.linux {
   div#tab-container {
+    div.scroller {
+      line-height: 29px;
+      background-color: rgb(235, 235, 235);
+      &:hover { background-color: rgb(200, 200, 200); }
+
+      &.left { border-right: 1px solid rgb(200, 200, 200); }
+      &.right { border-left: 1px solid rgb(200, 200, 200); }
+    }
+
     div[role="tab"] {
       font-size: 12px;
       background-color: rgb(235, 235, 235); // Almost same colour as toolbar
@@ -600,6 +712,14 @@ body.linux {
   &.dark {
     div#tab-container {
       background-color: rgb(11, 11, 11);
+
+      div.scroller {
+        background-color: #5a5a5a;
+        &:hover { background-color: rgb(53, 53, 53); }
+
+        &.left { border-color: 1px solid rgb(120, 120, 120); }
+        &.right { border-color: 1px solid rgb(120, 120, 120); }
+      }
 
       div[role="tab"] {
         border-color: rgb(120, 120, 120);

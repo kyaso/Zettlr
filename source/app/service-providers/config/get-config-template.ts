@@ -106,7 +106,7 @@ export default function getConfigTemplate (): ConfigOptions {
       autoSearch: true, // Automatically start a search upon following a link?
       customDirectory: '', // If present, saves auto-created files here
       tooltipEnable: true, // Whether link tooltips are enabled
-      tooltipDelay: 250, // Tooltip popup delay (ms) 
+      tooltipDelay: 250, // Tooltip popup delay (ms)
       copyOnClick: true, // Whether to copy the ID/tag on click (search)
       copyIDWithBrackets: false // Whether to copy the ID with "[[ ]]"
     },
@@ -232,6 +232,21 @@ export default function getConfigTemplate (): ConfigOptions {
     },
     checkForBeta: false, // Should the user be notified of beta releases?
     uuid: uuid4(), // The app's unique anonymous identifier
+    displayToolbarButtons: {
+      showOpenPreferencesButton: true,
+      showNewFileButton: true,
+      showPreviousFileButton: true,
+      showNextFileButton: true,
+      showToggleReadabilityButton: true,
+      showMarkdownCommentButton: true,
+      showMarkdownLinkButton: true,
+      showMarkdownImageButton: true,
+      showMarkdownMakeTaskListButton: true,
+      showInsertTableButton: true,
+      showInsertFootnoteButton: true,
+      showDocumentInfoText: true,
+      showPomodoroButton: true
+    },
     custom: { // Custom options
       ctrlNum: { // Favorite files
         file1: 'foo1',
