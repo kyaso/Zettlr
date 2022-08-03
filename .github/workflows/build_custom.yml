@@ -143,7 +143,7 @@ jobs:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   build_win:
     name: Windows build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Clone repo (custom branch)
         uses: actions/checkout@v3
