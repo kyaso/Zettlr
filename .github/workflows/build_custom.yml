@@ -136,6 +136,51 @@ jobs:
           name: linux
           path: |
             ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #                                                                           #
+  #                               WINDOWS BUILDS                              #
+  #                                                                           #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  build_win:
+    name: Windows build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo (custom branch)
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+      - name: Setup NodeJS ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Set up build environment
+        run: yarn install --frozen-lockfile
+      - name: Retrieve tag version
+        id: ref
+        run: |
+          pkgver=$(node ./scripts/get-pkg-version.js)
+          echo ::set-output name=version::$pkgver
+          tag=$(git describe --tags --abbrev=0)
+          echo ::set-output name=latestTag::$tag
+      - name: No new version detected
+        if: ${{ format('v{0}', steps.ref.outputs.version) == steps.ref.outputs.latestTag }}
+        run: |
+          echo "::error file=package.json::Did you forget to update the version in package.json?"
+          exit 1
+      - name: Package Windows targets (x64)
+        run: yarn package:win-x64
+      - name: Build NSIS installer (x64)
+        run: yarn release:win-x64
+      #- name: Rename executable
+      #  run: mv ./release/Zettlr* ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
+      # After everything has been created, now we need to cache them.
+      - name: Cache installers
+        uses: actions/upload-artifact@v2
+        with:
+          name: win32
+          path: |
+            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #                                                                           #
@@ -180,12 +225,18 @@ jobs:
         with:
           name: linux
           path: ./release
+      - name: Retrieve windows installers
+        uses: actions/download-artifact@v2
+        with:
+          name: win32
+          path: ./release
       # Now we are set, we have all release assets on the VM. It's time to
       # create the SHA-checksums file and then upload everything!
       - name: Generate SHA256 checksums
         run: |
           cd ./release
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage" >> "SHA256SUMS.txt"
+          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage" > "SHA256SUMS.txt"
+          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x64.exe" >> "SHA256SUMS.txt"
           cd ..
       - name: Verify checksums
         run: |
@@ -206,4 +257,5 @@ jobs:
           # Gosh, is that convenient as opposed to earlier!
           files: |
             ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
+            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
             ./release/SHA256SUMS.txt
