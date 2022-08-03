@@ -85,7 +85,7 @@ env:
   # environment variable, thus rendering this approach unusable. We have to
   # manually copy this into the appropriate places.
   # BUILD_NIGHTLY: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-  BRANCH: 'custom'
+  BRANCH: 'kyaso-patch-1'
 
 # This workflow file contains four jobs, three to build the corresponding
 # releases on all three supported platforms, and a last one, which will
