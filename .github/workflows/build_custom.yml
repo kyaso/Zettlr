@@ -173,7 +173,7 @@ jobs:
       - name: Build NSIS installer (x64)
         run: yarn release:win-x64
       - name: Rename executable
-        run: mv ./release/Zettlr* ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
+        run: mv ./release/Zettlr*exe ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
       # After everything has been created, now we need to cache them.
       - name: Cache installers
         uses: actions/upload-artifact@v2
