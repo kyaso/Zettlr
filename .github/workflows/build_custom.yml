@@ -195,7 +195,7 @@ jobs:
   prepare_release:
     name: Prepare release draft
     # Make sure (and wait until) the builds have succeeded
-    needs: [build_linux]
+    needs: [build_linux, build_win]
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
