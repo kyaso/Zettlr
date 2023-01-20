@@ -65,6 +65,8 @@ In the following, every customization so far is listed, as well as the related v
     - One can assign `Ctrl+<num>`, where `<num>` is 1..9, to different files
     - _added in custom.19_
 * Show any kind of **Wikilink** (aka ZKN, internal link) in the link **autocomplete**
+    -  **Update 2023-02-16**: This feature was recently added in upstream, and will be part of 3.0!
+       -  _custom.37_
     - Also, added **fuzzy search** for that (using the [fuzzysort](https://github.com/farzher/fuzzysort) library)
         - This is still experimental, as there are some parameters that need to be tweaked for a reliable operation, but so far it worked fine for me
     - Clicking a link with multiple, space-separated words in it will force an exact search, i.e. the search terms will be surrounded by quotes
