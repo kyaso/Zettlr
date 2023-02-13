@@ -14,26 +14,50 @@
 
 import { trans } from '@common/i18n-renderer'
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
-import { CodeFileMeta, MDFileMeta } from '@dts/common/fsal'
+import { OpenDocument } from '@dts/common/documents'
+import { CodeFileDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import { AnyMenuItem } from '@dts/renderer/context'
 
-export default function displayTabsContext (event: MouseEvent, fileObject: MDFileMeta|CodeFileMeta, callback: (clickedID: string) => void): void {
+export function displayTabbarContext (event: MouseEvent, callback: (clickedID: string) => void): void {
   const items: AnyMenuItem[] = [
     {
-      label: trans('menu.tab_close'),
-      id: 'close-this',
+      label: 'Close leaf',
+      id: 'close-leaf',
       type: 'normal',
       enabled: true
+    }
+  ]
+
+  const point = { x: event.clientX, y: event.clientY }
+  showPopupMenu(point, items, callback)
+}
+
+export default function displayTabsContext (event: MouseEvent, fileObject: MDFileDescriptor|CodeFileDescriptor, doc: OpenDocument, callback: (clickedID: string) => void): void {
+  const items: AnyMenuItem[] = [
+    {
+      label: trans('Close Tab'),
+      id: 'close-this',
+      type: 'normal',
+      enabled: !doc.pinned
     },
     {
-      label: trans('menu.tab_close_others'),
+      label: trans('Close other tabs'),
       id: 'close-others',
       type: 'normal',
       enabled: true
     },
     {
-      label: trans('menu.tab_close_all'),
+      label: trans('Close all tabs'),
       id: 'close-all',
+      type: 'normal',
+      enabled: !doc.pinned
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: doc.pinned ? trans('Unpin tab') : trans('Pin tab'),
+      id: 'pin-tab',
       type: 'normal',
       enabled: true
     },
@@ -41,19 +65,19 @@ export default function displayTabsContext (event: MouseEvent, fileObject: MDFil
       type: 'separator'
     },
     {
-      label: trans('menu.copy_filename'),
+      label: trans('Copy filename'),
       id: 'copy-filename',
       type: 'normal',
       enabled: true
     },
     {
-      label: trans('menu.copy_abs_path'),
+      label: trans('Copy full path'),
       id: 'copy-path',
       type: 'normal',
       enabled: true
     },
     {
-      label: trans('menu.copy_id'),
+      label: trans('Copy ID'),
       id: 'copy-id',
       type: 'normal',
       enabled: fileObject.type === 'file' && fileObject.id !== ''

@@ -13,22 +13,22 @@
         v-bind:name="'labels'"
         v-bind:inline="true"
       ></Checkbox>
-      <Button
+      <ButtonElement
         v-bind:icon="'target'"
         v-bind:disabled="offsetX === 0 && offsetY === 0"
         v-bind:inline="true"
         v-on:click="offsetX = 0; offsetY = 0"
-      ></Button>
-      <Select
+      ></ButtonElement>
+      <SelectElement
         v-model="componentFilter"
         v-bind:options="selectableComponents"
         v-bind:inline="true"
-      ></Select>
-      <Text
+      ></SelectElement>
+      <TextElement
         v-model="highlightFilter"
         v-bind:placeholder="'Highlight vertices'"
         v-bind:inline="true"
-      ></Text>
+      ></TextElement>
     </div>
     <div id="graph" ref="container"></div>
 
@@ -36,10 +36,10 @@
     <transition name="fade">
       <div v-if="isBuildingGraph" id="loading-indicator">
         <p>Building graph &hellip; ({{ buildProgress.currentFile }}/{{ buildProgress.totalFiles }} files processed)</p>
-        <Progress
+        <ProgressElement
           v-bind:value="buildProgress.currentFile"
           v-bind:max="buildProgress.totalFiles"
-        ></Progress>
+        ></ProgressElement>
       </div>
     </transition>
   </div>
@@ -50,14 +50,14 @@ import { defineComponent } from 'vue'
 import { GraphArc, GraphVertex, LinkGraph } from '@dts/common/graph'
 import * as d3 from 'd3'
 import Checkbox from '@common/vue/form/elements/Checkbox.vue'
-import Button from '@common/vue/form/elements/Button.vue'
-import Progress from '@common/vue/form/elements/Progress.vue'
-import Select from '@common/vue/form/elements/Select.vue'
+import ButtonElement from '@common/vue/form/elements/Button.vue'
+import ProgressElement from '@common/vue/form/elements/Progress.vue'
+import SelectElement from '@common/vue/form/elements/Select.vue'
+import TextElement from '@common/vue/form/elements/Text.vue'
 import tippy from 'tippy.js'
 import { SimulationNodeDatum } from 'd3'
 import DirectedGraph from '@providers/links/directed-graph'
-import { MDFileMeta } from '@dts/common/fsal'
-import Text from '@common/vue/form/elements/Text.vue'
+import { MDFileDescriptor } from '@dts/common/fsal'
 
 const ipcRenderer = window.ipc
 
@@ -65,10 +65,10 @@ export default defineComponent({
   name: 'GraphView',
   components: {
     Checkbox,
-    Button,
-    Progress,
-    Select,
-    Text
+    ButtonElement,
+    ProgressElement,
+    SelectElement,
+    TextElement
   },
   data: function () {
     return {
@@ -242,9 +242,9 @@ export default defineComponent({
       .on('wheel.zoom', function (event: WheelEvent) {
         // What we do here is take the cursor offset from the container center
         // as well as the SVG offset and also move the SVG based on where the
-        // cursor is. This mimicks somewhat the Google Maps approach to always
+        // cursor is. This mimics somewhat the Google Maps approach to always
         // also move the map ever so slightly towards wherever the cursor is
-        // pointing. But the behavior can certainly be imporved I guess.
+        // pointing. But the behavior can certainly be improved I guess.
         const containerRect = graphComponent.containerElement.getBoundingClientRect()
         const cursorY = event.clientY - containerRect.y
         const cursorX = event.clientX - containerRect.x
@@ -451,7 +451,7 @@ export default defineComponent({
               .attr('r', 5)
               .attr('fill', (vertex, value) => (vertex.isolate) ? color(ISOLATES_CLASS) : color(vertex.component))
               .on('click', (event, vertex) => {
-                ipcRenderer.invoke('application', {
+                ipcRenderer.invoke('documents-provider', {
                   command: 'open-file',
                   payload: { path: vertex.id }
                 }).catch(err => console.error(err))
@@ -459,7 +459,6 @@ export default defineComponent({
               .attr('data-tippy-content', (vertex) => {
                 let cnt = ''
                 if (vertex.label === undefined) {
-                  console.log('Could not find correct vertex', vertex)
                   cnt += vertex.id
                 } else {
                   cnt += vertex.label
@@ -514,15 +513,15 @@ export default defineComponent({
       }
 
       this.isBuildingGraph = true
-      // We have to build the graph in the renderer because in main OH BOY IT'S
-      // A DISASTER. Even with my limited amount of files the whole app locks
-      // for 10-15 seconds (!)
-      // Here we do that shit asynchronously, therefore not blocking the main
-      // process.
+
       const dbObject = await ipcRenderer.invoke('link-provider', { command: 'get-link-database' })
       const database = new Map<string, string[]>(Object.entries(dbObject))
 
-      console.log(`Building graph from ${Object.entries(dbObject).length} files ...`)
+      const fileNameDisplay: string = window.config.get('fileNameDisplay')
+      const useH1 = fileNameDisplay.includes('heading')
+      const useTitle = fileNameDisplay.includes('title')
+      const displayMdExtensions = window.config.get('display.markdownFileExtensions') as boolean
+
       this.buildProgress.currentFile = 0
       this.buildProgress.totalFiles = Object.entries(dbObject).length
       this.componentFilter = ''
@@ -537,7 +536,22 @@ export default defineComponent({
         this.buildProgress.currentFile += 1
         // We have to specifically add the source, since isolates will have 0
         // targets, and hence we cannot rely on the Graph adding these vertices
-        DG.addVertex(sourcePath)
+        const sourceDescriptor: MDFileDescriptor|undefined = await ipcRenderer.invoke('application', { command: 'get-descriptor', payload: sourcePath })
+        if (sourceDescriptor === undefined) {
+          console.warn(`Could not find descriptor for ${sourcePath}. Not adding to graph.`)
+          continue
+        }
+
+        if (useTitle && sourceDescriptor.yamlTitle !== undefined) {
+          DG.addVertex(sourcePath, sourceDescriptor.yamlTitle)
+        } else if (useH1 && sourceDescriptor.firstHeading != null) {
+          DG.addVertex(sourcePath, sourceDescriptor.firstHeading)
+        } else if (displayMdExtensions) {
+          DG.addVertex(sourcePath, sourceDescriptor.name)
+        } else {
+          DG.addVertex(sourcePath, sourceDescriptor.name.replace(sourceDescriptor.ext, ''))
+        }
+
         for (const target of targets) {
           // Before adding a target, we MUST resolve the link to an actual file
           // path if possible. This is necessary because there are at least two
@@ -546,24 +560,29 @@ export default defineComponent({
           // return the full absolute path to the file identified by `target` or
           // the unaltered `target`.
           if (!resolvedLinks.has(target)) {
-            const found: MDFileMeta|undefined = await ipcRenderer.invoke('application', { command: 'find-exact', payload: target })
+            const found: MDFileDescriptor|undefined = await ipcRenderer.invoke('application', { command: 'find-exact', payload: target })
             if (found === undefined) {
               // This will create a vertex representing a latent (i.e. not yet
               // existing) file.
               resolvedLinks.set(target, target)
+              DG.addVertex(target, target)
             } else {
               resolvedLinks.set(target, found.path)
+              if (useTitle && found.yamlTitle !== undefined) {
+                DG.addVertex(found.path, found.yamlTitle)
+              } else if (useH1 && found.firstHeading != null) {
+                DG.addVertex(found.path, found.firstHeading)
+              } else if (displayMdExtensions) {
+                DG.addVertex(found.path, found.name)
+              } else {
+                DG.addVertex(found.path, found.name.replace(found.ext, ''))
+              }
             }
           }
           DG.addArc(sourcePath, resolvedLinks.get(target) as string)
         }
       }
       DG.endOperation()
-
-      // Now set the labels (i.e. the filenames)
-      for (const V of DG.vertices) {
-        DG.setLabel(V.id, window.path.basename(V.id))
-      }
 
       const duration = performance.now() - startTime
       console.log(`[Link Provider] Graph constructed in ${Math.round(duration)}ms. Graph contains ${DG.countVertices} nodes, ${DG.countArcs} arcs and ${DG.countComponents} components.`)

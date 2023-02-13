@@ -7,7 +7,7 @@
         <span>{{ formattedWords }}</span>
       </div>
       <div v-else>
-        <span>Type: <span class="badge primary">{{ ext.substr(1) }}</span></span>
+        <span>Type: <span class="badge primary">{{ ext.substring(1) }}</span></span>
       </div>
     </div>
     <div class="properties-info-container">
@@ -19,13 +19,13 @@
       <div>
         <div v-for="(item, idx) in tags" v-bind:key="idx" class="badge">
           <span
-            v-if="retrieveTagColour(item)"
+            v-if="retrieveTagColour(item) !== ''"
             class="color-circle"
             v-bind:style="{
               'background-color': retrieveTagColour(item)
             }"
           ></span>
-          <span>#{{ item }}</span>
+          <span>{{ item }}</span>
         </div>
       </div>
     </template>
@@ -53,7 +53,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 /**
  * @ignore
  * BEGIN HEADER
@@ -68,12 +68,15 @@
  * END HEADER
  */
 
-import NumberControl from '@common/vue/form/elements/Number'
-import SelectControl from '@common/vue/form/elements/Select'
+import NumberControl from '@common/vue/form/elements/Number.vue'
+import SelectControl from '@common/vue/form/elements/Select.vue'
 import { trans } from '@common/i18n-renderer'
 import formatDate from '@common/util/format-date'
 import formatSize from '@common/util/format-size'
 import localiseNumber from '@common/util/localise-number'
+import { ColoredTag } from '@providers/tags'
+
+const ipcRenderer = window.ipc
 
 export default {
   name: 'PopoverFileProps',
@@ -83,11 +86,12 @@ export default {
   },
   data: function () {
     return {
+      filepath: '',
       filename: '',
       creationtime: 0,
       modtime: 0,
       tags: [],
-      colouredTags: [],
+      colouredTags: [] as ColoredTag[],
       targetValue: 0,
       targetMode: 'words',
       words: 0,
@@ -100,7 +104,7 @@ export default {
     // This property needs to be exposed on every Popover. The popover needs to
     // return the data that will then be reported back to the caller.
     popoverData: function () {
-      const data = {}
+      const data: any = {}
       if (this.type === 'file') {
         data.target = {
           value: this.targetValue,
@@ -110,22 +114,22 @@ export default {
       return data
     },
     wordsLabel: function () {
-      return trans('dialog.target.words')
+      return trans('Words')
     },
     createdLabel: function () {
-      return trans('gui.created')
+      return trans('Created')
     },
     modifiedLabel: function () {
-      return trans('gui.modified')
+      return trans('Modified')
     },
     resetLabel: function () {
-      return trans('gui.reset')
+      return trans('Reset')
     },
     writingTargetTitle: function () {
-      return trans('menu.set_target')
+      return trans('Set writing target…')
     },
     charactersLabel: function () {
-      return trans('dialog.target.chars')
+      return trans('Characters')
     },
     creationTime: function () {
       return formatDate(new Date(this.creationtime), window.config.get('appLang'), true)
@@ -137,7 +141,15 @@ export default {
       return formatSize(this.fileSize)
     },
     formattedWords: function () {
-      return trans('gui.words', localiseNumber(this.words))
+      return trans('%s words', localiseNumber(this.words))
+    }
+  },
+  watch: {
+    targetValue () {
+      this.updateWritingTarget()
+    },
+    targetMode () {
+      this.updateWritingTarget()
     }
   },
   methods: {
@@ -148,13 +160,19 @@ export default {
       this.targetValue = 0
       this.targetMode = 'words'
     },
-    retrieveTagColour: function (tagName) {
+    updateWritingTarget () {
+      ipcRenderer.invoke('targets-provider', {
+        command: 'set-writing-target',
+        payload: {
+          mode: this.targetMode,
+          count: this.targetValue,
+          path: this.filepath
+        }
+      }).catch(e => console.error(e))
+    },
+    retrieveTagColour: function (tagName: string) {
       const foundTag = this.colouredTags.find(tag => tag.name === tagName)
-      if (foundTag !== undefined) {
-        return foundTag.color
-      } else {
-        return false
-      }
+      return foundTag !== undefined ? foundTag.color : ''
     }
   }
 }

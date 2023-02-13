@@ -14,7 +14,7 @@
 
 import ZettlrCommand from './zettlr-command'
 import { trans } from '@common/i18n-main'
-import { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/main/fsal'
+import { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 
 export default class RequestMove extends ZettlrCommand {
   constructor (app: any) {
@@ -31,15 +31,15 @@ export default class RequestMove extends ZettlrCommand {
     // arg contains from and to. Prepare the necessary variables
     const fsal = this._app.fsal // We need this quite often here
 
-    let from: MDFileDescriptor|CodeFileDescriptor|DirDescriptor|null = fsal.findDir(arg.from)
+    let from: DirDescriptor|MDFileDescriptor|CodeFileDescriptor|undefined = fsal.findDir(arg.from)
     // Obviously a file!
-    if (from == null) {
+    if (from === undefined) {
       from = fsal.findFile(arg.from)
     }
 
     let to = fsal.findDir(arg.to)
 
-    if (to === null || from === null) {
+    if (to === undefined || from === undefined) {
       // If findDir doesn't return anything then it's a file
       this._app.log.error('Could not find the target directory for moving.')
       return false
@@ -54,11 +54,13 @@ export default class RequestMove extends ZettlrCommand {
     }
 
     // Let's check if the destination is a child of the source:
-    if (fsal.findFile(to.path, [from]) !== null || fsal.findDir(to.path, [from]) !== null) {
+    if (from.type === 'directory' && (
+      fsal.findFile(to.path, [from]) !== null || fsal.findDir(to.path, [from]) !== null
+    )) {
       this._app.windows.prompt({
         type: 'error',
-        title: trans('system.error.move_into_child_title'),
-        message: trans('system.error.move_into_child_message')
+        title: trans('Cannot move directory'),
+        message: trans('You cannot move a directory into one of its subdirectories.')
       })
       return false
     }
@@ -67,8 +69,8 @@ export default class RequestMove extends ZettlrCommand {
     if (fsal.hasChild(to, from)) {
       this._app.windows.prompt({
         type: 'error',
-        title: trans('system.error.already_exists_title'),
-        message: trans('system.error.already_exists_message', from.name)
+        title: trans('Cannot move directory or file'),
+        message: trans('The file/directory %s already exists in target.', from.name)
       })
 
       return false
@@ -76,8 +78,7 @@ export default class RequestMove extends ZettlrCommand {
 
     // A final check: If from is a file, and the file is modified, we cannot
     // move, lest we want to induce data loss, see issue #2347
-    const openFile = this._app.documents.openFiles.find(elem => elem.path === arg.from)
-    if (openFile?.modified === true) {
+    if (this._app.documents.isModified(arg.from)) {
       this._app.log.error(`[Application] Cannot move file ${arg.from} to ${arg.to}, since it is modified.`)
       return false
     }

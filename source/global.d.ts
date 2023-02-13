@@ -54,8 +54,6 @@ declare const PREFERENCES_PRELOAD_WEBPACK_ENTRY: string
 declare const PREFERENCES_WEBPACK_ENTRY: string
 declare const PRINT_PRELOAD_WEBPACK_ENTRY: string
 declare const PRINT_WEBPACK_ENTRY: string
-declare const QUICKLOOK_PRELOAD_WEBPACK_ENTRY: string
-declare const QUICKLOOK_WEBPACK_ENTRY: string
 declare const STATS_PRELOAD_WEBPACK_ENTRY: string
 declare const STATS_WEBPACK_ENTRY: string
 declare const TAG_MANAGER_PRELOAD_WEBPACK_ENTRY: string
@@ -105,12 +103,13 @@ declare interface Window {
   /**
    * Takes citation items and returns a rendered citation from main
    *
-   * @param   {CiteItem[]}  items      The cite items (as CSL JSON)
+   * @param   {string}      database   The database to request from
+   * @param   {CiteItem[]}  citations  The cite items (as CSL JSON)
    * @param   {boolean}     composite  Whether the citation is composite
    *
    * @return  {string|undefined}       The rendered citation, or undefined
    */
-  getCitation: (items: CiteItem[], composite: boolean) => string|undefined
+  getCitationCallback: (database: string) => (citations: CiteItem[], composite: boolean) => string|undefined
   ipc: {
     /**
      * Sends a message to main (fire-and-forget)
@@ -145,8 +144,10 @@ declare interface Window {
      * @param   {string}     channel   The channel on which to listen
      * @param   {undefined}  listener  An event. This will always be omitted and undefined.
      * @param   {any}        args      Any payload that was sent from main
+     *
+     * @return {Function}  A function to stop listening (remove the listener)
      */
-    on: (channel: string, listener: (event: undefined, ...args: any) => void) => void
+    on: (channel: string, listener: (event: undefined, ...args: any) => void) => () => void
   }
   path: RendererPath
   clipboard: {

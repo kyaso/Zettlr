@@ -24,6 +24,7 @@ import { trans } from '@common/i18n-main'
 import ProviderContract from '../provider-contract'
 import WindowProvider from '../windows'
 import LogProvider from '../log'
+import ConfigProvider from '@providers/config'
 
 /**
  * This class generates the Tray in the system notification area
@@ -155,20 +156,20 @@ export default class TrayProvider extends ProviderContract {
 
     const menu: MenuItemConstructorOptions[] = [
       {
-        label: trans('tray.show_zettlr'),
+        label: trans('Show Zettlr'),
         click: () => this._windows.showAnyWindow(),
         type: 'normal'
       },
       { label: '', type: 'separator' },
       {
-        label: trans('menu.quit'),
+        label: trans('Quit'),
         click: () => app.quit(),
         type: 'normal'
       }
     ]
 
     const contextMenu = Menu.buildFromTemplate(menu)
-    this._tray.setToolTip(trans('tray.tooltip'))
+    this._tray.setToolTip(trans('Zettlr'))
     this._tray.setContextMenu(contextMenu)
   }
 

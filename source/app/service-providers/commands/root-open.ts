@@ -57,7 +57,7 @@ export default class RootOpen extends ZettlrCommand {
   private async openFiles (): Promise<string[]> {
     // The user wants to open another file or directory.
     const extensions = [ 'markdown', 'md', 'txt', 'rmd' ]
-    const filter = [{ 'name': trans('system.files'), 'extensions': extensions }]
+    const filter = [{ name: trans('Files'), extensions }]
 
     return await this._app.windows.askFile(filter, true)
   }
@@ -70,7 +70,7 @@ export default class RootOpen extends ZettlrCommand {
   private async openWorkspaces (): Promise<string[]> {
     // TODO: Move this to a command
     // The user wants to open another file or directory.
-    const ret = await this._app.windows.askDir()
+    const ret = await this._app.windows.askDir(trans('Open project folder'), null)
 
     for (const workspace of ret) {
       const ignoredDir = isDir(workspace) && ignoreDir(workspace)
@@ -80,8 +80,8 @@ export default class RootOpen extends ZettlrCommand {
         this._app.log.error(`The chosen workspace "${workspace}" is on the ignore list.`)
         this._app.windows.prompt({
           'type': 'error',
-          'title': trans('system.error.ignored_dir_title'),
-          'message': trans('system.error.ignored_dir_message', path.basename(workspace))
+          'title': trans('Cannot open directory'),
+          'message': trans('Directory &quot;%s&quot; cannot be opened by Zettlr.', path.basename(workspace))
         })
       }
     }
@@ -97,36 +97,54 @@ export default class RootOpen extends ZettlrCommand {
    */
   private async handleAddRoots (pathlist: string[]): Promise<void> {
     // As long as it's not a forbidden file or ignored directory, add it.
+    if (pathlist.length === 0) {
+      return // No need to add anything
+    }
+
     let newFile = null
     let newDir = null
+
+    // Make sure there's at least one window
+    if (this._app.documents.windowCount() === 0) {
+      this._app.documents.newWindow()
+    }
+
+    // Always open these files in the focused main window OR the first one
+    const firstWin = this._app.windows.getFirstMainWindow()
+    const winKey = firstWin !== undefined
+      ? this._app.windows.getMainWindowKey(firstWin) ?? this._app.documents.windowKeys()[0]
+      : this._app.documents.windowKeys()[0]
+
+    const leafId = this._app.documents.leafIds(winKey)[0]
+
     for (const absPath of pathlist) {
       // First check if this thing is already added. If so, simply write
       // the existing file/dir into the newFile/newDir vars. They will be
       // opened accordingly.
-      if ((newFile = this._app.fsal.findFile(absPath)) != null) {
+      if ((newFile = this._app.fsal.findFile(absPath)) !== undefined) {
         // Open the file immediately
-        await this._app.documents.openFile(newFile.path, true)
+        await this._app.documents.openFile(winKey, leafId, newFile.path, true)
         // Also set the newDir variable so that Zettlr will automatically
         // navigate to the directory. The directory of the latest file will
         // remain open afterwards.
-        newDir = newFile.parent
+        newDir = this._app.fsal.findDir(newFile.dir)
       } else if ((newDir = this._app.fsal.findDir(absPath)) != null) {
         // Do nothing
       } else if (this._app.config.addPath(absPath)) {
         try {
           if (isDir(absPath)) {
-            this._app.notifications.show(trans('system.open_root_directory', path.basename(absPath)))
+            this._app.notifications.show(trans('Opening new root %s …', path.basename(absPath)))
           }
           const loaded = await this._app.fsal.loadPath(absPath)
           if (loaded) {
             // If it was a file and not a directory, immediately open it.
             const file = this._app.fsal.findFile(absPath)
-            if (file !== null) {
-              await this._app.documents.openFile(file.path, true)
+            if (file !== undefined) {
+              await this._app.documents.openFile(winKey, leafId, file.path, true)
             }
 
             if (isDir(absPath)) {
-              this._app.notifications.show(trans('system.open_root_directory_success', path.basename(absPath)))
+              this._app.notifications.show(trans('%s has been loaded.', path.basename(absPath)))
             }
           } else {
             this._app.config.removePath(absPath)
@@ -138,13 +156,13 @@ export default class RootOpen extends ZettlrCommand {
           this._app.windows.reportFSError('Could not open new root', err)
         }
       } else {
-        this._app.notifications.show(trans('system.error.open_root_error', path.basename(absPath)))
+        this._app.notifications.show(trans('Could not open workspace %s.', path.basename(absPath)))
         this._app.log.error(`Could not open new root ${absPath}!`)
       }
     }
 
     // Open the newly added path(s) directly.
-    if (newDir !== null) {
+    if (newDir !== undefined) {
       this._app.fsal.openDirectory = newDir
     }
   }

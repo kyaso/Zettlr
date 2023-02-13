@@ -14,8 +14,7 @@
  */
 
 import objectToArray from '@common/util/object-to-array'
-import { FSALStats } from '@dts/common/fsal'
-import { MaybeRootDescriptor, DirDescriptor, MDFileDescriptor, CodeFileDescriptor } from '@dts/main/fsal'
+import { MaybeRootDescriptor, DirDescriptor, MDFileDescriptor, CodeFileDescriptor, FSALStats } from '@dts/common/fsal'
 
 export default function generateStats (filetree: MaybeRootDescriptor[]): FSALStats {
   // First, we need ALL of our loaded paths as an array
@@ -87,14 +86,14 @@ export default function generateStats (filetree: MaybeRootDescriptor[]): FSALSta
   const words95PercentUpper = Math.round(meanWords + 2 * sdWords)
 
   return {
-    minChars: minChars,
-    maxChars: maxChars,
-    minWords: minWords,
-    maxWords: maxWords,
-    sumChars: sumChars,
-    sumWords: sumWords,
-    meanChars: meanChars,
-    meanWords: meanWords,
+    minChars,
+    maxChars,
+    minWords,
+    maxWords,
+    sumChars,
+    sumWords,
+    meanChars,
+    meanWords,
     sdChars: Math.round(sdChars),
     sdWords: Math.round(sdWords),
     chars68PercentLower: (chars68PercentLower < minChars) ? minChars : chars68PercentLower,

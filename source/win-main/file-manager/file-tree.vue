@@ -22,11 +22,12 @@
       </div>
       <TreeItem
         v-for="item in getFiles"
-        v-bind:key="item.hash"
+        v-bind:key="item.path"
         v-bind:obj="item"
         v-bind:depth="0"
         v-bind:active-item="activeTreeItem?.[0]"
         v-bind:has-duplicate-name="getFiles.filter(i => i.name === item.name).length > 1"
+        v-bind:window-id="windowId"
       >
       </TreeItem>
       <div v-show="getDirectories.length > 0" id="directories-dirs-header">
@@ -37,12 +38,13 @@
       </div>
       <TreeItem
         v-for="item in getDirectories"
-        v-bind:key="item.hash"
+        v-bind:key="item.path"
         v-bind:obj="item"
         v-bind:is-currently-filtering="filterQuery.length > 0"
         v-bind:depth="0"
         v-bind:active-item="activeTreeItem?.[0]"
         v-bind:has-duplicate-name="getDirectories.filter(i => i.name === item.name).length > 1"
+        v-bind:window-id="windowId"
       >
       </TreeItem>
     </template>
@@ -76,11 +78,9 @@ import TreeItem from './tree-item.vue'
 import matchQuery from './util/match-query'
 import matchTree from './util/match-tree'
 import { defineComponent } from 'vue'
-import { MDFileMeta, CodeFileMeta, DirMeta, OtherFileMeta } from '@dts/common/fsal'
+import { MDFileDescriptor, CodeFileDescriptor, DirDescriptor, AnyDescriptor, MaybeRootDescriptor } from '@dts/common/fsal'
 
 const ipcRenderer = window.ipc
-
-type AnyDescriptor = DirMeta|CodeFileMeta|MDFileMeta|OtherFileMeta
 
 /**
  * Flattens one element of the filtered directory tree into a one-dimensional
@@ -124,6 +124,10 @@ export default defineComponent({
     filterQuery: {
       type: String,
       required: true
+    },
+    windowId: {
+      type: String,
+      required: true
     }
   },
   data: function () {
@@ -133,7 +137,7 @@ export default defineComponent({
     }
   },
   computed: {
-    fileTree: function (): Array<MDFileMeta|CodeFileMeta|DirMeta> {
+    fileTree: function (): MaybeRootDescriptor[] {
       return this.$store.state.fileTree
     },
     useH1: function (): boolean {
@@ -142,7 +146,10 @@ export default defineComponent({
     useTitle: function (): boolean {
       return this.$store.state.config.fileNameDisplay.includes('title')
     },
-    getFilteredTree: function (): Array<MDFileMeta|CodeFileMeta|DirMeta> {
+    lastLeafId: function (): string {
+      return this.$store.state.lastLeafId
+    },
+    getFilteredTree: function (): MaybeRootDescriptor[] {
       const q = String(this.filterQuery).trim().toLowerCase() // Easy access
 
       if (q === '') {
@@ -168,11 +175,11 @@ export default defineComponent({
       }
       return filteredTree
     },
-    getFiles: function (): Array<MDFileMeta|CodeFileMeta> {
-      return this.getFilteredTree.filter(item => item.type !== 'directory') as Array<MDFileMeta|CodeFileMeta>
+    getFiles: function (): Array<MDFileDescriptor|CodeFileDescriptor> {
+      return this.getFilteredTree.filter(item => item.type !== 'directory') as Array<MDFileDescriptor|CodeFileDescriptor>
     },
-    getDirectories: function (): DirMeta[] {
-      return this.getFilteredTree.filter(item => item.type === 'directory') as DirMeta[]
+    getDirectories: function (): DirDescriptor[] {
+      return this.getFilteredTree.filter(item => item.type === 'directory') as DirDescriptor[]
     },
     uncollapsedDirectories: function (): string[] {
       return this.$store.state.uncollapsedDirectories
@@ -194,16 +201,16 @@ export default defineComponent({
       return flatArray
     },
     fileSectionHeading: function (): string {
-      return trans('gui.files')
+      return trans('Files')
     },
     workspaceSectionHeading: function (): string {
-      return trans('gui.workspaces')
+      return trans('Workspaces')
     },
     noRootsMessage: function (): string {
-      return trans('gui.empty_directories')
+      return trans('No open files or folders')
     },
     noResultsMessage: function () {
-      return trans('gui.no_search_results')
+      return trans('No results')
     }
   },
   methods: {
@@ -250,10 +257,12 @@ export default defineComponent({
             .catch(e => console.error(e))
         } else {
           // Select the active file (if there is one)
-          ipcRenderer.invoke('application', {
+          ipcRenderer.invoke('documents-provider', {
             command: 'open-file',
             payload: {
               path: this.activeTreeItem[0],
+              windowId: this.windowId,
+              leafId: this.lastLeafId,
               newTab: false
             }
           })

@@ -14,6 +14,7 @@
 
 import { BrowserWindow, dialog, MessageBoxOptions } from 'electron'
 import { trans } from '@common/i18n-main'
+import ConfigProvider from '@providers/config'
 
 /**
  * Asks the user for confirmation, if the file identified by filename should
@@ -27,13 +28,13 @@ import { trans } from '@common/i18n-main'
 export default async function shouldReplaceFileDialog (config: ConfigProvider, win: BrowserWindow, filename: string): Promise<boolean> {
   let options: MessageBoxOptions = {
     type: 'question',
-    title: trans('system.replace_file_title'),
-    message: trans('system.replace_file_message', filename),
-    checkboxLabel: trans('dialog.preferences.always_reload_files'),
+    title: trans('Replace file'),
+    message: trans('File %s has been modified remotely. Replace the loaded version with the newer one from disk?', filename),
+    checkboxLabel: trans('Always load remote changes to the current file'),
     checkboxChecked: config.get('alwaysReloadFiles'),
     buttons: [
-      trans('system.cancel'),
-      trans('system.ok')
+      trans('Cancel'),
+      trans('Ok')
     ],
     cancelId: 0,
     defaultId: 1

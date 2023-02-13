@@ -102,10 +102,10 @@ export default {
   emits: ['update:modelValue'],
   computed: {
     selectedLabel: function () {
-      return trans('dialog.preferences.theme.selected_label')
+      return trans('selected')
     },
     selectLabel: function () {
-      return trans('dialog.preferences.theme.select_label')
+      return trans('click to select')
     }
   },
   methods: {
@@ -239,6 +239,7 @@ div#theme-container {
       p.theme-name {
         display: inline-block;
         font-weight: bold;
+        margin-right: 5px;
       }
 
       div.selected-button, div.not-selected-button {

@@ -100,11 +100,22 @@ module.exports = {
       }
     }
   },
+  rebuildConfig: {
+    // Since we must build native modules for both x64 as well as arm64, we have
+    // to explicitly build it everytime for the correct architecture
+    force: true
+  },
   packagerConfig: {
     appBundleId: 'com.zettlr.app',
     // This info.plist file contains file association for the app on macOS.
     extendInfo: './scripts/assets/info.plist',
-    asar: true,
+    asar: {
+      // We must add native node modules to this option. Doing so ensures that
+      // the modules will be code-signed. (They still end up in the final
+      // app.asar file, but they will be code-signed.) Code signing these dylibs
+      // is required on macOS for the Node process to properly load them.
+      unpack: '*.{node,dll}'
+    },
     darwinDarkModeSupport: 'true',
     // Electron-forge automatically adds the file extension based on OS
     icon: './resources/icons/icon',
@@ -133,8 +144,10 @@ module.exports = {
     // notarization.
     osxNotarize: ('APPLE_ID' in process.env && 'APPLE_ID_PASS' in process.env)
       ? {
+          tool: 'notarytool',
           appleId: process.env.APPLE_ID,
-          appleIdPassword: process.env.APPLE_ID_PASS
+          appleIdPassword: process.env.APPLE_ID_PASS,
+          teamId: 'QS52BN8W68'
         }
       : false,
     extraResource: [
@@ -142,9 +155,9 @@ module.exports = {
     ]
   },
   plugins: [
-    [
-      '@electron-forge/plugin-webpack',
-      {
+    {
+      name: '@electron-forge/plugin-webpack',
+      config: {
         mainConfig: './webpack.main.config.js',
         // Since electron-forge v6.0.0-beta.58, this property controls the CSP
         // for the development process. Since the defaults by electron-forge are
@@ -153,6 +166,12 @@ module.exports = {
         // basically copying the CSP from the HTML-files, but with 'unsafe-eval'
         // added (which webpack needs for the sourcemaps).
         devContentSecurityPolicy: "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        // The default port for php-fpm is 9000, and since forge and PHP will
+        // collide on every system on which PHP is installed, we change the
+        // default ports for both the logger and the dev servers. We have to set
+        // both ports, because changing only one doesn't solve the issue.
+        port: 3000,
+        loggerPort: 9001,
         renderer: {
           config: './webpack.renderer.config.js',
           entryPoints: [
@@ -176,14 +195,6 @@ module.exports = {
               html: './static/index.htm',
               js: './source/win-log-viewer/index.ts',
               name: 'log_viewer',
-              preload: {
-                js: './source/common/modules/preload/index.ts'
-              }
-            },
-            {
-              html: './static/index.htm',
-              js: './source/win-quicklook/index.ts',
-              name: 'quicklook',
               preload: {
                 js: './source/common/modules/preload/index.ts'
               }
@@ -263,6 +274,6 @@ module.exports = {
           ]
         }
       }
-    ]
+    }
   ]
 }

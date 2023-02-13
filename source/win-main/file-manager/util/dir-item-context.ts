@@ -14,33 +14,33 @@
 
 import { trans } from '@common/i18n-renderer'
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
-import { DirMeta } from '@dts/common/fsal'
+import { DirDescriptor } from '@dts/common/fsal'
 import { AnyMenuItem } from '@dts/renderer/context'
 
 const ipcRenderer = window.ipc
 
-export default function displayFileContext (event: MouseEvent, dirObject: DirMeta, el: HTMLElement, callback: any): void {
+export default function displayFileContext (event: MouseEvent, dirObject: DirDescriptor, el: HTMLElement, callback: any): void {
   const TEMPLATE: AnyMenuItem[] = [
     {
-      label: trans('menu.properties'),
+      label: trans('Properties'),
       id: 'menu.properties',
       type: 'normal',
       enabled: true
     },
     {
-      label: trans('menu.rename_dir'),
+      label: trans('Rename directory'),
       type: 'normal',
       id: 'menu.rename_dir',
       enabled: true
     },
     {
-      label: trans('menu.delete_dir'),
+      label: trans('Delete directory'),
       type: 'normal',
       id: 'menu.delete_dir',
       enabled: true
     },
     {
-      label: trans('gui.attachments_open_dir'),
+      label: trans('Open directory'),
       type: 'normal',
       id: 'gui.attachments_open_dir',
       enabled: true
@@ -49,13 +49,13 @@ export default function displayFileContext (event: MouseEvent, dirObject: DirMet
       type: 'separator'
     },
     {
-      label: trans('menu.new_file'),
+      label: trans('New File…'),
       type: 'normal',
       id: 'menu.new_file',
       enabled: true
     },
     {
-      label: trans('menu.new_dir'),
+      label: trans('New directory…'),
       type: 'normal',
       id: 'menu.new_dir',
       enabled: true
@@ -66,7 +66,7 @@ export default function displayFileContext (event: MouseEvent, dirObject: DirMet
     {
       id: 'menu.rescan_dir',
       type: 'normal',
-      label: trans('menu.rescan_dir'),
+      label: trans('Check for directory …'),
       enabled: true
     }
   ]
@@ -78,24 +78,24 @@ export default function displayFileContext (event: MouseEvent, dirObject: DirMet
   }
 
   // Now check for a project
-  if (dirObject.project !== null && dirObject.dirNotFoundFlag !== true) {
+  if (dirObject.settings.project !== null && dirObject.dirNotFoundFlag !== true) {
     template.push({ type: 'separator' })
     template.push({
       id: 'menu.project_build',
       type: 'normal',
-      label: trans('menu.project_build'),
+      label: trans('Export Project'),
       // Only enable if there are formats to export to
-      enabled: dirObject.project.formats.length > 0
+      enabled: dirObject.settings.project.profiles.length > 0
     })
   }
 
   // Finally, check for it being root
-  if (dirObject.parent == null) {
+  if (dirObject.root) {
     template.push({ type: 'separator' })
     template.push({
       id: 'menu.close_workspace',
       type: 'normal',
-      label: trans('menu.close_workspace'),
+      label: trans('Close Workspace'),
       enabled: true
     })
   }

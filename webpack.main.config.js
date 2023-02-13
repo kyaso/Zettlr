@@ -1,4 +1,5 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const ESLintPlugin = require('eslint-webpack-plugin')
 const path = require('path')
 const rules = require('./webpack.rules')
 
@@ -18,6 +19,7 @@ module.exports = {
   entry: './source/main.ts',
   module: { rules },
   plugins: [
+    new ESLintPlugin(),
     new CopyWebpackPlugin({
       patterns: [
         // These are all static files that simply need to be bundled with the
@@ -28,8 +30,6 @@ module.exports = {
         { from: 'static/csl-locales', to: 'assets/csl-locales' },
         { from: 'static/csl-styles', to: 'assets/csl-styles' },
         { from: 'static/defaults', to: 'assets/defaults' },
-        { from: 'static/template.revealjs.htm', to: 'assets' },
-        { from: 'static/revealjs-styles', to: 'assets/revealjs-styles' },
         { from: 'static/lua-filter', to: 'assets/lua-filter' },
         { from: 'resources/icons/icon.ico', to: 'assets/icons' },
         { from: 'resources/icons/png', to: 'assets/icons/png' }
@@ -58,5 +58,5 @@ module.exports = {
       '@dts': [path.resolve(__dirname, 'source/types')]
     }
   },
-  externals: externals
+  externals
 }

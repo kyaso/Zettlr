@@ -13,6 +13,7 @@
  * END HEADER
  */
 
+import ConfigProvider from '@providers/config'
 import LogProvider from '@providers/log'
 import {
   BrowserWindow,
@@ -44,7 +45,10 @@ export default function createProjectPropertiesWindow (logger: LogProvider, conf
     show: false,
     fullscreenable: false,
     webPreferences: {
+      // contextIsolation and sandbox mean: Preload scripts have access to
+      // Node modules, the renderers not
       contextIsolation: true,
+      sandbox: false,
       preload: PROJECT_PROPERTIES_PRELOAD_WEBPACK_ENTRY
     }
   }

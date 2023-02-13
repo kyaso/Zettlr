@@ -21,6 +21,7 @@ import { trans } from '@common/i18n-main'
 import got from 'got'
 import { shell } from 'electron'
 import pdfSorter from '@common/util/sort-by-pdf'
+import getBibliographyForDescriptor from '@common/util/get-bibliography-for-descriptor'
 
 export default class OpenAttachment extends ZettlrCommand {
   constructor (app: any) {
@@ -37,12 +38,18 @@ export default class OpenAttachment extends ZettlrCommand {
       return false
     }
 
+    const descriptor = this._app.fsal.find(arg.filePath)
+    if (descriptor === undefined || descriptor.type !== 'file') {
+      return false
+    }
+    const library = getBibliographyForDescriptor(descriptor)
+
     let appearsToHaveNoAttachments = false
 
     // First let's see if we've got BibTex attachments, so we can
     // circumvent the Zotero thing directly
-    if (this._app.citeproc.hasBibTexAttachments()) {
-      const attachments = this._app.citeproc.getBibTexAttachments(arg.citekey)
+    if (this._app.citeproc.hasBibTexAttachments(library)) {
+      const attachments = this._app.citeproc.getBibTexAttachments(library, arg.citekey)
       if (attachments === false || attachments.length === 0) {
         appearsToHaveNoAttachments = true
       } else {
@@ -82,12 +89,12 @@ export default class OpenAttachment extends ZettlrCommand {
     } catch (err: any) {
       if (appearsToHaveNoAttachments) {
         // Better error message
-        let msg = trans('system.error.citation_no_attachments', arg.citekey)
+        let msg = trans('The reference with key %s does not appear to have attachments.', arg.citekey)
         this._app.log.info(msg)
         this._app.notifications.show(msg)
       } else {
         this._app.log.error('Could not open attachment.', err.message)
-        this._app.notifications.show(trans('system.error.open_attachment_error'))
+        this._app.notifications.show(trans('Could not open attachment. Is Zotero running?'))
       }
       return false
     }

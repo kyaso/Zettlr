@@ -71,7 +71,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 /**
  * @ignore
  * BEGIN HEADER
@@ -88,9 +88,9 @@
 
 import formatDate from '@common/util/format-date'
 import localiseNumber from '@common/util/localise-number'
-import SelectControl from '@common/vue/form/elements/Select'
-import SwitchControl from '@common/vue/form/elements/Switch'
-import ButtonControl from '@common/vue/form/elements/Button'
+import SelectControl from '@common/vue/form/elements/Select.vue'
+import SwitchControl from '@common/vue/form/elements/Switch.vue'
+import ButtonControl from '@common/vue/form/elements/Button.vue'
 import { trans } from '@common/i18n-renderer'
 
 const ipcRenderer = window.ipc
@@ -188,7 +188,7 @@ export default {
       sortingDirection: 'up',
       isProject: false,
       isGitRepository: false,
-      icon: null
+      icon: null as string|null
     }
   },
   computed: {
@@ -214,25 +214,25 @@ export default {
       return localiseNumber(this.dirs)
     },
     formattedWordCount: function () {
-      return trans('gui.words', localiseNumber(this.totalWords))
+      return trans('%s words', localiseNumber(this.totalWords))
     },
     foldersLabel: function () {
-      return trans('gui.dirs')
+      return trans('Directories')
     },
     modifiedLabel: function () {
-      return trans('gui.modified')
+      return trans('Modified')
     },
     createdLabel: function () {
-      return trans('gui.created')
+      return trans('Created')
     },
     filesLabel: function () {
-      return trans('gui.files')
+      return trans('Files')
     },
     icons: function () {
       return ICONS
     },
     projectPropertiesLabel: function () {
-      return trans('menu.project_properties')
+      return trans('Project Settings…')
     }
   },
   created: function () {

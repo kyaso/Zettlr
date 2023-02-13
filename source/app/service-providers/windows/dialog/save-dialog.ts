@@ -17,6 +17,7 @@ import path from 'path'
 import isDir from '@common/util/is-dir'
 import { trans } from '@common/i18n-main'
 import LogProvider from '@providers/log'
+import ConfigProvider from '@providers/config'
 
 /**
 * Displays a dialog to prompt the user for a file path
@@ -48,7 +49,7 @@ export default async function saveFileDialog (logger: LogProvider, config: Confi
 
   // Prepare options
   let opt: SaveDialogOptions = {
-    title: trans('system.save_file'),
+    title: trans('Save file'),
     // If the caller has provided an absolute path to a file, start there. Otherwise,
     // concatenate the startdir
     defaultPath: (isDir(path.dirname(fileOrPathName))) ? fileOrPathName : path.join(startDir, fileOrPathName),

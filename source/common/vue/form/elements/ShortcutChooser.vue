@@ -95,7 +95,7 @@ export default defineComponent({
       return 'field-input-' + this.name
     },
     resetLabel: function (): string {
-      return trans('gui.reset')
+      return trans('Reset')
     },
     element: function (): HTMLInputElement {
       return this.$refs.input as HTMLInputElement
@@ -154,7 +154,7 @@ export default defineComponent({
       const tab = event.key === 'Tab'
       const del = event.key === 'Backspace'
 
-      // If this is true, we should't add the event.key
+      // If this is true, we shouldn't add the event.key
       const hasSpecial = plus || space || tab || del || /* Mods */ meta || alt || altGr
 
       // Now build the shortcut
@@ -194,8 +194,6 @@ export default defineComponent({
 
       // On macOS and Linux, if you use Alt as a modifier
       const isRegularKey = /^(?:Key[A-Z])|(?:Digit[0-9])$/.test(event.code)
-      console.log(`event.code: ${event.code}; event.key: ${event.key}`)
-      ;(navigator as any).keyboard.getLayoutMap().then((map: any) => console.log(map.get(event.code)))
 
       if (isRegularKey && !win32 && alt) {
         // The user has pressed a regular key on macOS or Linux, and has

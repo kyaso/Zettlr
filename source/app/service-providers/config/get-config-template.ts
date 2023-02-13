@@ -16,6 +16,7 @@ import { app } from 'electron'
 import * as bcp47 from 'bcp-47'
 import { v4 as uuid4 } from 'uuid'
 import getLanguageFile from '@common/util/get-language-file'
+import { ConfigOptions } from '@dts/main/config-provider'
 
 const ZETTLR_VERSION = app.getVersion()
 const ATTACHMENT_EXTENSIONS = [
@@ -48,8 +49,6 @@ export default function getConfigTemplate (): ConfigOptions {
   return {
     version: ZETTLR_VERSION, // Useful for migrating
     openPaths: [], // Array to include all opened root paths
-    openFiles: [], // Array to include all currently opened files
-    activeFile: null, // Save last opened file hash here
     openDirectory: null, // Save last opened dir path here
     dialogPaths: {
       askFileDialog: '',
@@ -70,7 +69,7 @@ export default function getConfigTemplate (): ConfigOptions {
     attachmentExtensions: ATTACHMENT_EXTENSIONS,
     // UI related options
     darkMode: false,
-    alwaysReloadFiles: false, // Should Zettlr automatically load remote changes?
+    alwaysReloadFiles: true, // Should Zettlr automatically load remote changes?
     autoDarkMode: 'off', // Possible values: 'off', 'system', 'schedule', 'auto'
     autoDarkModeStart: '22:00', // Switch into dark mode at this time
     autoDarkModeEnd: '06:00', // Switch to light mode at this time
@@ -85,7 +84,7 @@ export default function getConfigTemplate (): ConfigOptions {
     newFileNamePattern: '%id.md',
     newFileDontPrompt: false, // If true immediately creates files
     export: {
-      dir: 'temp', // Can either be "temp" or "cwd" (current working directory)
+      dir: 'temp', // Can either be "temp", "cwd" (current working directory) or "ask"
       stripTags: false, // Strip tags a.k.a. #tag
       stripLinks: 'full', // Strip internal links: "full" - remove completely, "unlink" - only remove brackets, "no" - don't alter
       cslLibrary: '', // Path to a CSL JSON library file
@@ -97,8 +96,6 @@ export default function getConfigTemplate (): ConfigOptions {
     zkn: {
       idRE: '(\\d{14})',
       idGen: '%Y%M%D%h%m%s',
-      linkStart: '[[',
-      linkEnd: ']]',
       linkFilenameOnly: false,
       linkWithFilename: 'always', // can be always|never|withID
       // If true, create files that are not found, if forceOpen is called
@@ -115,9 +112,9 @@ export default function getConfigTemplate (): ConfigOptions {
       autoSave: 'delayed',
       autocompleteAcceptSpace: false, // Whether you can type spaces in autocorrect
       autoCloseBrackets: true,
+      showLinkPreviews: true, // Whether to fetch link previews in the editor
       defaultSaveImagePath: '',
       citeStyle: 'regular', // Determines how autocomplete will complete citations
-      homeEndBehaviour: false, // If true, Home/End goes to start/end of a paragraph, false means start/end of line.
       enableTableHelper: true, // Enable the table helper plugin
       indentUnit: 4, // The number of spaces to be added
       indentWithTabs: false,
@@ -127,11 +124,11 @@ export default function getConfigTemplate (): ConfigOptions {
       boldFormatting: '**', // Can be ** or __
       italicFormatting: '_', // Can be * or _
       readabilityAlgorithm: 'dale-chall', // The algorithm to use with readability mode.
-      direction: 'ltr', // Can be set to rtl for right-to-left scripts such as Persian
-      rtlMoveVisually: true, // Whether the cursor should move visually with arrows in RTL mode
+      lint: {
+        markdown: true // Should Markdown be linted?
+      },
       autoCorrect: {
         active: true, // AutoCorrect is on by default
-        style: 'LibreOffice', // Default to LibreOffice style
         magicQuotes: {
           // Can be various quote pairs. The default characters (" and ')
           // will disable magic quotes.
@@ -224,10 +221,9 @@ export default function getConfigTemplate (): ConfigOptions {
     system: {
       deleteOnFail: false, // Whether to delete files if trashing them fails
       leaveAppRunning: false, // Whether to leave app running in the notification area (tray)
-      avoidNewTabs: true, // Whether to avoid opening new tabs for documents if possible
+      avoidNewTabs: false, // Whether to avoid opening new tabs for documents if possible
       iframeWhitelist: [ 'www.youtube.com', 'player.vimeo.com' ], // Contains a list of whitelisted iFrame prerendering domains
       checkForUpdates: true,
-      checkForTranslationUpdates: true,
       zoomBehavior: 'gui' // Used to determine what gets zoomed: The GUI or the editor
     },
     checkForBeta: false, // Should the user be notified of beta releases?

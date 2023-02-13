@@ -14,7 +14,9 @@
  */
 
 import ZettlrCommand from './zettlr-command'
-import { MDFileMeta } from '@dts/common/fsal'
+import { MDFileDescriptor } from '@dts/common/fsal'
+
+const MAX_FILE_PREVIEW_LENGTH = 300
 
 export default class FilePathFindMetaData extends ZettlrCommand {
   constructor (app: any) {
@@ -29,37 +31,39 @@ export default class FilePathFindMetaData extends ZettlrCommand {
    * @param   {string}                         evt  The event
    * @param   {arg}                            arg  The argument, should be a query string
    *
-   * @return  {MDFileMeta|undefined|string[]}       Returns a MetaDescriptor, undefined, or an array
+   * @return  {MDFileDescriptor|undefined|string[]} Returns a MetaDescriptor, undefined, or an array
    */
-  async run (evt: string, arg: any): Promise<MDFileMeta|undefined|any[]> {
+  async run (evt: string, arg: any): Promise<MDFileDescriptor|undefined|any[]> {
     // Quick'n'dirty command to return the Meta descriptor for the given query
+    const descriptor = this._app.fsal.findExact(arg)
+    if (descriptor === undefined) {
+      return undefined
+    }
+
     if (evt === 'find-exact') {
-      const descriptor = this._app.fsal.findExact(arg)
-      if (descriptor === undefined) {
-        return undefined
+      return descriptor
+    }
+
+    const contents = await this._app.fsal.loadAnySupportedFile(descriptor.path)
+    const lines = contents.split('\n')
+
+    let preview = ''
+    let i = 0
+    while (preview.length <= MAX_FILE_PREVIEW_LENGTH && i < 10) {
+      const remainingChars = MAX_FILE_PREVIEW_LENGTH - preview.length
+      if (lines[i].length <= remainingChars) {
+        preview += lines[i] + '\n'
+      } else {
+        preview += lines[i].slice(0, remainingChars) + '…'
       }
-      return this._app.fsal.getMetadataFor(descriptor) as MDFileMeta
+      i++
     }
 
-    const file = this._app.fsal.findExact(arg)
-    if (file !== undefined) {
-      const metaData = await this._app.fsal.getFileContents(file) as MDFileMeta
-
-      // We don't need the content and word count for or our custom tooltip
-      //
-      //let content = metaData.content.substring(0, 200) // The content
-      // if (metaData.content.length > 200) {
-      //   content += '...'
-      // }
-      // const wordCount = metaData.wordCount // The word count
-      const title = metaData.name // The file name
-      const dir = metaData.dir // The absolute directory path
-
-      // return ([ title, content, wordCount, metaData.modtime ])
-      return ([ title, dir, null, null ])
-    }
-
-    // We can't find it, so return Not Found
-    return undefined
+    return [
+      descriptor.name,
+      preview,
+      descriptor.wordCount,
+      descriptor.modtime
+    ]
   }
 }

@@ -17,20 +17,19 @@
       <!-- Add the project title field -->
       <TextControl
         v-model="projectTitle"
-        v-bind:label="'Project Title'"
+        v-bind:label="projectTitleLabel"
       ></TextControl>
 
-      <p v-if="selectedExportFormats.length === 0" class="warning">
+      <p v-if="selectedExportProfiles.length === 0" class="warning">
         <clr-icon shape="warning"></clr-icon>
-        <!-- TODO: Translate! -->
-        <span>Please select at least one export format to build this project.</span>
+        <span>{{ projectBuildWarning }}</span>
       </p>
       <ListControl
         v-bind:label="exportFormatLabel"
         v-bind:model-value="exportFormatList"
-        v-bind:labels="[exportFormatUseLabel, exportFormatNameLabel]"
+        v-bind:labels="[exportFormatUseLabel, exportFormatNameLabel, conversionLabel]"
         v-bind:editable="[0]"
-        v-on:update:model-value="selectExportFormat($event)"
+        v-on:update:model-value="selectExportProfile($event)"
       ></ListControl>
     </div>
     <div
@@ -51,20 +50,20 @@
       <!-- Then the CSL file -->
       <FileControl
         v-model="cslStyle"
-        v-bind:label="'CSL Stylesheet'"
+        v-bind:label="cslStyleLabel"
         v-bind:reset="true"
         v-bind:filter="{'csl': 'CSL Stylesheet'}"
       ></FileControl>
       <!-- Also, the other possible files users can override -->
       <FileControl
         v-model="texTemplate"
-        v-bind:label="'LaTeX Template'"
+        v-bind:label="texTemplateLabel"
         v-bind:reset="true"
         v-bind:filter="{'tex': 'LaTeX Source'}"
       ></FileControl>
       <FileControl
         v-model="htmlTemplate"
-        v-bind:label="'HTML Template'"
+        v-bind:label="htmlTemplateLabel"
         v-bind:reset="true"
         v-bind:filter="{'html,htm': 'HTML Template'}"
       ></FileControl>
@@ -95,10 +94,12 @@ import TextControl from '@common/vue/form/elements/Text.vue'
 import { defineComponent } from 'vue'
 import { ProjectSettings } from '@dts/common/fsal'
 import { WindowTab } from '@dts/renderer/window'
+import { PandocProfileMetadata } from '@dts/common/assets'
+import { PANDOC_READERS, PANDOC_WRITERS, SUPPORTED_READERS } from '@common/util/pandoc-maps'
 
 const ipcRenderer = window.ipc
 
-interface ExportFormat { selected: boolean, format: string }
+interface ExportProfile { selected: boolean, name: string, conversion: string }
 
 export default defineComponent({
   components: {
@@ -110,8 +111,8 @@ export default defineComponent({
   data: function () {
     return {
       dirPath: '',
-      exportFormatMap: {} as { [key: string]: string },
-      selectedExportFormats: [ 'html', 'chromium-pdf' ], // NOTE: Must correspond to the defaults in fsal-directory.ts
+      profiles: [] as PandocProfileMetadata[],
+      selectedExportProfiles: [] as string[], // NOTE: Must correspond to the defaults in fsal-directory.ts
       patterns: [],
       cslStyle: '',
       texTemplate: '',
@@ -138,33 +139,56 @@ export default defineComponent({
     windowTitle: function (): string {
       return this.projectTitle
     },
-    exportFormatList: function (): ExportFormat[] {
-      // We need to return a list of { selected: boolean, format: 'string' }
-      return Object.keys(this.exportFormatMap).map(e => {
+    exportFormatList: function (): ExportProfile[] {
+      // We need to return a list of { selected: boolean, name: string, conversion: string }
+      return this.profiles.filter(e => SUPPORTED_READERS.includes(e.reader)).map(e => {
+        const reader = e.reader in PANDOC_READERS ? PANDOC_READERS[e.reader] : e.reader
+        const writer = e.writer in PANDOC_WRITERS ? PANDOC_WRITERS[e.writer] : e.writer
+        const conversionString = (e.isInvalid) ? 'Invalid' : [ reader, writer ].join(' → ')
+
         return {
-          selected: this.selectedExportFormats.includes(this.exportFormatMap[e]),
-          format: e
+          selected: this.selectedExportProfiles.includes(e.name),
+          name: this.getDisplayText(e.name),
+          conversion: conversionString
         }
       })
     },
     exportFormatLabel: function (): string {
-      return trans('dialog.preferences.project.format')
+      return trans('Export project to:')
     },
     exportFormatUseLabel: function (): string {
-      return trans('dialog.preferences.project.use_label')
+      return trans('Use')
     },
     exportFormatNameLabel: function (): string {
-      return trans('dialog.preferences.project.name_label')
+      return trans('Format')
+    },
+    conversionLabel: function (): string {
+      return trans('Conversion')
     },
     exportPatternLabel: function (): string {
-      return trans('dialog.preferences.project.pattern')
+      return trans('Add Glob patterns to include only specific files')
     },
     exportPatternNameLabel: function (): string {
-      return trans('dialog.preferences.project.pattern_name')
+      return trans('Glob Pattern')
+    },
+    projectBuildWarning: function (): string {
+      return trans('Please select at least one profile to build this project.')
+    },
+    projectTitleLabel: function (): string {
+      return trans('Project Title')
+    },
+    cslStyleLabel: function (): string {
+      return trans('CSL Stylesheet')
+    },
+    texTemplateLabel: function (): string {
+      return trans('LaTeX Template')
+    },
+    htmlTemplateLabel: function (): string {
+      return trans('HTML Template')
     }
   },
   watch: {
-    selectedExportFormats: function () {
+    selectedExportProfiles: function () {
       this.updateProperties()
     },
     projectTitle: function () {
@@ -188,21 +212,11 @@ export default defineComponent({
   },
   mounted: function () {
     // First, we need to get the available export formats
-    ipcRenderer.invoke('application', {
-      command: 'get-available-export-formats'
+    ipcRenderer.invoke('assets-provider', {
+      command: 'list-export-profiles'
     })
-      .then(exporterInformation => {
-        // We only need to know the readable string for an exportable format
-        // and the identifier. The list will be populated using the keys
-        // (human-readable string), and the actual value will consist of the
-        // values (the identifiers).
-        for (const info of exporterInformation) {
-          // NOTE: We are switching "id: readable" to "readable: id" here so
-          // that it's much easier to retrieve the identifier later on.
-          for (const key in info.formats) {
-            this.exportFormatMap[info.formats[key]] = key
-          }
-        }
+      .then((defaults: PandocProfileMetadata[]) => {
+        this.profiles = defaults
       })
       .catch(err => console.error(err))
 
@@ -221,19 +235,22 @@ export default defineComponent({
     })
   },
   methods: {
-    selectExportFormat: function (newListVal: ExportFormat[]) {
-      const newFormats = newListVal.filter(e => e.selected).map(e => {
-        return this.exportFormatMap[e.format]
-      })
-      this.selectedExportFormats = newFormats
+    selectExportProfile: function (newListVal: ExportProfile[]) {
+      const newProfiles = newListVal.filter(e => e.selected).map(e => {
+        return this.profiles.find(x => this.getDisplayText(x.name) === e.name)
+      }).filter(x => x !== undefined) as PandocProfileMetadata[]
+      this.selectedExportProfiles = newProfiles.map(x => x.name)
       this.updateProperties()
+    },
+    getDisplayText: function (name: string): string {
+      return name.substring(0, name.lastIndexOf('.'))
     },
     updateProperties: function () {
       ipcRenderer.invoke('application', {
         command: 'update-project-properties',
         payload: {
           properties: {
-            formats: this.selectedExportFormats.map(e => e), // De-proxy
+            profiles: this.selectedExportProfiles.map(e => e), // De-proxy
             filters: this.patterns.map(e => e), // De-proxy
             cslStyle: this.cslStyle,
             title: this.projectTitle,
@@ -254,7 +271,7 @@ export default defineComponent({
         .then(descriptor => {
           // Save the actually used formats.
           if (descriptor.project !== null) {
-            this.selectedExportFormats = descriptor.project.formats
+            this.selectedExportProfiles = descriptor.project.profiles
             this.patterns = descriptor.project.filters
             this.cslStyle = descriptor.project.cslStyle
             this.htmlTemplate = descriptor.project.templates.html

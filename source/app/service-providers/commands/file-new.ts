@@ -16,15 +16,13 @@ import ZettlrCommand from './zettlr-command'
 import { trans } from '@common/i18n-main'
 import path from 'path'
 import sanitize from 'sanitize-filename'
-import { codeFileExtensions, mdFileExtensions } from '@providers/fsal/util/valid-file-extensions'
 import generateFilename from '@common/util/generate-filename'
-
-const CODEFILE_TYPES = codeFileExtensions(true)
-const ALLOWED_FILETYPES = mdFileExtensions(true)
+import { hasMdOrCodeExt } from '@providers/fsal/util/is-md-or-code-file'
+import { app } from 'electron'
 
 export default class FileNew extends ZettlrCommand {
   constructor (app: any) {
-    super(app, [ 'file-new', 'new-unsaved-file' ])
+    super(app, ['file-new'])
   }
 
   /**
@@ -33,7 +31,7 @@ export default class FileNew extends ZettlrCommand {
    * @param  {Object} arg An object containing a hash of containing directory and a file name.
    * @return {void}     This function does not return anything.
    */
-  async run (evt: string, arg: { name?: string, path?: string, type?: 'md'|'yaml'|'json'|'tex' }): Promise<void> {
+  async run (evt: string, arg: { leafId?: string, windowId?: string, name?: string, path?: string, type: 'md'|'yaml'|'json'|'tex' }): Promise<void> {
     // A few notes on how this command works with respect to its input. As you
     // can see, all parameters are optional and all which are missing will be
     // inferred from context (otherwise the command will fail). The type
@@ -46,28 +44,45 @@ export default class FileNew extends ZettlrCommand {
     const filenamePattern = this._app.config.get('newFileNamePattern')
     const idGenPattern = this._app.config.get('zkn.idGen')
     const generatedName = generateFilename(filenamePattern, idGenPattern)
+    const leafId = arg.leafId
 
-    if (evt === 'new-unsaved-file' && shouldPromptUser) {
-      // We should simply create a new unsaved file that only resides in memory
-      const file = await this._app.documents.newUnsavedFile(type)
-      // Set it as active
-      this._app.documents.activeFile = file
-      return // Return early
+    if (arg.windowId === undefined) {
+      // The caller didn't provide a window number. This can happen with, e.g.
+      // menu items. But since we want to fulfill the user's wish, we first try
+      // to fallback onto any main window and only fail otherwise.
+      const firstMainWindow = this._app.windows.getFirstMainWindow()
+      if (firstMainWindow !== undefined) {
+        arg.windowId = this._app.windows.getMainWindowKey(firstMainWindow)
+      }
     }
 
-    let dir = this._app.fsal.openDirectory
+    const windowId = arg.windowId
+
+    if (windowId === undefined) {
+      this._app.log.error('Cannot create new file: No window id provided')
+      return
+    }
+
+    let dir = this._app.fsal.openDirectory ?? undefined
 
     if (arg?.path !== undefined) {
       dir = this._app.fsal.findDir(arg.path)
     }
 
-    if (dir === null) {
-      this._app.log.error(`Could not create new file ${arg.name as string}: No directory selected!`)
-      return
+    let isFallbackDir = false
+    if (dir === undefined) {
+      // There is no directory we could salvage, so choose a default one: the
+      // documents directory. Displaying the file choosing dialog should never
+      // fail because we can't decide on a directory.
+      dir = await this._app.fsal.getAnyDirectoryDescriptor(app.getPath('documents'))
+      isFallbackDir = true
     }
 
     // Make sure we have a filename and have the user confirm this if applicable
-    if (arg.name === undefined && shouldPromptUser) {
+    // Also, if the user does not want to be prompted BUT we had to use the
+    // fallback directory, we should also prompt the user as otherwise it would
+    // be opaque to the user where the notes end up in.
+    if ((arg.name === undefined && shouldPromptUser) || (!shouldPromptUser && isFallbackDir)) {
       // The user wishes to confirm the filename
       const chosenPath = await this._app.windows.saveFile(path.join(dir.path, generatedName))
       if (chosenPath === undefined) {
@@ -80,7 +95,7 @@ export default class FileNew extends ZettlrCommand {
       // that directory exists and is loaded by the FSAL, overwrite the dir.
       if (path.dirname(chosenPath) !== dir.path) {
         dir = this._app.fsal.findDir(path.dirname(chosenPath))
-        if (dir === null) {
+        if (dir === undefined) {
           // TODO: Better feedback to the user!
           this._app.log.error(`Could not create new file ${arg.name}: The selected directory is not loaded in Zettlr!`)
           return
@@ -98,20 +113,22 @@ export default class FileNew extends ZettlrCommand {
         throw new Error('Could not create file: Filename was not valid')
       }
 
-      // If no valid filename is provided, assume .md
-      const ext = path.extname(filename).toLowerCase()
-      if (type !== 'md') {
-        // The user has explicitly requested a code file so we must respect
-        // the decision.
-        if (type === 'tex' && ext !== '.tex') {
-          filename += '.tex'
-        } else if (type === 'json' && ext !== '.json') {
-          filename += '.json'
-        } else if (type === 'yaml' && ![ '.yaml', '.yml' ].includes(ext)) {
-          filename += '.yaml'
+      if (!hasMdOrCodeExt(filename)) {
+        // There's no valid file extension given. We have to add one. By default
+        // we assume Markdown, but let ourselves be guided by the given type.
+        switch (type) {
+          case 'json':
+            filename += '.json'
+            break
+          case 'tex':
+            filename += '.tex'
+            break
+          case 'yaml':
+            filename += '.yml'
+            break
+          default:
+            filename += '.md'
         }
-      } else if (!ALLOWED_FILETYPES.includes(ext) && !CODEFILE_TYPES.includes(ext)) {
-        filename += '.md'
       }
 
       // Check if there's already a file with this name in the directory
@@ -132,16 +149,16 @@ export default class FileNew extends ZettlrCommand {
       await this._app.fsal.createFile(dir, {
         name: filename,
         content: '',
-        type: (type === 'md') ? 'md' : 'code'
+        type: (type === 'md') ? 'file' : 'code'
       })
 
       // And directly thereafter, open the file
-      await this._app.documents.openFile(path.join(dir.path, filename), true)
+      await this._app.documents.openFile(windowId, leafId, path.join(dir.path, filename), true)
     } catch (err: any) {
       this._app.log.error(`Could not create file: ${err.message as string}`)
       this._app.windows.prompt({
         type: 'error',
-        title: trans('system.error.could_not_create_file'),
+        title: trans('Could not create file'),
         message: err.message
       })
     }

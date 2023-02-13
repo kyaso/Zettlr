@@ -2,12 +2,14 @@ const rules = require('./webpack.rules')
 const path = require('path')
 
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
+const ESLintPlugin = require('eslint-webpack-plugin')
 const { VueLoaderPlugin } = require('vue-loader')
 const { DefinePlugin } = require('webpack')
 
 const plugins = [
   // Apply webpack rules to the corresponding language blocks in .vue files
   new VueLoaderPlugin(),
+  new ESLintPlugin(),
 
   // Set a few Vue 3 options; see: http://link.vuejs.org/feature-flags
   new DefinePlugin({
@@ -28,8 +30,6 @@ rules.push({
   use: [{
     loader: 'style-loader' // Create style nodes from JS strings
   }, {
-    loader: '@teamsupercell/typings-for-css-modules-loader' // Enrich css by typing information
-  }, {
     loader: 'css-loader' // Translate CSS into JS string
   }, {
     loader: 'less-loader' // Compile Less to CSS
@@ -41,8 +41,6 @@ rules.push({
   use: [{
     loader: 'style-loader', // Create style nodes from JS strings
     options: { injectType: 'lazyStyleTag' } // Lazy-load themes so that we can switch between them
-  }, {
-    loader: '@teamsupercell/typings-for-css-modules-loader' // Enrich css by typing information
   }, {
     loader: 'css-loader' // Translate CSS into JS string
   }, {
@@ -59,7 +57,7 @@ module.exports = {
   // in production (i.e. when we ship to users). NOTE, however, that these env-
   // variables must be set, which we're doing using cross-env in package.json.
   devtool: (process.env.NODE_ENV === 'production') ? false : 'source-map',
-  plugins: plugins,
+  plugins,
   resolve: {
     extensions: [
       '.js', '.ts', '.jsx', '.tsx',

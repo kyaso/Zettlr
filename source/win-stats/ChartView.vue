@@ -117,7 +117,7 @@ export default defineComponent({
   },
   computed: {
     chartLabel: function (): string {
-      return trans('dialog.statistics.tabs.chart_label')
+      return trans('Charts')
     },
     earliestYear: function (): number {
       const years = Object.keys(this.wordCounts).map(k => parseInt(k.substr(0, 4), 10))
@@ -249,10 +249,7 @@ export default defineComponent({
         datasets.push(year)
       }
 
-      return {
-        labels: labels,
-        datasets: datasets
-      }
+      return { labels, datasets }
     },
     months: function (): ChartData {
       // Months are calculated on a day-basis per year.
@@ -304,10 +301,7 @@ export default defineComponent({
         datasets.push(month)
       }
 
-      return {
-        labels: labels,
-        datasets: datasets
-      }
+      return { labels, datasets }
     },
     currentData: function (): ChartData {
       // Just returns the data necessary for the chart library that can then
@@ -329,6 +323,7 @@ export default defineComponent({
   beforeUnmount: function () {
     if (chart !== null) {
       chart.destroy()
+      chart = null
     }
   },
   methods: {

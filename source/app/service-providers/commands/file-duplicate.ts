@@ -34,31 +34,29 @@ export default class FileDuplicate extends ZettlrCommand {
    * @return {void}     This function does not return anything.
    */
   async run (evt: string, arg: any): Promise<void> {
-    // ARG structure: { dir, file, name }
-
     // First, retrieve our source file
     let file = this._app.fsal.findFile(arg.path)
-    if (file === null) {
+    if (file === undefined) {
       this._app.log.error('Could not duplicate source file, because the source file was not found')
       this._app.windows.prompt({
         type: 'error',
-        title: trans('system.error.could_not_create_file'),
+        title: trans('Could not create file'),
         message: 'Could not duplicate file, because the source file was not found'
       })
       return
     }
 
     // Then, the target directory.
-    let dir = file.parent // (1) A specified directory
-    if (dir === null) {
-      dir = this._app.fsal.openDirectory // (2) The current dir
+    let dir = this._app.fsal.findDir(file.dir) // (1) A specified directory
+    if (dir === undefined) {
+      dir = this._app.fsal.openDirectory ?? undefined // (2) The current dir
     }
 
-    if (dir === null) { // (3) Fail
+    if (dir === undefined) { // (3) Fail
       this._app.log.error('Could not create file, because no directory was found')
       this._app.windows.prompt({
         type: 'error',
-        title: trans('system.error.could_not_create_file'),
+        title: trans('Could not create file'),
         message: 'No directory provided'
       })
       return
@@ -70,7 +68,7 @@ export default class FileDuplicate extends ZettlrCommand {
       filename = sanitize(arg.name.trim(), { 'replacement': '-' })
     } else {
       // We need to generate our own filename. First, attempt to just use 'copy of'
-      filename = 'Copy of ' + file.name // TODO: Translate
+      filename = trans('Copy of %s', file.name)
       // See if it's a file
       if (isFile(path.join(dir.path, filename))) {
         // Filename is already given, so we need to add increasing numbers
@@ -97,13 +95,14 @@ export default class FileDuplicate extends ZettlrCommand {
     }
 
     // Retrieve the file's content and create a new file with the same content
-    const fileMeta = await this._app.fsal.getFileContents(file)
+    const contents = await this._app.fsal.loadAnySupportedFile(file.path)
     await this._app.fsal.createFile(dir, {
       name: filename,
-      content: fileMeta.content
+      content: contents,
+      type: file.type
     })
 
     // And directly thereafter, open the file
-    await this._app.documents.openFile(path.join(dir.path, filename))
+    await this._app.documents.openFile(arg.windowNumber, arg.leafId, path.join(dir.path, filename))
   }
 }

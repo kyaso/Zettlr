@@ -17,7 +17,7 @@
  * END HEADER
  */
 
-import { AnyMetaDescriptor } from '@dts/common/fsal'
+import { AnyDescriptor } from '@dts/common/fsal'
 import fuzzysort from 'fuzzysort'
 
 /**
@@ -28,9 +28,9 @@ import fuzzysort from 'fuzzysort'
  * @param   {boolean}   includeTitle            Whether or not to include titles
  * @param   {boolean}   includeH1               Whether or not to include headings level 1
  *
- * @return  {(item: AnyMetaDescriptor) => boolean}  The filter function. Takes a descriptor as its only argument.
+ * @return  {(item: AnyDescriptor) => boolean}  The filter function. Takes a descriptor as its only argument.
  */
-export default function matchQuery (query: string, includeTitle: boolean, includeH1: boolean): (item: AnyMetaDescriptor) => boolean {
+export default function matchQuery (query: string, includeTitle: boolean, includeH1: boolean): (item: AnyDescriptor) => boolean {
   const queries = query.split(' ').map(q => q.trim()).filter(q => q !== '')
 
   const fuzzyThreshold = -window.config.get('custom.test.val4')
@@ -41,7 +41,7 @@ export default function matchQuery (query: string, includeTitle: boolean, includ
   }
 
   // Returns a function that takes a Meta descriptor and returns whether it matches or not
-  return function (item: AnyMetaDescriptor): boolean {
+  return function (item: AnyDescriptor): boolean {
     for (const q of queries) {
       // First, see if the name gives a match since that's what all descriptors have.
       if (fuzzyMatch(q, item.name.toLowerCase())) {

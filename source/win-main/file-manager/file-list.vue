@@ -35,6 +35,7 @@
             v-bind:obj="item.props"
             v-bind:active-file="activeDescriptor"
             v-bind:index="index"
+            v-bind:window-id="windowId"
             v-on:create-file="handleOperation('file-new', item.id)"
             v-on:create-dir="handleOperation('dir-new', item.id)"
             v-on:begin-dragging="$emit('lock-file-tree')"
@@ -52,6 +53,7 @@
         v-bind:key="item.id"
         v-bind:index="0"
         v-bind:obj="item.props"
+        v-bind:window-id="windowId"
         v-on:create-file="handleOperation('file-new', item.id)"
         v-on:create-dir="handleOperation('dir-new', item.id)"
       >
@@ -96,8 +98,8 @@ import objectToArray from '@common/util/object-to-array'
 import matchQuery from './util/match-query'
 
 import { nextTick, defineComponent } from 'vue'
-import { MDFileMeta, CodeFileMeta, DirMeta, OtherFileMeta } from '@dts/common/fsal'
 import { mdEditor } from '../MainEditor.vue'
+import { MaybeRootDescriptor, AnyDescriptor } from '@dts/common/fsal'
 
 const ipcRenderer = window.ipc
 
@@ -113,6 +115,10 @@ export default defineComponent({
       required: true
     },
     filterQuery: {
+      type: String,
+      required: true
+    },
+    windowId: {
       type: String,
       required: true
     }
@@ -134,36 +140,36 @@ export default defineComponent({
       }
     },
     noResultsMessage: function (): string {
-      return trans('gui.no_search_results')
+      return trans('No results')
     },
     emptyFileListMessage: function (): string {
-      return trans('gui.no_dir_selected')
+      return trans('No directory selected')
     },
     emptyDirectoryMessage: function (): string {
-      return trans('gui.empty_dir')
+      return trans('Empty directory')
     },
     selectedFile: function (): string {
       return this.$store.state.activeFile
     },
     itemHeight: function (): number {
-      if (this.$store.state.config['fileMeta'] === true) {
+      if (this.$store.state.config.fileMeta === true) {
         return 70
       } else {
         return 30
       }
     },
-    getDirectoryContents: function (): Array<{ id: number, props: MDFileMeta|CodeFileMeta|DirMeta}> {
+    getDirectoryContents: function (): Array<{ id: number, props: MaybeRootDescriptor}> {
       if (this.$store.state.selectedDirectory === null) {
         return []
       }
 
-      const ret: Array<{ id: number, props: MDFileMeta|CodeFileMeta|DirMeta}> = []
-      const items = objectToArray(this.$store.state.selectedDirectory, 'children') as Array<MDFileMeta|CodeFileMeta|DirMeta|OtherFileMeta>
+      const ret: Array<{ id: number, props: MaybeRootDescriptor}> = []
+      const items = objectToArray(this.$store.state.selectedDirectory, 'children') as AnyDescriptor[]
       for (let i = 0; i < items.length; i++) {
         if (items[i].type !== 'other') {
           ret.push({
             id: i, // This helps the virtual scroller to adequately position the items
-            props: items[i] as MDFileMeta|CodeFileMeta|DirMeta // The actual item
+            props: items[i] as MaybeRootDescriptor // The actual item
           })
         }
       }
@@ -253,7 +259,7 @@ export default defineComponent({
       const ctrl = evt.ctrlKey === true && process.platform !== 'darwin'
       const cmdOrCtrl = cmd || ctrl
 
-      // getDirectoryContents accomodates the virtual scroller
+      // getDirectoryContents accommodates the virtual scroller
       // by packing the actual items in a props property.
       const list = this.getFilteredDirectoryContents.map(e => e.props)
       const descriptor = list.find(e => {
@@ -274,7 +280,7 @@ export default defineComponent({
             .catch(e => console.error(e))
         } else {
           // Select the active file (if there is one)
-          ipcRenderer.invoke('application', {
+          ipcRenderer.invoke('documents-provider', {
             command: 'open-file',
             payload: {
               path: descriptor.path,

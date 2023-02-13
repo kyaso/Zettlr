@@ -47,6 +47,7 @@
         ref="directories"
         v-bind:is-visible="fileTreeVisible"
         v-bind:filter-query="filterQuery"
+        v-bind:window-id="windowId"
         v-on:selection="selectionListener"
       ></FileTree>
       <!-- Now render the file list -->
@@ -62,6 +63,7 @@
         ref="fileList"
         v-bind:is-visible="isFileListVisible"
         v-bind:filter-query="filterQuery"
+        v-bind:window-id="windowId"
         v-on:lock-file-tree="lockDirectoryTree()"
       ></FileList>
     </div>
@@ -95,6 +97,12 @@ export default defineComponent({
     FileTree,
     FileList
   },
+  props: {
+    windowId: {
+      type: String,
+      required: true
+    }
+  },
   data: () => {
     return {
       previous: '', // Can be "file-list" or "directories"
@@ -115,7 +123,7 @@ export default defineComponent({
       return this.$store.state.selectedDirectory
     },
     filterPlaceholder: function () {
-      return trans('system.common.filter')
+      return trans('Filter …')
     },
     isThin: function () {
       return this.fileManagerMode === 'thin'
@@ -128,7 +136,7 @@ export default defineComponent({
     },
     // We need the fileManagerMode separately to watch the property
     fileManagerMode: function () {
-      return this.$store.state.config['fileManagerMode']
+      return this.$store.state.config.fileManagerMode
     },
     /**
      * Determines whether the file list is currently visible
@@ -194,7 +202,8 @@ export default defineComponent({
           // When switching from the global search, the focus might not work properly.
           // Using a timeout indeed helps.
           // Thanks Stackoverflow (https://stackoverflow.com/a/1096938)
-          .then(() => { setTimeout(() => (this.$refs['quickFilter'] as any).focus(), 0) })
+          // .then(() => { setTimeout(() => (this.$refs['quickFilter'] as any).focus(), 0) })
+          .then(() => { setTimeout(() => (this.$refs.quickFilter as any).focus(), 0) })
           .catch(err => console.error(err))
       }
     })
@@ -232,7 +241,7 @@ export default defineComponent({
       }
     },
     /**
-     * Display the arrow button for nagivation, if applicable.
+     * Display the arrow button for navigation, if applicable.
      * @param {MouseEvent} evt The associated event.
      */
     maybeShowArrowButton: function (evt: MouseEvent) {

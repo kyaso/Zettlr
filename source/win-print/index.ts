@@ -7,7 +7,7 @@
  * Maintainer:      Hendrik Erz
  * License:         GNU GPL v3
  *
- * Description:     Controls a single Quicklook window
+ * Description:     Controls the print preview window
  *
  * END HEADER
  */
@@ -38,6 +38,5 @@ const filePath = searchParams.get('file')
 if (filePath === null) {
   console.error('Could not load file to preview, since the passed file was null!')
 } else {
-  console.log(`Showing file: ${filePath}`)
   app.$data.filePath = filePath
 }

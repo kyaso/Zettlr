@@ -15,14 +15,23 @@
 
 import { app } from 'electron'
 import path from 'path'
-import { bootApplication, shutdownApplication, getServiceContainer } from './app/lifecycle'
-
-// Include the global Zettlr class
-import Zettlr from './main/zettlr'
+import { bootApplication, shutdownApplication } from './app/lifecycle'
 
 // Helper function to extract files to open from process.argv
 import extractFilesFromArgv from './app/util/extract-files-from-argv'
 import AppServiceContainer from './app/app-service-container'
+import {
+  DATA_DIR,
+  DISABLE_HARDWARE_ACCELERATION,
+  getCLIArgument,
+  handleGeneralArguments
+} from '@providers/cli-provider'
+
+handleGeneralArguments()
+
+// We need the service container, as long as this object is in memory, and hence
+// not garbage collected, the app will run.
+let serviceContainer: AppServiceContainer|undefined
 
 // Immediately after launch, check if there is already another instance of
 // Zettlr running, and, if so, exit immediately. The arguments (including files)
@@ -46,33 +55,29 @@ if (process.platform === 'win32') {
 
 // Setting custom data dir for user configuration files.
 // Full path or relative path is OK. '~' does not work as expected.
-const dataDirFlag = process.argv.find(elem => elem.indexOf('--data-dir=') === 0)
+let dataDir = getCLIArgument(DATA_DIR)
 
-if (dataDirFlag !== undefined) {
+if (typeof dataDir === 'string') {
   // a path to a custom config dir is provided
-  const match = /^--data-dir="?([^"]+)"?$/.exec(dataDirFlag)
-  if (match !== null) {
-    let dataDir = match[1]
-
-    if (!path.isAbsolute(dataDir)) {
-      if (app.isPackaged) {
-        // Attempt to use the executable file's path as the basis
-        dataDir = path.join(path.dirname(app.getPath('exe')), dataDir)
-      } else {
-        // Attempt to use the repository's root directory as the basis
-        dataDir = path.join(__dirname, '../../', dataDir)
-      }
+  if (!path.isAbsolute(dataDir)) {
+    if (app.isPackaged) {
+      // Attempt to use the executable file's path as the basis
+      dataDir = path.join(path.dirname(app.getPath('exe')), dataDir)
+    } else {
+      // Attempt to use the repository's root directory as the basis
+      dataDir = path.join(__dirname, '../../', dataDir)
     }
-    getServiceContainer()?.log.info('[Application] Using custom data dir: ' + dataDir)
-    app.setPath('userData', dataDir)
-    app.setAppLogsPath(path.join(dataDir, 'logs'))
   }
+
+  serviceContainer?.log.info('[Application] Using custom data dir: ' + dataDir)
+  app.setPath('userData', dataDir)
+  app.setAppLogsPath(path.join(dataDir, 'logs'))
 }
 
 // On systems with virtual GPUs (i.e. VMs), it might be necessary to disable
 // hardware acceleration. If the corresponding flag is set, we do so.
 // See for more info https://github.com/Zettlr/Zettlr/issues/2127
-if (process.argv.includes('--disable-hardware-acceleration')) {
+if (getCLIArgument(DISABLE_HARDWARE_ACCELERATION) === true) {
   app.disableHardwareAcceleration()
 }
 
@@ -80,19 +85,13 @@ if (process.argv.includes('--disable-hardware-acceleration')) {
 
 // This array will be only useful for macOS since there we have the "open-file"
 // event indicating that the user wants to open a file. But this event might be
-// emitted before the app is ready and the main Zettlr object has been
+// emitted before the app is ready and the service container object has been
 // instantiated. This is why we need to cache those in this array. After the app
 // is booted, we won't need this anymore.
 const filesBeforeOpen: string[] = []
 
 /**
- * The main Zettlr object. As long as this exists in memory, the app will run.
- * @type {Zettlr|null}
- */
-let zettlr: Zettlr|null = null
-
-/**
- * This variable is being used to determine if all servive providers have
+ * This variable is being used to determine if all service providers have
  * successfully shut down and we can actually quit the app.
  *
  * @var {boolean}
@@ -121,20 +120,10 @@ app.whenReady().then(() => {
   // Immediately boot the application. This function performs some initial
   // checks to make sure the environment is as expected for Zettlr, and boots
   // up the providers.
-  bootApplication().then(() => {
-    // Now instantiate the main class which will care about everything else
-    zettlr = new Zettlr(getServiceContainer() as AppServiceContainer)
-    zettlr.init()
-      .then(() => {
-        // After the app has been booted, open any files that we amassed in the
-        // meantime.
-        (getServiceContainer() as AppServiceContainer).commands.run('roots-add', filesBeforeOpen)
-          .catch(err => console.error(err))
-      })
-      .catch(err => {
-        console.error(err)
-        app.exit(1)
-      })
+  bootApplication().then((container) => {
+    serviceContainer = container
+    serviceContainer.commands.run('roots-add', filesBeforeOpen)
+      .catch(err => console.error(err))
   }).catch(err => {
     console.error(err)
     app.exit(1)
@@ -151,18 +140,13 @@ app.whenReady().then(() => {
  * @param {String} cwd The current working directory
  */
 app.on('second-instance', (event, argv, cwd) => {
-  if (zettlr === null) {
-    console.error('A second instance called this instance but a Zettlr object has not yet been instantiated. This may indicate a logical error.')
-    return
-  }
-
-  getServiceContainer()?.log.info('[Application] A second instance has been opened.')
+  serviceContainer?.log.info('[Application] A second instance has been opened.')
 
   // openWindow calls the appropriate function of the windowManager, which deals
   // with the nitty-gritty of actually making the main window visible.
-  getServiceContainer()?.windows.showMainWindow()
+  serviceContainer?.windows.showMainWindows()
 
-  const commands = getServiceContainer()?.commands
+  const commands = serviceContainer?.commands
 
   // In case the user wants to open a file/folder with this running instance
   commands?.run('roots-add', extractFilesFromArgv(argv)).catch(err => { console.error(err) })
@@ -172,12 +156,12 @@ app.on('second-instance', (event, argv, cwd) => {
  * This gets executed when the user wants to open a file on macOS.
  */
 app.on('open-file', (e, p) => {
-  const commands = getServiceContainer()?.commands
+  const commands = serviceContainer?.commands
   e.preventDefault() // Need to explicitly set this b/c we're handling this
   // The user wants to open a file -> simply handle it.
-  if (zettlr !== null) {
+  if (serviceContainer !== undefined) {
     commands?.run('roots-add', [p]).catch((err) => {
-      getServiceContainer()?.log.error('[Application] Error while adding new roots', err)
+      serviceContainer?.log.error('[Application] Error while adding new roots', err)
     })
   } else {
     // The Zettlr object has yet to be created -> cache it
@@ -190,7 +174,7 @@ app.on('open-file', (e, p) => {
  * `system.leaveAppRunning` is true or on macOS.
  */
 app.on('window-all-closed', function () {
-  const config = getServiceContainer()?.config
+  const config = serviceContainer?.config
   if (config === undefined) {
     return
   }
@@ -215,11 +199,7 @@ app.on('will-quit', function (event) {
     return // Don't prevent quitting, but we don't need to shut down again.
   }
 
-  const promises = [shutdownApplication()]
-  if (zettlr !== null) {
-    promises.push(zettlr.shutdown())
-  }
-  Promise.all(promises)
+  shutdownApplication()
     .then(() => {
       // Now we can safely quit the app. Set the flag so that the callback
       // won't stop the shutdown, and programmatically quit the app.
@@ -233,9 +213,7 @@ app.on('will-quit', function (event) {
  * On macOS, open a new window as soon as the user re-activates the app.
  */
 app.on('activate', function () {
-  if (zettlr !== null) {
-    getServiceContainer()?.windows.showAnyWindow()
-  }
+  serviceContainer?.windows.showAnyWindow()
 })
 
 /**
@@ -244,5 +222,5 @@ app.on('activate', function () {
  */
 process.on('unhandledRejection', (err: any) => {
   // Just log to console.
-  getServiceContainer()?.log.error('[Application] Unhandled rejection received', err)
+  serviceContainer?.log.error('[Application] Unhandled rejection received', err)
 })

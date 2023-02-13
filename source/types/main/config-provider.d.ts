@@ -1,39 +1,9 @@
-interface ConfigProvider {
-  // Clone the properties to prevent intrusion
-  get: (key?: string) => any
-  // The setter is a simply pass-through
-  set: (key: string, val: any) => boolean
-  // Enable global event listening to updates of the config
-  on: (evt: string, callback: (...args: any[]) => void) => void
-  // Also do the same for the removal of listeners
-  off: (evt: string, callback: (...args: any[]) => void) => void
-  /**
-   * Adds a path to the startup path array
-   * @param {String} p The path to add
-   * @return {Boolean} Whether or not the call succeeded
-   */
-  addPath: (p: string) => boolean
-  /**
-   * Removes a path from the startup path array
-   * @param  {String} p The path to remove
-   * @return {Boolean}   Whether or not the call succeeded
-   */
-  removePath: (p: string) => boolean
-  /**
-   * If true, Zettlr assumes this is the first start of the app
-   */
-  isFirstStart: () => boolean
-  /**
-   * If true, Zettlr has detected a change in version in the config
-   */
-  newVersionDetected: () => boolean
-}
-
-interface ConfigOptions {
+/**
+ * All configuration options managed by the Config provider
+ */
+export interface ConfigOptions {
   version: string
   openPaths: string[]
-  openFiles: string[]
-  activeFile: string|null
   openDirectory: string|null
   dialogPaths: {
     askFileDialog: string
@@ -63,7 +33,7 @@ interface ConfigOptions {
   newFileNamePattern: string
   newFileDontPrompt: boolean
   export: {
-    dir: 'temp'|'cwd'
+    dir: 'temp'|'cwd'|'ask'
     stripTags: boolean
     stripLinks: 'full'|'unlink'|'no'
     cslLibrary: string
@@ -74,8 +44,6 @@ interface ConfigOptions {
   zkn: {
     idRE: string
     idGen: string
-    linkStart: string
-    linkEnd: string
     linkFilenameOnly: boolean
     linkWithFilename: 'always'|'never'|'withID'
     autoCreateLinkedFiles: boolean
@@ -91,8 +59,8 @@ interface ConfigOptions {
     autoSave: 'off'|'immediately'|'delayed'
     citeStyle: 'in-text'|'in-text-suffix'|'regular'
     autoCloseBrackets: boolean
+    showLinkPreviews: boolean
     defaultSaveImagePath: string
-    homeEndBehaviour: boolean
     enableTableHelper: boolean
     indentUnit: number
     indentWithTabs: boolean
@@ -102,11 +70,11 @@ interface ConfigOptions {
     boldFormatting: '**'|'__'
     italicFormatting: '_'|'*'
     readabilityAlgorithm: string
-    direction: 'ltr'|'rtl'
-    rtlMoveVisually: boolean
+    lint: {
+      markdown: boolean
+    }
     autoCorrect: {
       active: boolean
-      style: 'LibreOffice'|'Word'
       magicQuotes: {
         primary: string
         secondary: string
@@ -143,7 +111,6 @@ interface ConfigOptions {
     avoidNewTabs: boolean
     iframeWhitelist: string[]
     checkForUpdates: boolean
-    checkForTranslationUpdates: boolean
     zoomBehavior: 'gui'|'editor'
   }
   checkForBeta: boolean

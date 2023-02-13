@@ -23,12 +23,11 @@ import DirRescan from './dir-rescan'
 import DirSetIcon from './dir-set-icon'
 import DirSort from './dir-sort'
 import Export from './export'
-import FileClose from './file-close'
+import FetchLinkPreview from './fetch-link-preview'
 import FileDelete from './file-delete'
 import FileDuplicate from './file-duplicate'
 import FileNew from './file-new'
 import FileRename from './file-rename'
-import FileSave from './file-save'
 import FileSearch from './file-search'
 import ForceOpen from './force-open'
 import FileFindAndReturnMetaData from './file-find-and-return-meta-data'
@@ -41,7 +40,6 @@ import RequestMove from './request-move'
 import RootClose from './root-close'
 import RootOpen from './root-open'
 import SaveImageFromClipboard from './save-image-from-clipboard'
-import SortOpenFiles from './sort-open-files'
 import TutorialOpen from './tutorial-open'
 import UpdateProjectProperties from './update-project-properties'
 import UpdateUserDictionary from './update-user-dictionary'
@@ -49,8 +47,12 @@ import ProviderContract from '@providers/provider-contract'
 import AppServiceContainer from 'source/app/app-service-container'
 import ZettlrCommand from './zettlr-command'
 import SetOpenDirectory from './set-open-directory'
-import { MDFileDescriptor } from '@dts/main/fsal'
 import { BrowserWindow, clipboard, ipcMain, nativeImage } from 'electron'
+import isFile from '@common/util/is-file'
+import isDir from '@common/util/is-dir'
+import enumLangFiles from '@common/util/enum-lang-files'
+import enumDictFiles from '@common/util/enum-dict-files'
+import RenameTag from './rename-tag'
 
 export const commands = [
   DirDelete,
@@ -63,12 +65,11 @@ export const commands = [
   DirSetIcon,
   DirSort,
   Export,
-  FileClose,
+  FetchLinkPreview,
   FileDelete,
   FileDuplicate,
   FileNew,
   FileRename,
-  FileSave,
   FileSearch,
   FileFindAndReturnMetaData,
   ForceOpen,
@@ -77,12 +78,12 @@ export const commands = [
   IncreasePomodoro,
   OpenAttachment,
   Print,
+  RenameTag,
   RequestMove,
   RootClose,
   RootOpen,
   SaveImageFromClipboard,
   SetOpenDirectory,
-  SortOpenFiles,
   TutorialOpen,
   UpdateProjectProperties,
   UpdateUserDictionary
@@ -121,45 +122,33 @@ export default class CommandProvider extends ProviderContract {
     } else if (command === 'get-filetree-events') {
       return this._app.fsal.filetreeHistorySince(payload)
     } else if (command === 'get-descriptor') {
-      const descriptor = this._app.fsal.find(payload)
-      if (descriptor === undefined) {
-        return undefined
+      if (isFile(payload)) {
+        return await this._app.fsal.getDescriptorForAnySupportedFile(payload)
+      } else if (isDir(payload)) {
+        return await this._app.fsal.getAnyDirectoryDescriptor(payload)
+      } else {
+        this._app.log.error(`[Application] Could not return descriptor for ${String(payload)}: Neither file nor directory.`)
       }
-      return this._app.fsal.getMetadataFor(descriptor)
     } else if (command === 'get-open-directory') {
       const openDir = this._app.fsal.openDirectory
       if (openDir === null) {
         return null
       }
 
-      return this._app.fsal.getMetadataFor(openDir)
-    } else if (command === 'get-active-file') {
-      const descriptor = this._app.documents.activeFile
-      if (descriptor === null) {
-        return null
-      }
-
-      return this._app.fsal.getMetadataFor(descriptor as MDFileDescriptor)
+      return openDir
     } else if (command === 'next-file') {
       // Trigger a "forward" command on the document manager
-      await this._app.documents.forward()
+      // await this._app.documents.forward()
+      // TODO!!!
       return true
     } else if (command === 'previous-file') {
       // Trigger a "back" command on the document manager
-      await this._app.documents.back()
+      // await this._app.documents.back()
+      // TODO!!!
       return true
-    } else if (command === 'set-writing-target') {
-      // Sets or updates a file's writing target
-      this._app.targets.set(payload)
-    } else if (command === 'open-file') {
-      await this._app.documents.openFile(payload.path, payload.newTab)
-      return true
-    } else if (command === 'get-open-files') {
-      // Return all open files as their metadata objects
-      return this._app.documents.openFiles.map(file => this._app.fsal.getMetadataFor(file))
       // Switch to the previous file
     } else if (command === 'switch-file') {
-        await this._app.documents.switch()
+      await this._app.documents.switch()
     } else if (command === 'copy-img-to-clipboard') {
       // We should copy the contents of an image file to clipboard. Payload
       // contains the image path. We can rely on the Electron framework here.
@@ -177,35 +166,10 @@ export default class CommandProvider extends ProviderContract {
       }
       return true
     } else if (command === 'get-file-contents') {
-      // First, attempt to get the contents from the document manager
-      const file = this._app.documents.openFiles.find(file => file.path === payload)
-      if (file !== undefined) {
-        return await this._app.documents.getFileContents(file)
-      }
-
-      // Otherwise, try to find the file via the FSAL
-      const descriptor = this._app.fsal.findFile(payload)
-      if (descriptor === null) {
-        return null
-      }
-
-      return await this._app.fsal.getFileContents(descriptor)
-    } else if (command === 'update-modified-files') {
-      // Update the modification status according to the file path array given
-      // in the payload.
-      this._app.documents.updateModifiedFlags(payload)
-      this._app.windows.setModified(!this._app.documents.isClean())
+      // Some renderer's editor has requested a file
+      return await this._app.fsal.loadAnySupportedFile(payload)
     } else if (command === 'open-preferences') {
       this._app.windows.showPreferences()
-      return true
-    } else if (command === 'open-quicklook') {
-      const file = this._app.fsal.findFile(payload)
-      if (file === null || file.type !== 'file') {
-        this._app.log.error(`[Application] A Quicklook window for ${payload as string} was requested, but the file was not found.`)
-        return false
-      }
-
-      this._app.windows.showQuicklookWindow(file)
       return true
     } else if (command === 'open-stats-window') {
       this._app.windows.showStatsWindow()
@@ -228,6 +192,10 @@ export default class CommandProvider extends ProviderContract {
           this._app.log.error('[Application] Error received while running command: ' + String(err.message), err)
           return false
         }
+      } else if (command === 'get-available-languages') {
+        return enumLangFiles().map(elem => elem.tag)
+      } else if (command === 'get-available-dictionaries') {
+        return enumDictFiles().map(elem => elem.tag)
       } else {
         this._app.log.warning(`[Application] Received a request to run command ${command}, but it's not registered.`)
       }
@@ -239,7 +207,7 @@ export default class CommandProvider extends ProviderContract {
    * 
    * @param {string}  terms   The search term(s)
    */
-   startGlobalSearch(terms: string): void {
+  startGlobalSearch (terms: string): void {
     BrowserWindow.getFocusedWindow()?.webContents.send('start-global-search', terms)
   }
 

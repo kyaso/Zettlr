@@ -12,7 +12,11 @@
  * END HEADER
  */
 
+import { OpenDocument } from '@dts/common/documents'
+import { MDFileDescriptor } from '@dts/common/fsal'
 import { RelatedFile } from '@dts/renderer/misc'
+import { hasMarkdownExt } from '@providers/fsal/util/is-md-or-code-file'
+import { TagRecord } from '@providers/tags'
 import { ActionContext } from 'vuex'
 import { ZettlrState } from '..'
 
@@ -20,11 +24,9 @@ const path = window.path
 const ipcRenderer = window.ipc
 
 export default async function (context: ActionContext<ZettlrState, ZettlrState>): Promise<void> {
-  // First reset, default is no related files
-  context.commit('updateRelatedFiles', [])
-
-  const activeFile = context.state.activeFile
-  if (activeFile === null || activeFile.type !== 'file') {
+  const activeFile: OpenDocument|null = context.getters.lastLeafActiveFile()
+  if (activeFile === null || !hasMarkdownExt(activeFile.path)) {
+    context.commit('updateRelatedFiles', [])
     return
   }
 
@@ -35,7 +37,7 @@ export default async function (context: ActionContext<ZettlrState, ZettlrState>)
   const { inbound, outbound } = await ipcRenderer.invoke('link-provider', {
     command: 'get-inbound-links',
     payload: { filePath: activeFile.path }
-  }) as { inbound: string[], outbound: string[]}
+  }) as { inbound: string[], outbound: string[] }
 
   for (const absPath of [ ...inbound, ...outbound ]) {
     const found = unreactiveList.find(elem => elem.path === absPath)
@@ -61,28 +63,41 @@ export default async function (context: ActionContext<ZettlrState, ZettlrState>)
     unreactiveList.push(related)
   }
 
+  const descriptor: MDFileDescriptor|undefined = await ipcRenderer.invoke('application', {
+    command: 'get-descriptor',
+    payload: activeFile.path
+  })
+
+  if (descriptor === undefined) {
+    context.commit('updateRelatedFiles', [])
+    return
+  }
+
   // The second way files can be related to each other is via shared tags.
   // This relation is not as important as explicit links, so they should
   // be below the inbound linked files.
-  const recommendations = await ipcRenderer.invoke('tag-provider', {
-    command: 'recommend-matching-files',
-    payload: activeFile.tags.map(tag => tag) // De-proxy
-  })
 
-  // Recommendations come in the form of [file: string]: string[]
-  for (const filePath of Object.keys(recommendations)) {
-    const existingFile = unreactiveList.find(elem => elem.path === filePath)
-    if (existingFile !== undefined) {
-      // This file already links here
-      existingFile.tags = recommendations[filePath]
-    } else {
-      // This file doesn't explicitly link here but it shares tags
-      unreactiveList.push({
-        file: path.basename(filePath),
-        path: filePath,
-        tags: recommendations[filePath],
-        link: 'none'
-      })
+  const tags = await ipcRenderer.invoke('tag-provider', { command: 'get-all-tags' }) as TagRecord[]
+  const recommendations = tags.filter(tag => descriptor.tags.includes(tag.name))
+
+  for (const tagRecord of recommendations) {
+    for (const filePath of tagRecord.files) {
+      if (filePath === descriptor.path) {
+        continue
+      }
+      const existingFile = unreactiveList.find(elem => elem.path === filePath)
+      if (existingFile !== undefined) {
+        // This file already links here
+        existingFile.tags.push(tagRecord.name)
+      } else {
+        // This file doesn't explicitly link here but it shares tags
+        unreactiveList.push({
+          file: path.basename(filePath),
+          path: filePath,
+          tags: [tagRecord.name],
+          link: 'none'
+        })
+      }
     }
   }
 
@@ -98,7 +113,16 @@ export default async function (context: ActionContext<ZettlrState, ZettlrState>)
   // No sorting necessary
 
   const tagsOnly = unreactiveList.filter(e => e.link === 'none')
-  tagsOnly.sort((a, b) => { return b.tags.length - a.tags.length })
+  const idf: Record<string, number> = {}
+  for (const tagRecord of tags) {
+    idf[tagRecord.name] = tagRecord.idf
+  }
+
+  // We sort based on the IDF frequency of shared tags, which "weighs" the tags
+  // by importance. Files with less shared tags hence can get higher counts and
+  // are listed higher than files with more shared tags, if those few tags have
+  // high IDF scores.
+  tagsOnly.sort((a, b) => b.tags.map(tag => idf[tag]).reduce((p, c) => p + c, 0) - a.tags.map(tag => idf[tag]).reduce((p, c) => p + c, 0))
 
   // TODO: possibly filter out current file
 

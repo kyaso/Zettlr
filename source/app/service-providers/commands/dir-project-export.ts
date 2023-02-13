@@ -19,6 +19,7 @@ import { filter as minimatch } from 'minimatch'
 import { shell } from 'electron'
 import { ExporterOptions } from './exporter/types'
 import LogProvider from '@providers/log'
+import { trans } from '@common/i18n-main'
 
 export default class DirProjectExport extends ZettlrCommand {
   constructor (app: any) {
@@ -34,12 +35,12 @@ export default class DirProjectExport extends ZettlrCommand {
     // First get the directory
     const dir = this._app.fsal.findDir(arg)
 
-    if (dir === null) {
+    if (dir === undefined) {
       this._app.log.error('Could not export project: Directory not found.')
       return false
     }
 
-    const config = dir._settings.project
+    const config = dir.settings.project
 
     if (config === null) {
       this._app.log.error(`Could not export project: Directory ${dir.name} is not a project.`)
@@ -66,32 +67,42 @@ export default class DirProjectExport extends ZettlrCommand {
       return false
     }
 
-    for (const format of config.formats) {
+    const allDefaults = await this._app.assets.listDefaults()
+
+    for (const profilePath of config.profiles) {
       // Spin up one exporter per format.
-      this._app.log.info(`[Project] Exporting ${dir.name} as ${format}.`)
+      const profile = allDefaults.find(e => e.name === profilePath)
+
+      if (profile === undefined) {
+        this._app.log.warning(`Could not export project ${dir.name} using profile ${profilePath}: Not found`)
+        continue
+      }
+
+      this._app.log.info(`[Project] Exporting ${dir.name} as ${profile.writer} (Profile: ${profile.name}).`)
+
       let template
-      if ([ 'html', 'chromium-pdf' ].includes(format) && config.templates.html !== '') {
+      if (profile.writer === 'html' && config.templates.html !== '') {
         template = config.templates.html
-      } else if (format === 'latex-pdf' && config.templates.tex !== '') {
+      } else if (profile.writer === 'pdf' && config.templates.tex !== '') {
         template = config.templates.tex
       }
 
       try {
         const opt: ExporterOptions = {
-          format: format,
+          profile,
           sourceFiles: files,
           targetDirectory: dir.path,
           cwd: dir.path,
           defaultsOverride: {
             title: config.title,
             csl: (typeof config.cslStyle === 'string' && config.cslStyle.length > 0) ? config.cslStyle : undefined,
-            template: template
+            template
           }
         }
 
         this._app.log.verbose(`[Project Export] Exporting ${opt.sourceFiles.length} files to ${opt.targetDirectory}`)
 
-        const result = await makeExport(opt, this._app.config, this._app.assets)
+        const result = await makeExport(opt, this._app.log, this._app.config, this._app.assets)
         if (result.code !== 0) {
           // We got an error!
           throw new Error(`Export failed: ${result.stderr.join('\n')}`)
@@ -107,8 +118,7 @@ export default class DirProjectExport extends ZettlrCommand {
       }
     }
 
-    // TODO: Translate!
-    const notificationShown = this._app.notifications.show('Project successfully exported. Click to show.', 'Export', () => {
+    const notificationShown = this._app.notifications.show(trans('Project successfully exported. Click to show.'), trans('Export'), () => {
       openDirectory(this._app.log, dir.path)
     })
 

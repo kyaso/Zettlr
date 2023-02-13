@@ -1,3 +1,310 @@
+# Upcoming
+
+## READ THIS FIRST!
+
+This update brings a host of changes and new features. If you're upgrading from
+an older version of Zettlr, you will have to re-do a few things because due to
+the extensive changes, we had to adapt how your data is persisted. Here's the
+quick list:
+
+1. Your open documents will have to be re-opened once. Regardless of which files
+   were open previously, they will all be closed after the update.
+2. There are no more unsaved in-memory files.
+3. Two default settings have changed in order to maximize benefits from the new
+   features: Avoid new tabs is now set to false (since split-panes also allows
+   you to spread out your open documents across several panes and windows), and
+   Always reload remote changes is now set to true by default.
+4. The defaults system has changed. You will see new export options that weren't
+   there before, and you will see some weird `export.format.yaml` and
+   `import.format.yaml` export options. These are the "old" profiles we have
+   kept in case you made modifications. We suggest you copy over all changes to
+   the new profiles and then delete them, or rename those old ones to more
+   memorable names. Read more below.
+5. The TableEditor has received a better save strategy to prevent data loss. As
+   it is impossible to fully control the data flow from the visual table element
+   into the underlying Markdown document, this data flow is now explicit: Tables
+   now feature a save button (with a disk icon) at the top of the table. Its
+   background will be green as long as the table has not been modified. Once it
+   it modified, the background will turn red. Click the button to apply all
+   changes to the document.
+6. Quicklook windows are completely gone now.
+7. Footnote editing has changed: Instead of editing the footnote in-place by
+   `Cmd/Ctrl`-clicking it, there is now an "Edit" button inside the footnote
+   preview which, upon clicking, will bring you to the footnote context. This
+   has the benefit that you will have full syntax highlighting support as well
+   as any shortcuts and commands you may need.
+8. We have deprecated the Zettelkasten link start and end configuration
+   settings. Both are now fixed to `[[` and `]]` respectively. We have figured
+   that nobody needs to configure this, and it makes many parts of our code
+   easier.
+
+## Split-Panes and Multiple Windows
+
+A long awaited feature has made it into this version: Now you can open multiple
+windows and you can split the editor area in every window into multiple parts,
+so-called editor _panes_ (sometimes we may call them "leafs" since internally
+they are represented as a tree structure. Feel free to remind us in that case
+that we're talking to humans, not our code). This means you can now open as many
+files as you wish at the same time, and you can spread them out across multiple
+windows. This will especially benefit workflows that rely on having open
+multiple files side by side to copy information or to read them. However, if you
+are happy with the old ways, you can of course opt not to use them. Here's how
+it works:
+
+* You can open a new window by choosing the corresponding menu item in the
+  Windows submenu, or by pressing `Cmd/Ctrl+Shift+N`.
+* You can now drag document tabs not just within the tab bar, but also onto the
+  editor area. If you move a document tab to the borders of the editor, a
+  shimmer will appear that indicates that you can split the editor to that side.
+  If you drop the file on one of the four borders of the editor, this will split
+  the corresponding editor in two along the specified direction (left, right,
+  top, bottom) and also move the file into that new pane.
+* You can also move document tabs between multiple panes by simply dropping them
+  in the center of an editor pane. As long as there's no shimmer, the file will
+  be moved instead. You can also drop a file onto a tabbar of one of the
+  editors, which will have the same effect (but it will be indicated with the
+  same blue shimmer as when you are splitting an editor).
+* After you have closed the last file inside such a pane, it will automatically
+  close itself. If the pane was part of a split, the other pane will then occupy
+  the place of the now closed editor pane. To create the pane again, simply drag
+  another file to the correct border of an existing editor pane.
+* You can resize the panes at will. Unlike the sidebar and file manager, we have
+  not implemented any size limits, so with a little bit of care, you can create
+  your unique mosaic of files.
+* Since we are now not limited to one active file and one set of open files per
+  window, these notions have changed their meaning. Now, every editor pane has
+  one set of open files and one active file. Each window also remembers which
+  pane was last active so that global features (such as the sidebar) can show
+  you information based on the most recently focused editor pane's active file.
+* Most contextual information (table of contents, list of references, etc.) will
+  now update based on the most recently focused editor. In order to make those
+  places show information relating to one of the open editors, simply click with
+  your mouse inside to focus them.
+
+## New Defaults/Profile File System
+
+This update introduces a new way to work with defaults files. At a glance,
+here's what has changed:
+
+* Zettlr now understands the `reader` and `writer` properties of defaults files
+* It uses those properties to determine if a file can be used for importing or
+  exporting, and displays the appropriate files in the relevant places for you
+  to choose
+* You can now create new defaults files, rename existing ones, or remove them
+* When changing the `writer` or `reader` for such a file, this change will be
+  recognized by Zettlr and be treated accordingly
+* This also means that Zettlr will from now on only ship with a minimum set of
+  profiles; but any additional import/export formats can be created by you with
+  just one click
+* Additionally, because of this, you are now able to export LaTeX files directly
+  without running them through a Markdown interpreter first, allowing you to,
+  e.g., create beamer slides or write plain TeX files within Zettlr
+* Furthermore, we have dropped our internal reveal.js exporter, since Pandoc
+  supports everything we did out of the box (and better) than our exporter
+
+## Tag Manager Update
+
+The tag manager has received a necessary face lift. Now, the tag manager shows
+all your tags and allows you to assign/un-assign colors and descriptions. This
+makes it easier to assign colors to certain tags without having to remember the
+tag first. Additionally, it gives you a better overview over your tags. The info
+is now being propagated better across the app, with more places showing the
+assigned colors for tags.
+
+Additionally, you now have a better way to consolidate your tags: Within the
+tag manager, you can now rename tags in order to clean up your tagging system.
+
+### Migration Guide
+
+There are two instances where you will want to migrate something.
+
+#### Old defaults files
+
+Since Zettlr will never remove any data without asking, it will keep the
+previous files in your defaults directory. Now that their filename is also
+meaningful, you can see them by their naming structure: `import.format.yaml` and
+`export.format.yaml`. You are free to remove them or rename and keep them.
+
+Zettlr ships with a set of new files that are now additionally appropriately
+named. Those files are "protected". Protected files have a small lock icon next
+to their name. Protected means that if you delete or rename them, they will
+automatically be recreated. You can use this to your advantage: By deleting such
+a file, you are effectively resetting it to factory default (good if you forgot
+what you changed). By renaming such a file, you can effectively make a copy to
+have several versions of the same settings depending on your needs.
+
+#### Reveal.js Presentations
+
+Since we have now dropped our internal reveal.js exporter, there are a few
+changes you have to make to your existing reveal.js presentations. First, the
+theme must now be defined in a YAML frontmatter instead of via the dropdown. A
+minimal working YAML frontmatter will look like this:
+
+```markdown
+---
+theme: league
+---
+
+... the rest of the file
+```
+
+Supported theme values are:
+
+* `beige`
+* `black` (the default, in this case you can omit the `theme` variable)
+* `blood`
+* `league`
+* `moon`
+* `night`
+* `serif`
+* `simple`
+* `sky`
+* `solarized`
+* `white`
+
+Then, in order to get a working reveal.js presentation, you have to make sure
+that the property `standalone: true` is inside the profile (this is the
+default). In order to additionally copy everything into the HTML file to create
+a truly self-contained presentation, set the property `self-contained: true`.
+
+All other things should work as before, but may require a small tweak here or
+there.
+
+## GUI and Functionality
+
+- **New Feature**: You can now open multiple main windows, each with their own
+  files loaded
+- **New Feature**: You can now arbitrarily split the editor area into multiple
+  editor panes to keep open as many files at the same time as you wish
+- **New Feature**: After a long time, you can now again drag and drop entries in
+  the table of contents in the sidebar to rearrange sections of your file
+- **New Feature**: Overhauled, improved, and streamlined the defaults file
+  system used by the importer and exporter
+- **New Feature**: You can now pin tabs, which prevents them from being closed
+- **New Feature**: The editor will now check your Markdown for potential style
+  issues (can be disabled in the preferences)
+- **New Feature**: In the combined filemanager mode, you can now see writing
+  targets as a ring progress bar in the position of the file icon
+- **New Feature**: Zettlr can now automatically update internal links (Wiki/
+  Zettelkasten style) if you rename a file
+- **New Feature**: When you hover over a link, you can now get a link preview
+- The TableEditor now has a clear data saving strategy: Whenever you change a
+  table, you need to manually click the disk icon at the top of the table to
+  apply all your changes to the document so that it can then be saved
+- Quicklook windows are gone completely now, since they can be more than
+  replaced by the new split views and multiple windows
+- The windows now finally correctly remember their positions, fixing an old bug
+- Improved the link tooltip inside the editor; it will show faster now and is
+  easier to access
+- Zettlr now recognizes Quarto Markdown files (`*.qmd`)
+- Code files (e.g. `*.tex` or `*.json`) now have line numbers enabled and the
+  margins of the main editor removed by default
+- The sidebar tabs are now static at the top, meaning you don't have to scroll
+  up within a long list just to see the tabbar
+- Lists (especially in the assets manager) now also allow you to remove entries
+  with a right click
+- Added new variables for snippets:
+  - `CURRENT_ID`: Holds the currently assigned Zettelkasten ID to the file
+  - `FILENAME`: Holds the filename of the current file
+  - `DIRECTORY`: Holds the directory path for the current file
+  - `EXTENSION`: Holds the file extension for the current file
+- Fixed inability to move the text cursor while renaming files in the file tree
+- Fixed an incredibly dangerous bug that would lead to data loss if the app was
+  being shut down before the statistics provider has been booted up; in which
+  case the provider would overwrite sometimes several years worth of statistics
+  with empty data
+- Added the ability to use mouse buttons 4 and 5 for forward/backward navigation
+- Fixed a visual glitch on Linux where in dark mode the active tab would have no
+  colored bottom border
+- Added a third exporter option: You can now have Zettlr ask you everytime where
+  it should store an exported file
+- In case of an error, the error dialog will now also present the Pandoc error
+  code
+- Fixed a minor bug in toolbar toggle controls that necessitated clicking them
+  twice to bring them into the "active" state (holds especially true for the
+  sidebar toggle)
+- Fixed faulty updates on Windows: Now the downloaded file should be opened
+  without any errors
+- Middle-mouse clicks on the collapse/uncollapse indicators in the file tree
+  should no longer trigger scrolling behavior on Windows
+- File tree items now show their absolute path on mouse hover
+- Clicking a directory will now also uncollapse it without having to click on
+  the arrow
+- The graph view now uses as labels YAML frontmatter titles, first headings
+  level 1, or a filename without extension based on the preferences
+- Fixed a usability issue on macOS where if you wanted to select a BibTeX file
+  for your citations you had to click through intransparent buttons before being
+  able to; now you can immediately select both CSL JSON and BibTeX files
+- Parsed links will now show the correctly resolved link as titles
+- The file tree now properly cuts too long file and directory names, indicating
+  these with an ellipsis, rather than simply cutting off the text mid-letter
+- Pressing `Cmd/Ctrl+S` while a TableEditor is focused, this will now trigger an
+  update that applies the changes to the underlying document. In other words,
+  when editing a table, you can press `Cmd/Ctrl+S` twice to first apply any
+  changes from the table to the document and second save the document itself.
+- The editor now recognizes Pandoc attribute syntax (e.g., `{.unnumbered}`)
+- Added `lua` syntax highlighting support
+- Improved the tutorial to make use of the new split views
+- Citation keys in the autocomplete dropdown are now sorted by number of
+  occurrences in the text
+- Fixed the readability mode color gradient (red -> purple -> blue -> green)
+- The "Save changes" dialog is now simpler and easier to understand
+- The main editor is finally properly styled and looks more natural to work with
+- Pre-rendered citations within Zettlr now respect the composite flag, meaning
+  that `Some sentence by @Author2015` renders as
+  `Some sentence by Author (2015)` instead of `Some sentence by (Author 2015)`
+- Tags now include a measure of informativeness or uniqueness, called Inverse
+  Document Frequency (IDF); the higher this value the more informative a tag is.
+  This number is shown in the tag manager, and tags are ordered by this in some
+  places
+
+## Under the Hood
+
+- Refactored the main editor component further
+- Refactored the Sidebar panels into their own respective components
+- Upgrade Electron to `22.x.x`
+- Upgrade Pandoc to `2.19.2`
+- Upgrade Chart.js to `4.x.x`
+- Upgrade CodeMirror to version 6
+- Upgrade to Yarn v2
+- Pandoc logs are now logged in every case
+- Improve the display and functionality of log messages
+- Switched the configuration file management for the different service providers
+  from the previously very bodged methods to the unified and new
+  PersistentDataContainer
+- Changed the default ports for the logging server to 9001 to avoid collisions
+  with PHP fpm installations on development systems
+- The yaml frontmatter title property is now its own property on file
+  descriptors to centralize the extraction logic and save some code on the
+  renderer's side
+- Extracted the ID extraction functionality to its own utility function
+- Fixed a bug that would incorrectly detect Python comments or C++ pragmas as
+  tags
+- Removed all `Meta` descriptors; now all descriptors are unified across main
+  and renderer processes
+- Documents are now no longer managed by the editor leafs. Instead, they are
+  managed by the document provider
+- Completely removed all instances of `hash`; the FSAL cache now is being called
+  with absolute file paths. Hashed paths are only used to determine the shard.
+- Exchanged `nspell` with `nodehun` so that we can load any Hunspell-compatible
+  dictionary file in Zettlr, including the previously too-complex ones such as
+  the Italian or Portuguese dictionaries
+- Fixed the build pipeline so that native Node modules are now code-signed and
+  work on macOS and Windows, meaning that `chokidar` should not need to fall
+  back to CPU intensive polling anymore
+- Sandbox print preview window iframe elements
+- The update check will no longer block the boot cycle, making start up times
+  fast even in degraded Wifi contexts where there is a connection, but extremely
+  slow
+- Zettlr now attempts to extract the version strings for supported external
+  programs (such as Pandoc, Git, and Quarto) and displays them in the About panel
+- Exchanged Zettlr Translate system with `gettext`
+- Removed the translation provider, since its remaining functionality to list
+  available dictionary files and translations has now been moved to the main
+  command hub
+- Removed the `Zettlr` class; the last remnant of the old, class-based system
+- Remove deprecated modules `svg-inline-loader`, `raw-loader`, and `file-loader`
+
 # 2.3.0
 
 ## GUI and Functionality

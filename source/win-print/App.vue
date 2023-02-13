@@ -11,6 +11,7 @@
     <iframe
       v-bind:src="fileUrl"
       style="position: relative; width: 0; height: 0; width: 100%; height: 100%; border: none"
+      sandbox=""
     >
     </iframe>
   </WindowChrome>
@@ -53,8 +54,8 @@ export default defineComponent({
         document.title = path.basename(this.filePath)
         return path.basename(this.filePath)
       } else {
-        document.title = trans('menu.print')
-        return trans('menu.print')
+        document.title = trans('Print…')
+        return trans('Print…')
       }
     },
     fileUrl: function (): string {

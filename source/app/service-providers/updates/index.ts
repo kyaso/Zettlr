@@ -34,6 +34,7 @@ import NotificationProvider from '../notifications'
 import LogProvider from '../log'
 import CommandProvider from '../commands'
 import { ServerAPIResponse, UpdateState } from '@dts/main/update-provider'
+import ConfigProvider from '@providers/config'
 
 const CUR_VER = app.getVersion()
 const REPO_URL = 'https://zettlr.com/api/releases/latest'
@@ -144,6 +145,13 @@ export default class UpdateProvider extends ProviderContract {
     try {
       this._logger.info(`[Updater] Checking ${REPO_URL} for updates ...`)
       const response: Response<string> = await got(REPO_URL, {
+        // I'm currently on Mälartåg and, despite WiFi normally being pretty good,
+        // it's abysmally slow right now, and I noticed that the update check was
+        // taking forever to complete, which prevented the app from properly
+        // booting up. Then I realized that got by default does not include any
+        // timeout, so I'm adding one here (+ decouple the update check from the
+        // boot cycle further below)
+        timeout: { request: 5000 },
         method: 'GET',
         searchParams: new URLSearchParams([
           [ 'accept-beta', this._config.get('checkForBeta') ]
@@ -165,19 +173,19 @@ export default class UpdateProvider extends ProviderContract {
 
       // Give a more detailed error message.
       if (serverError) {
-        msg = trans('dialog.update.server_error', err.response.statusCode)
+        msg = trans('Could not check for updates: Server Error (Status code: %s)', err.response.statusCode)
       } else if (clientError) {
-        msg = trans('dialog.update.client_error', err.response.statusCode)
+        msg = trans('Could not check for updates: Client Error (Status code: %s)', err.response.statusCode)
       } else if (redirectError) {
-        msg = trans('dialog.update.redirect_error', err.response.statusCode)
+        msg = trans('Could not check for updates: The server tried to redirect (Status code: %s)', err.response.statusCode)
       } else if (notFoundError) {
         // getaddrinfo has reported that the host has not been found.
         // This normally only happens if the networking interface is
         // offline.
-        msg = trans('dialog.update.connection_error')
+        msg = trans('Could not check for updates: Could not establish connection')
       } else {
         // Something else has occurred. GotError objects have a name property.
-        msg = trans('dialog.update.other_error', err.name, err.message)
+        msg = trans('Could not check for updates. %s: %s', err.name, err.message)
       }
 
       this._reportError(err.code, msg)
@@ -193,7 +201,7 @@ export default class UpdateProvider extends ProviderContract {
   private async _parseResponse (response: Response<string>): Promise<void> {
     // Error handling
     if (response.body.trim() === '') {
-      this._reportError('ERR_BODY_PARSE_FAILURE', trans('dialog.update.no_data'))
+      this._reportError('ERR_BODY_PARSE_FAILURE', trans('Could not check for updates: Server hasn\'t sent any data'))
       return
     }
 
@@ -328,6 +336,11 @@ export default class UpdateProvider extends ProviderContract {
     })
 
     this._downloadReadStream.on('end', () => {
+      // Close the write stream. This will free the file handle, which is
+      // important on Windows for the next step, because if this is not done,
+      // Windows will refuse to open the file and emit an error that the file is
+      // still in use.
+      this._downloadWriteStream?.end()
       this._logger.info(`Successfully downloaded ${this._updateState.name}. Transferred ${this._updateState.size_downloaded} bytes overall.`)
       this._notifications.show(`Download of ${this._updateState.name} successful!`, 'Update', () => {
         // The user has clicked the notification, so we can show the update window here
@@ -442,13 +455,15 @@ export default class UpdateProvider extends ProviderContract {
     // Initiate a first check for updates
     const checkUpdates: boolean = this._config.get('system.checkForUpdates')
     if (checkUpdates) {
-      await this.check()
-
-      if (this.applicationUpdateAvailable()) {
-        const { tagName } = this.getUpdateState()
-        this._logger.info(`Update available: ${tagName}`)
-        this._notifications.show(trans('dialog.update.new_update_available', tagName))
-      }
+      this.check()
+        .then(() => {
+          if (this.applicationUpdateAvailable()) {
+            const { tagName } = this.getUpdateState()
+            this._logger.info(`Update available: ${tagName}`)
+            this._notifications.show(trans('An update to version %s is available!', tagName))
+          }
+        })
+        .catch(err => this._logger.error('[Update Provider] Could not check for updates: Unexpected error', err))
     }
   }
 

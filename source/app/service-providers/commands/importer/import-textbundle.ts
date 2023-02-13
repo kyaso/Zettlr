@@ -19,7 +19,7 @@ import ZIP from 'adm-zip'
 
 import { trans } from '@common/i18n-main'
 import isFile from '@common/util/is-file'
-import { DirDescriptor } from '@dts/main/fsal'
+import { DirDescriptor } from '@dts/common/fsal'
 
 /**
  * Imports both textpacks and textbundles to the target directory.
@@ -60,13 +60,13 @@ export default async function importTextbundle (bundle: any, target: DirDescript
     }
   }
 
-  if (!foundMDFile) throw new Error(trans('system.error.malformed_textbundle', path.basename(bundle.path)))
+  if (!foundMDFile) throw new Error(trans('Malformed Textbundle: %s', path.basename(bundle.path)))
 
   // Now the assets
   try {
     bdl = await fs.readdir(path.join(bundle.path, 'assets'))
   } catch (err) {
-    throw new Error(trans('system.error.malformed_textbundle', path.basename(bundle.path)))
+    throw new Error(trans('Malformed Textbundle: %s', path.basename(bundle.path)))
   }
 
   if (bdl.length > 0) {

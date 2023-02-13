@@ -24,9 +24,17 @@ import isDir from '@common/util/is-dir'
 
 import { ignoreDirs as IGNORE_DIR_REGEXP } from '@common/data.json'
 
-import { WatchdogEvent } from '@dts/main/fsal'
 import LogProvider from '@providers/log'
 import { hasMdOrCodeExt } from './util/is-md-or-code-file'
+import ConfigProvider from '@providers/config'
+
+/**
+* Represents an event the watchdog can work with
+*/
+export interface WatchdogEvent {
+  event: string
+  path: string
+}
 
 export default class FSALWatchdog extends EventEmitter {
   private _booting: boolean
@@ -54,6 +62,10 @@ export default class FSALWatchdog extends EventEmitter {
    * @return {void} No return.
    */
   async shutdown (): Promise<void> {
+    // We MUST under all circumstances properly call the close() function on
+    // every chokidar process we utilize. Otherwise, the fsevents dylib will
+    // still hold on to some memory after the Electron process itself shuts down
+    // which will result in a crash report appearing on macOS.
     if (this._process !== null) {
       await this._process.close()
     }
@@ -88,20 +100,9 @@ export default class FSALWatchdog extends EventEmitter {
       followSymlinks: true, // Follow symlinks
       ignorePermissionErrors: true, // In the worst case one has to reboot the software, but so it looks nicer.
 
-      // Chokidar is an asshole to deal with, and as long as we cannot get fsevents
-      // to be compiled together with Electron, chokidar will *always* fall back
-      // to polling on macOS platforms. This is the bad news. The good news,
-      // however, is, that even Microsoft itself has this problem. So their
-      // approach was simply to only poll the file system every 5 seconds, which
-      // does, in fact, reduce the load on the CPU *big time*. This means that
-      // we simply use this setting and then be done with it for the time being.
-      //
-      // Thank you for reading this far! If you, person from the future, have
-      // the cure for what ails our file watching, please come forward and
-      // propose a Pull Request like a lover proposes to their loved ones!
-      //
-      // cf. on ye misery:
-      // https://github.com/microsoft/vscode/blob/master/src/vs/platform/files/node/watcher/unix/chokidarWatcherService.ts
+      // Chokidar should always be using fsevents, but we will be leaving this
+      // in here both in case something happens in the future, and for nostalgic
+      // reasons.
       interval: 5000,
       binaryInterval: 5000
     }
@@ -134,7 +135,7 @@ export default class FSALWatchdog extends EventEmitter {
       if (process.platform === 'darwin' && this._process.options.useFsEvents === false) {
         this._logger.warning('[FSAL Watchdog] The chokidar process falls back to polling. This may lead to a high CPU usage.')
       } else if (process.platform === 'darwin' && this._process.options.useFsEvents === true) {
-        this._logger.info('[FSAL Watchdog] The chokidar process utilizes fsevents. File changes are deteced without polling.')
+        this._logger.info('[FSAL Watchdog] The chokidar process utilizes fsevents. File changes are detected without polling.')
       }
 
       // Add all paths that may have been added to the array while the process

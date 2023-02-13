@@ -15,13 +15,13 @@
 
 // NOTE: fileExists is called "isFile" everywhere else, we have just renamed
 // it because of a naming conflict in the function.
-import fileExists from './is-file'
 import { getProtocolRE, getLinkRE, getMarkDownFileRE } from '../regular-expressions'
 
 const path = window.path
 
 const protocolRE = getProtocolRE()
 const linkRE = getLinkRE()
+const emailRe = /^[a-z0-9-.]+@[a-z0-9-.]+\.[a-z0-9-.]{2,}$/i
 const mdFileRE = getMarkDownFileRE()
 
 /**
@@ -55,6 +55,8 @@ export default function makeValidUri (uri: string, base: string = ''): string {
     // Shortcut for mailto-links, as these have a protocol (mailto) but with
     // *only* a colon, not the double-slash (//).
     return uri
+  } else if (emailRe.test(uri)) {
+    return 'mailto:' + uri
   }
 
   // Set the isFile var to undefined
@@ -74,11 +76,8 @@ export default function makeValidUri (uri: string, base: string = ''): string {
   } else if (uri.startsWith('//') || uri.startsWith('./') || uri.startsWith('../')) {
     // We know it's a file (shared drive, or relative to this directory)
     isFile = true
-  } else if (path.isAbsolute(uri) && fileExists(uri)) {
-    // The link is already absolute and exists
-    isFile = true
-  } else if (path.isAbsolute(uri) && fileExists(path.resolve(base, uri))) {
-    // The link is relative and exists
+  } else if (path.isAbsolute(uri)) {
+    // The link is already absolute
     isFile = true
   }
 

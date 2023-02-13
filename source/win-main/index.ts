@@ -16,10 +16,14 @@ import windowRegister from '@common/modules/window-register'
 import { createApp } from 'vue'
 // import { createStore } from 'vuex'
 import App from './App.vue'
-import createStore from './store'
+import createStore, { key as storeKey } from './store'
 import PopupProvider from './popup-provider'
+import { DP_EVENTS } from '@dts/common/documents'
 
 const ipcRenderer = window.ipc
+
+const searchParams = new URLSearchParams(window.location.search)
+const windowId = searchParams.get('window_id')
 
 // The first thing we have to do is run the window controller
 windowRegister()
@@ -28,7 +32,7 @@ const appStore = createStore()
 
 // Create the Vue app. We additionally use appStore, which exposes $store, and
 // PopupProvider, which exposes $showPopover, $togglePopover, and $closePopover
-const app = createApp(App).use(appStore).use(PopupProvider).mount('#app')
+const app = createApp(App).use(appStore, storeKey).use(PopupProvider).mount('#app')
 
 document.addEventListener('dragover', function (event) {
   event.preventDefault()
@@ -62,9 +66,9 @@ document.addEventListener('drop', (event) => {
 /**
  * Listen to update events
  */
-function updateColouredTags (): void {
+function updateColoredTags (): void {
   ipcRenderer.invoke('tag-provider', {
-    command: 'get-coloured-tags'
+    command: 'get-colored-tags'
   })
     .then(tags => {
       app.$store.commit('colouredTags', tags)
@@ -72,31 +76,13 @@ function updateColouredTags (): void {
     .catch(e => console.error(e))
 }
 
-ipcRenderer.on('coloured-tags', (event) => {
+ipcRenderer.on('colored-tags', (event) => {
   // Update the tags
-  updateColouredTags()
+  updateColoredTags()
 })
 
 // Send the first update for tags
-updateColouredTags()
-
-// -----------------------------------------------------------------------------
-
-function updateCitationDatabase (): void {
-  ipcRenderer.invoke('citeproc-provider', { command: 'get-items' })
-    .then(cslData => {
-      app.$store.commit('updateCSLItems', cslData)
-    })
-    .catch(err => console.error(err))
-}
-
-ipcRenderer.on('citeproc-provider', (event, message) => {
-  if (message === 'database-changed') {
-    updateCitationDatabase()
-  }
-})
-
-updateCitationDatabase()
+updateColoredTags()
 
 // -----------------------------------------------------------------------------
 
@@ -107,28 +93,15 @@ ipcRenderer.on('config-provider', (event, { command, payload }) => {
   }
 })
 
-// -----------------------------------------------------------------------------
-
-// Listen for updates to the tag database
-ipcRenderer.on('tags', (event) => {
-  ipcRenderer.invoke('tag-provider', { command: 'get-tags-database' })
-    .then(tags => {
-      app.$store.commit('updateTagDatabase', tags)
-    })
-    .catch(e => console.error(e))
+// Listen for document state updates
+ipcRenderer.on('documents-update', (evt, payload) => {
+  app.$store.dispatch('documentTree', payload).catch(err => console.error(err))
 })
-
-// Also send an initial update
-ipcRenderer.invoke('tag-provider', { command: 'get-tags-database' })
-  .then(tags => {
-    app.$store.commit('updateTagDatabase', tags)
-  })
-  .catch(e => console.error(e))
 
 // -----------------------------------------------------------------------------
 let filetreeUpdateLock = false
 let openDirectoryLock = false
-let activeFileUpdateLock = false
+
 // Listen for broadcasts from main in order to update the filetree
 ipcRenderer.on('fsal-state-changed', (event, kind: string) => {
   if (kind === 'filetree') {
@@ -149,17 +122,27 @@ ipcRenderer.on('fsal-state-changed', (event, kind: string) => {
     app.$store.dispatch('updateOpenDirectory')
       .catch(e => console.error(e))
       .finally(() => { openDirectoryLock = false })
-  } else if (kind === 'activeFile') {
-    if (activeFileUpdateLock) {
-      return
-    }
+  }
+})
 
-    activeFileUpdateLock = true
-    app.$store.dispatch('updateActiveFile')
+ipcRenderer.on('documents-update', (event, payload) => {
+  // A file has been saved or modified
+  if (payload.event === DP_EVENTS.CHANGE_FILE_STATUS && payload.status === 'modification') {
+    app.$store.dispatch('updateModifiedFiles')
       .catch(e => console.error(e))
-      .finally(() => { activeFileUpdateLock = false })
-  } else if (kind === 'openFiles') {
-    app.$store.dispatch('updateOpenFiles')
+  }
+})
+
+ipcRenderer.on('targets-provider', (event, what: string) => {
+  if (what === 'writing-targets-updated') {
+    app.$store.dispatch('updateWritingTargets')
+      .catch(e => console.error(e))
+  }
+})
+
+ipcRenderer.on('assets-provider', (event, what: string) => {
+  if (what === 'snippets-updated') {
+    app.$store.dispatch('updateSnippets')
       .catch(e => console.error(e))
   }
 })
@@ -167,17 +150,19 @@ ipcRenderer.on('fsal-state-changed', (event, kind: string) => {
 // Initial update
 filetreeUpdateLock = true
 openDirectoryLock = true
-activeFileUpdateLock = true
 app.$store.dispatch('filetreeUpdate')
   .catch(e => console.error(e))
   .finally(() => { filetreeUpdateLock = false })
 app.$store.dispatch('updateOpenDirectory')
   .catch(e => console.error(e))
   .finally(() => { openDirectoryLock = false })
-app.$store.dispatch('updateActiveFile')
+app.$store.dispatch('documentTree', { event: 'init', context: { windowId } })
+  .catch(err => console.error(err))
+app.$store.dispatch('updateModifiedFiles')
   .catch(e => console.error(e))
-  .finally(() => { activeFileUpdateLock = false })
-app.$store.dispatch('updateOpenFiles')
+app.$store.dispatch('updateSnippets')
+  .catch(e => console.error(e))
+app.$store.dispatch('updateWritingTargets')
   .catch(e => console.error(e))
 
 // -----------------------------------------------
@@ -218,5 +203,7 @@ ipcRenderer.on('shortcut', (event, command) => {
       payload: { path: dirDescriptor.path }
     })
       .catch(err => console.error(err))
+  } else if (command === 'toggle-distraction-free') {
+    app.$store.commit('toggleDistractionFree')
   }
 })

@@ -32,6 +32,10 @@ export default {
     obj: {
       type: Object,
       default: function () { return {} }
+    },
+    windowId: {
+      type: String,
+      required: true
     }
   },
   data: function () {
@@ -44,7 +48,7 @@ export default {
       return this.obj.type === 'directory'
     },
     selectedFile: function () {
-      return this.$store.state.activeFile
+      return this.$store.getters.lastLeafActiveFile()
     },
     selectedDir: function () {
       return this.$store.state.selectedDirectory
@@ -97,20 +101,15 @@ export default {
         event.preventDefault() // Otherwise, on Windows we'd have a middle-click-scroll
       }
 
-      if (type === 'file' && alt) {
-        // QuickLook the file
-        ipcRenderer.invoke('application', {
-          command: 'open-quicklook',
-          payload: this.obj.path
-        })
-          .catch(e => console.error(e))
-      } else if ([ 'file', 'code' ].includes(type)) {
+      if ([ 'file', 'code' ].includes(type)) {
         // Request the clicked file
-        ipcRenderer.invoke('application', {
+        ipcRenderer.invoke('documents-provider', {
           command: 'open-file',
           payload: {
             path: this.obj.path,
-            newTab: middleClick // Force a new tab in this case.
+            windowId: this.windowId,
+            leafId: this.$store.state.lastLeafId,
+            newTab: middleClick || (alt && type === 'file') // Force a new tab in this case.
           }
         })
           .catch(e => console.error(e))
@@ -133,6 +132,11 @@ export default {
             payload: this.obj.path
           })
             .catch(e => console.error(e))
+        }
+
+        // Also uncollapse (only applies in file trees)
+        if (this.hasChildren === true) {
+          this.collapsed = this.collapsed === false
         }
       }
     },
@@ -183,7 +187,6 @@ export default {
             })
               .catch(err => console.error(err))
           } else if (clickedID === 'menu.properties') {
-            console.log('git dir', this.obj.isGitRepository)
             const data = {
               dirname: this.obj.name,
               creationtime: this.obj.creationtime,
@@ -194,22 +197,19 @@ export default {
                 .filter(file => file.type === 'file')
                 .map(file => file.wordCount)
                 .reduce((prev, cur) => prev + cur, 0),
-              isProject: this.obj.type === 'directory' && this.obj.project !== null,
+              isProject: this.obj.type === 'directory' && this.obj.settings.project !== null,
               fullPath: this.obj.path,
               isGitRepository: this.obj.isGitRepository,
               icon: this.obj.icon
             }
 
-            if (this.obj.sorting !== null) {
-              data.sortingType = this.obj.sorting.split('-')[0]
-              data.sortingDirection = this.obj.sorting.split('-')[1]
-            } // Else: Default sorting of name-up
+            ;[ data.sortingType, data.sortingDirection ] = this.obj.settings.sorting.split('-')
 
             const elem = (treeItem) ? this.$refs['display-text'] : this.$el
 
             this.$showPopover(PopoverDirProps, elem, data, (data) => {
               // Apply new sorting if applicable
-              if (data.sorting !== this.obj.sorting) {
+              if (data.sorting !== this.obj.settings.sorting) {
                 ipcRenderer.invoke('application', {
                   command: 'dir-sort',
                   payload: {
@@ -234,7 +234,7 @@ export default {
               }
 
               // Set the icon if it has changed
-              if (data.icon !== this.obj.icon) {
+              if (data.icon !== this.obj.settings.icon) {
                 ipcRenderer.invoke('application', {
                   command: 'dir-set-icon',
                   payload: {
@@ -250,10 +250,11 @@ export default {
         fileContextMenu(event, this.obj, this.$el, (clickedID) => {
           if (clickedID === 'new-tab') {
             // Request the clicked file, explicitly in a new tab
-            ipcRenderer.invoke('application', {
+            ipcRenderer.invoke('documents-provider', {
               command: 'open-file',
               payload: {
                 path: this.obj.path,
+                windowId: this.windowId,
                 newTab: true
               }
             })
@@ -263,7 +264,11 @@ export default {
           } else if (clickedID === 'menu.duplicate_file') {
             ipcRenderer.invoke('application', {
               command: 'file-duplicate',
-              payload: { path: this.obj.path }
+              payload: {
+                path: this.obj.path,
+                windowId: this.windowId,
+                leafId: this.$store.state.lastLeafId
+              }
             })
               .catch(err => console.error(err))
           } else if (clickedID === 'menu.delete_file') {
@@ -274,6 +279,7 @@ export default {
               .catch(err => console.error(err))
           } else if (clickedID === 'properties') {
             const data = {
+              filepath: this.obj.path,
               filename: this.obj.name,
               creationtime: this.obj.creationtime,
               modtime: this.obj.modtime,
@@ -289,9 +295,10 @@ export default {
               ext: this.obj.ext
             }
 
-            if (this.hasWritingTarget === true) {
-              data.targetValue = this.obj.target.count
-              data.targetMode = this.obj.target.mode
+            const target = this.getWritingTarget(this.obj.path)
+            if (target !== undefined) {
+              data.targetValue = target.count
+              data.targetMode = target.mode
             }
 
             if (this.obj.type === 'file') {
@@ -301,30 +308,11 @@ export default {
             const elem = (treeItem) ? this.$refs['display-text'] : this.$el
 
             this.$showPopover(PopoverFileProps, elem, data, (data) => {
-              // Whenever the data changes, update the target
-
-              // 1.: Writing Target
-              if (this.obj.type === 'file') {
-                ipcRenderer.invoke('application', {
-                  command: 'set-writing-target',
-                  payload: {
-                    mode: data.target.mode,
-                    count: data.target.value,
-                    path: this.obj.path
-                  }
-                }).catch(e => console.error(e))
-              }
             })
           } else if (clickedID === 'menu.close_file') {
             // The close_file item is only shown in the tree view on root files
             ipcRenderer.invoke('application', {
               command: 'root-close',
-              payload: this.obj.path
-            })
-              .catch(err => console.error(err))
-          } else if (clickedID === 'menu.quicklook') {
-            ipcRenderer.invoke('application', {
-              command: 'open-quicklook',
               payload: this.obj.path
             })
               .catch(err => console.error(err))
@@ -373,7 +361,7 @@ export default {
       const command = (this.obj.type === 'directory') ? 'dir-rename' : 'file-rename'
 
       ipcRenderer.invoke('application', {
-        command: command,
+        command,
         payload: {
           path: this.obj.path,
           name: newName
@@ -381,6 +369,15 @@ export default {
       })
         .catch(e => console.error(e))
         .finally(() => { this.nameEditing = false })
+    },
+    getWritingTarget: function (filePath) {
+      const targets = this.$store.state.writingTargets
+
+      if (targets.length === 0) {
+        return undefined
+      }
+
+      return targets.find(x => x.path === filePath)
     }
   }
 }

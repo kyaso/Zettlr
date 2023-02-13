@@ -1,35 +1,29 @@
 <template>
-  <div
-    class="tree-item-container"
-    v-bind:data-hash="obj.hash"
-    v-on:dragover="acceptDrags"
-    v-on:dragenter="enterDragging"
-    v-on:dragleave="leaveDragging"
-    v-on:drop="handleDrop"
-  >
+  <div class="tree-item-container">
     <div
       v-bind:class="{
         'tree-item': true,
         [obj.type]: true,
         'selected': isSelected,
         'active': activeItem === obj.path,
-        'project': obj.type === 'directory' && obj.project != null,
+        'project': obj.type === 'directory' && obj.settings.project != null,
         'root': isRoot
       }"
-      v-bind:data-hash="obj.hash"
       v-bind:data-id="obj.type === 'file' ? obj.id : ''"
       v-bind:style="{
         'padding-left': `${depth * 15 + 10}px`
       }"
+      v-bind:title="obj.path"
       v-on:click.stop="requestSelection"
       v-on:auxclick.stop="requestSelection"
       v-on:contextmenu="handleContextMenu"
+      v-on:dragover="acceptDrags"
+      v-on:dragenter="enterDragging"
+      v-on:dragleave="leaveDragging"
+      v-on:drop="handleDrop"
     >
       <!-- First: Secondary icon (only if primaryIcon displays the chevron) -->
-      <span
-        class="item-icon"
-        aria-hidden="true"
-      >
+      <span class="item-icon" aria-hidden="true">
         <clr-icon
           v-if="secondaryIcon !== false"
           v-bind:shape="secondaryIcon"
@@ -41,11 +35,16 @@
         />
       </span>
       <!-- Second: Primary icon (either the chevron, or the custom icon) -->
-      <span
-        class="toggle-icon"
-      >
+      <span class="toggle-icon" aria-hidden="true">
+        <!-- If the customIcon is set to 'writing-target' we need to display our
+        custom progress ring, instead of a regular icon -->
+        <RingProgress
+          v-if="primaryIcon === 'writing-target'"
+          v-bind:ratio="writingTargetPercent"
+        ></RingProgress>
+        <!-- Otherwise, display whatever the secondary Icon is -->
         <clr-icon
-          v-if="primaryIcon !== false"
+          v-else-if="primaryIcon !== false"
           v-bind:shape="primaryIcon"
           role="presentation"
           v-bind:class="{
@@ -53,6 +52,7 @@
             'special': typeof primaryIcon !== 'boolean' && ![ 'caret right', 'caret down' ].includes(primaryIcon)
           }"
           v-on:click.stop="handlePrimaryIconClick"
+          v-on:auxclick.stop.prevent="handlePrimaryIconClick"
         ></clr-icon>
       </span>
       <span
@@ -63,7 +63,6 @@
         }"
         role="button"
         v-bind:aria-label="`Select ${obj.name}`"
-        v-bind:data-hash="obj.hash"
         v-bind:draggable="!isRoot"
         v-on:dragstart="beginDragging"
         v-on:drag="onDragHandler"
@@ -78,6 +77,7 @@
             v-bind:value="obj.name"
             v-on:keyup.enter="finishNameEditing(($event.target as HTMLInputElement).value)"
             v-on:keyup.esc="nameEditing = false"
+            v-on:keydown.stop=""
             v-on:blur="nameEditing = false"
             v-on:click.stop=""
           >
@@ -100,19 +100,22 @@
         v-if="operationType !== undefined"
         ref="new-object-input"
         type="text"
-        v-on:keyup.esc="operationType = undefined"
-        v-on:blur="operationType = undefined"
         v-on:keyup.enter="handleOperationFinish(($event.target as HTMLInputElement).value)"
+        v-on:keyup.esc="operationType = undefined"
+        v-on:keydown.stop=""
+        v-on:blur="operationType = undefined"
+        v-on:click.stop=""
       >
     </div>
     <div v-if="isDirectory && !shouldBeCollapsed">
       <TreeItem
         v-for="child in filteredChildren"
-        v-bind:key="child.hash"
+        v-bind:key="child.path"
         v-bind:obj="child"
         v-bind:is-currently-filtering="isCurrentlyFiltering"
         v-bind:depth="depth + 1"
         v-bind:active-item="activeItem"
+        v-bind:window-id="windowId"
       >
       </TreeItem>
     </div>
@@ -138,14 +141,16 @@ import itemMixin from './util/item-mixin'
 import generateFilename from '@common/util/generate-filename'
 import { trans } from '@common/i18n-renderer'
 
+import RingProgress from '@common/vue/window/toolbar-controls/RingProgress.vue'
 import { nextTick, defineComponent } from 'vue'
-import { MDFileMeta, DirMeta, CodeFileMeta } from '@dts/common/fsal'
+import { DirDescriptor, MaybeRootDescriptor } from '@dts/common/fsal'
 
 const path = window.path
 const ipcRenderer = window.ipc
 
 export default defineComponent({
   name: 'TreeItem',
+  components: { RingProgress },
   mixins: [itemMixin],
   props: {
     // How deep is this tree item nested?
@@ -158,7 +163,7 @@ export default defineComponent({
       default: false // Can only be true if root and actually has a duplicate name
     },
     obj: {
-      type: Object as () => MDFileMeta|DirMeta|CodeFileMeta,
+      type: Object as () => MaybeRootDescriptor,
       required: true
     },
     isCurrentlyFiltering: {
@@ -168,6 +173,10 @@ export default defineComponent({
     activeItem: {
       type: String,
       default: undefined
+    },
+    windowId: {
+      type: String,
+      required: true
     }
   },
   data: () => {
@@ -194,7 +203,7 @@ export default defineComponent({
      * @return  {string|boolean}  False if no secondary icon
      */
     secondaryIcon: function (): string|boolean {
-      if (this.hasChildren === false) {
+      if (!this.hasChildren) {
         // If whatever the object we're representing has no children, we do not
         // need the secondary icon, since the primary icon will display whatever
         // is necessary.
@@ -226,32 +235,49 @@ export default defineComponent({
      * @return  {string|boolean}  False if no custom icon.
      */
     customIcon: function (): string|boolean {
-      if (this.obj.type !== 'directory') {
-        // Indicate that this is a file.
-        if (this.obj.type === 'file') {
-          return 'file'
-        } else {
-          return 'code'
-        }
+      if (this.obj.type === 'file' && this.writingTarget !== undefined) {
+        return 'writing-target'
+      } else if (this.obj.type === 'file') {
+        return 'file'
+      } else if (this.obj.type === 'code') {
+        return 'code'
       } else if (this.obj.dirNotFoundFlag === true) {
         return 'disconnect'
-      } else if (this.obj.project !== null) {
+      } else if (this.obj.settings.project !== null) {
         // Indicate that this directory has a project.
         return 'blocks-group'
-      } else if (this.obj.icon !== null) {
+      } else if (this.obj.settings.icon != null) {
         // Display the custom icon
-        return this.obj.icon
+        return this.obj.settings.icon
       }
 
       // No icon available
       return false
     },
+    writingTarget: function (): undefined|{ path: string, mode: 'words'|'chars', count: number } {
+      if (this.obj.type !== 'file') {
+        return undefined
+      } else {
+        return this.$store.state.writingTargets.find((x: any) => x.path === this.obj.path)
+      }
+    },
+    writingTargetPercent: function (): number {
+      if (this.writingTarget !== undefined && this.obj.type === 'file') {
+        const count = this.writingTarget.mode === 'words'
+          ? this.obj.wordCount
+          : this.obj.charCount
+
+        let ratio = count / this.writingTarget.count
+        return Math.min(1, ratio)
+      } else {
+        return 0.0
+      }
+    },
     /**
      * Returns true if this item is a root item
      */
     isRoot: function (): boolean {
-      // Parent apparently can also be undefined BUG
-      return this.obj.parent == null
+      return this.obj.root
     },
     /**
      * Returns true if the file manager mode is set to "combined"
@@ -281,14 +307,14 @@ export default defineComponent({
     /**
      * Returns a list of children that can be displayed inside the tree view
      */
-    filteredChildren: function (): Array<MDFileMeta|DirMeta|CodeFileMeta> {
+    filteredChildren: function (): MaybeRootDescriptor[] {
       if (this.obj.type !== 'directory') {
         return []
       }
       if (this.combined === true) {
-        return this.obj.children.filter(child => child.type !== 'other') as Array<MDFileMeta|DirMeta|CodeFileMeta>
+        return this.obj.children.filter(child => child.type !== 'other') as MaybeRootDescriptor[]
       } else {
-        return this.obj.children.filter(child => child.type === 'directory') as DirMeta[]
+        return this.obj.children.filter(child => child.type === 'directory') as DirDescriptor[]
       }
     },
     useH1: function (): boolean {
@@ -305,8 +331,8 @@ export default defineComponent({
         return this.obj.name
       }
 
-      if (this.useTitle && typeof this.obj.frontmatter?.title === 'string') {
-        return this.obj.frontmatter.title
+      if (this.useTitle && this.obj.yamlTitle !== undefined) {
+        return this.obj.yamlTitle
       } else if (this.useH1 && this.obj.firstHeading !== null) {
         return this.obj.firstHeading
       } else if (this.displayMdExtensions) {
@@ -354,7 +380,7 @@ export default defineComponent({
             input.value = generateFilename(filenamePattern, idGenPattern)
           } else if (this.operationType === 'createDir') {
             // Else standard val for new dirs.
-            input.value = trans('dialog.dir_new.value')
+            input.value = trans('Untitled')
           }
           input.focus()
           // Select from the beginning until the last dot
@@ -529,9 +555,23 @@ export default defineComponent({
 <style lang="less">
 body {
   div.tree-item-container {
-    white-space: nowrap;
-
     .tree-item {
+      white-space: nowrap;
+      display: flex;
+
+      .item-icon, .toggle-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        flex-shrink: 0; // Prevent shrinking; only the display text should
+      }
+
+      .display-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
       // These inputs should be more or less "invisible"
       input {
         border: none;
@@ -580,11 +620,6 @@ body.darwin {
     // On macOS, non-standard icons are normally displayed in color
     clr-icon.special { color: var(--system-accent-color, --c-primary); }
 
-    .item-icon, .toggle-icon {
-      display: inline-block;
-      width: 18px; // Size of clr-icon with the margin of the icon
-    }
-
     .display-text {
       font-size: 13px;
       padding: 3px 5px;
@@ -614,11 +649,6 @@ body.win32 {
   .tree-item {
     margin: 8px 0px;
 
-    .item-icon, .toggle-icon {
-      display: inline-block;
-      width: 18px; // Size of clr-icon with the margin of the icon
-    }
-
     .display-text {
       font-size: 13px;
       padding: 3px 5px;
@@ -636,11 +666,6 @@ body.win32 {
 body.linux {
   .tree-item {
     margin: 8px 0px;
-
-    .item-icon, .toggle-icon {
-      display: inline-block;
-      width: 18px; // Size of clr-icon with the margin of the icon
-    }
 
     .display-text {
       font-size: 13px;

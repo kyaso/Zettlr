@@ -109,6 +109,7 @@ In the following, every customization so far is listed, as well as the related v
   <a href="https://www.zettlr.com/" target="_blank">Homepage</a> |
   <a href="https://www.zettlr.com/download">Download</a> |
   <a href="https://docs.zettlr.com/" target="_blank">Documentation</a> |
+  <a rel="me" href="https://fosstodon.org/@zettlr" target="_blank">Mastodon</a> |
   <a href="https://discord.gg/PcfS3DM9Xj" target="_blank">Discord</a> |
   <a href="#contributing">Contributing</a> |
   <a href="https://www.patreon.com/zettlr" target="_blank">Support Us</a>
@@ -131,15 +132,29 @@ With Zettlr, writing professional texts is easy and motivating: Whether you are 
 - **Code highlighting** for many languages
 - Simple and beautiful **exports** with [Pandoc](https://pandoc.org/), [LaTeX](https://www.latex-project.org/), and [Textbundle](http://textbundle.org/)
 - Support for state of the art knowledge management techniques (**Zettelkasten**)
-- A revolutionary **search algorithm** with integrated heatmap
+- A powerful **full text search** that helps you find anything, anywhere
 
-… and the best is: **Zettlr is [Open Source (FOSS)](https://en.wikipedia.org/wiki/Free_and_open-source_software)!**
+… and the best is: **Zettlr is [Free and Open Source Software (FOSS)](https://en.wikipedia.org/wiki/Free_and_open-source_software)!**
 
 ## Installation
 
-To install Zettlr, just [download the latest release](https://www.zettlr.com/download/) for your operating system! Currently supported are macOS, Windows, and most Linux distributions (via Debian- and Fedora-packages as well as AppImages).
+To install Zettlr, just [download the latest release](https://www.zettlr.com/download/) for your operating system. Currently supported are macOS, Windows, and most Linux distributions (via Debian- and Fedora-packages as well as AppImages).
 
-All other [platforms that Electron supports](https://www.electronjs.org/docs/tutorial/support#supported-platforms) are supported as well, but you will need to build the app yourself for this to work.
+On our website and here on GitHub, we provide a set of installers for the most common use-cases. We provide both 64-bit installers as well as installers for ARM systems (called "Apple Silicon" in the macOS ecosystem). 32-bit is not supported. We offer the following binaries directly:
+
+* Windows (x64 and ARM)
+* macOS (Intel and Apple Silicon)
+* Debian and Fedora (x64 and ARM)
+* AppImage (x64 and ARM)
+
+Thanks to our community, we can also offer you a variety of other installation opportunities:
+
+* [Chocolatey (Windows)](https://community.chocolatey.org/packages/zettlr/)
+* [Homebrew (macOS)](https://formulae.brew.sh/cask/zettlr)
+* [AUR (Arch Linux)](https://wiki.archlinux.org/title/Zettlr)
+* [FlatPack (Linux)](https://flathub.org/apps/details/com.zettlr.Zettlr)
+
+All other [platforms that Electron supports](https://www.electronjs.org/docs/latest/development/build-instructions-gn#platform-prerequisites) are supported as well, but you will need to build the app yourself for this to work.
 
 **Please also consider [becoming a patron](https://www.patreon.com/zettlr) or making a [one-time donation](https://paypal.me/hendrikerz)!**
 
@@ -147,14 +162,36 @@ All other [platforms that Electron supports](https://www.electronjs.org/docs/tut
 
 After you have installed Zettlr, [head over to our documentation](https://docs.zettlr.com/) to get to know Zettlr. Refer to the [Quick Start Guide](https://docs.zettlr.com/en/5-minutes/), if you prefer to use software heads-on.
 
-![The central window of Zettlr using the Night Theme](/resources/screenshots/zettlr_view_dark.png)
+![The central window of Zettlr using the dark theme](/resources/screenshots/zettlr_view_dark.png)
 
 ## Contributing
 
-Zettlr is an [Electron](https://www.electronjs.org/)-based app, so to start developing, you'll need to have:
+As an Open Source application, Zettlr always welcomes contributions from the community. **You do not need to know how to write code to help!** A full overview over all the areas where you can help can be found in our [contributing guide](./CONTRIBUTING.md). Here, we introduce you to the two biggest areas where we welcome help: translations and contributing code.
 
-1. A [NodeJS](https://nodejs.org/)-stack installed on your computer. Make sure it's at least Node 14 (`lts/fermium`). To test what version you have, run `node -v`.
-2. [Yarn](https://yarnpkg.com/en/) installed. Yarn is the required package manager for the project, as we do not commit `package-lock.json`-files and many commands require yarn. You can install this globally using `npm install -g yarn` or Homebrew, if you are on macOS.
+### Translating
+
+The development team maintains the English and German translations, but lacks adequate knowledge of other languages. All the other available translations have been created by our community.
+
+Zettlr's translations utilize the [gettext system](https://www.gnu.org/software/gettext/). This means that the translations are kept in PO-files within the [`static/lang` directory](./static/lang).
+
+To update a translation, simply download the corresponding language file and edit it. You can edit PO-files with a simple text editor, but if you prefer a more comfortable graphical editor, there are many out there. One good option is the Open Source editor [POedit](https://poedit.net/).
+
+As soon as you are happy with your changes, open a Pull Request here that updates the corresponding file. GitHub has created a great [guide on how to open Pull Requests](https://docs.github.com/en/repositories/working-with-files/managing-files/editing-files#editing-files-in-another-users-repository).
+
+### Contributing Code
+
+Zettlr is an [Electron](https://www.electronjs.org/)-based app, so to start developing, you'll need to have the following installed on your computer:
+
+1. A [NodeJS](https://nodejs.org/)-stack. Make sure it's at least Node 14 (`lts/fermium`). To test what version you have, run `node -v`.
+2. [Yarn](https://yarnpkg.com/en/). This is the package manager for the project, as we do not commit `package-lock.json`-files and many commands require yarn. You can install this globally using `npm install -g yarn` or Homebrew, if you are on macOS.
+3. On Windows, we recommend to [install the Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install), which will make many of the next steps easier.
+4. A few command-line utilities that the build script requires to download Pandoc to your development setup:
+    * [`cURL`](https://curl.se/download.html)
+    * `unzip`
+5. An appropriate build toolchain for your operating system, since Zettlr requires a few native C++-modules that must be compiled before running the app:
+    * **macOS**: On macOS, installing the XCode command-line tools via `xcode-select --install` suffices
+    * **Windows**: On Windows, you'll need the [free Visual Studio development tools](https://visualstudio.microsoft.com/free-developer-offers/) that include the required tools
+    * **Linux**: On Linux, there are a variety of compatible toolchains available, sometimes they are already preinstalled. Refer to your distribution's manual for more information.
 
 Then, simply clone the repository and install the dependencies on your local computer:
 
@@ -166,17 +203,17 @@ $ yarn install --frozen-lockfile
 
 The `--frozen-lockfile` flag ensures that yarn will stick to the versions as listed in the `yarn.lock` and not attempt to update them.
 
-During development, hot module reloading is active so that you can edit the renderer's code easily and hit `F5` after the changes have been compiled by `electron-forge`. You can keep the developer tools open to see when HMR has finished loading your changes.
+During development, hot module reloading (HMR) is active so that you can edit the renderer's code easily and hit `F5` after the changes have been compiled by `electron-forge`. You can keep the developer tools open to see when HMR has finished loading your changes.
 
 ### What Should I Know To Contribute Code?
 
-In order to provide code, you should have basic familiarity with the following topics and/or manuals (ordered by importance descending):
+In order to provide code, you should have basic familiarity with the following topics and/or manuals (ordered by descending importance):
 
 * [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript) (especially asynchronous code) and [TypeScript](https://www.typescriptlang.org/docs/)
 * [Node.js](https://nodejs.org/api/)
 * [Electron](https://www.electronjs.org/docs)
-* [Vue.js](https://vuejs.org/v2/guide/) (2.x) and [Vuex](https://vuex.vuejs.org/)
-* [CodeMirror](https://codemirror.net/doc/manual.html) (5.x)
+* [Vue.js 3.x](https://vuejs.org/guide/introduction.html) and [Vuex](https://vuex.vuejs.org/)
+* [CodeMirror 6.x](https://codemirror.net/docs/)
 * [ESLint](https://eslint.org/)
 * [LESS](https://lesscss.org/#)
 * [Webpack 5.x](https://webpack.js.org/concepts/)
@@ -223,12 +260,6 @@ The resulting setup bundles are stored in `./release`.
 
 > Please note that, while you can `package` directly for your platform without any suffix, for creating a release specifying the platform is required as electron-builder would otherwise include the development-dependencies in the `app.asar`, resulting in a bloated application.
 
-#### `lang:refresh`
-
-This downloads the four default translations of the application from [Zettlr Translate](https://translate.zettlr.com/), with which it is shipped by default. It places the files in the `static/lang`-directory. Currently, the default languages are: German (Germany), English (USA), English (UK), and French (France).
-
-> Please note, that this command is intended for an automated workflow that runs from time to time on the repository to perform this action. This means: Do **not** commit updated files to the repository. Instead, the updated files will be downloaded whenever you `git fetch`.
-
 #### `csl:refresh`
 
 This downloads the [Citation Style Language](https://citationstyles.org/) (CSL) files with which the application is shipped, and places them in the `static/csl-locales`- and `static/csl-styles`-directories respectively.
@@ -260,6 +291,8 @@ Use this command to carefree test any changes you make to the application. This 
 **The first time you start this command**, pass the `--clean`-flag to copy a bunch of test-files to your `./resources`-directory, create a `test-config.yml` in your project root, and start the application with this clean configuration. Then, you can adapt the `test-config.yml` to your liking (so that certain settings which you would otherwise _always_ set will be pre-set without you having to open the preferences).
 
 Whenever you want to reset the test directory to its initial state (or you removed the directory, or cloned the whole project anew), pass the flag `--clean` to the command in order to create or reset the directory. **This is also necessary if you changed something in `test-config.yml`**.
+
+If you want to prevent a config-file from being created (e.g., to simulate the first start experience), you can pass the flag `--no-config` to this command.
 
 You can pass additional command-line switches such as `--clear-cache` to this command as well. They will be passed to the child process.
 
@@ -310,7 +343,6 @@ Zettlr is a mature app that has amassed hundreds of directories over the course 
 │   ├── win-paste-image            # The modal displayed when pasting an image
 │   ├── win-preferences            # The preferences window
 │   ├── win-print                  # Code for the print and preview window
-│   ├── win-quicklook              # Code for the Quicklook windows
 │   ├── win-stats                  # Code for the general statistics window
 │   ├── win-tag-manager            # Code for the tag manager
 │   └── win-update                 # The dedicated update window

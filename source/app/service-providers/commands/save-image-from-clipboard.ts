@@ -32,14 +32,13 @@ export default class SaveImage extends ZettlrCommand {
    * @param  {Object} target Options on the image
    * @return {void}        Does not return.
    */
-  async run (evt: string /*, target: any */): Promise<any> {
-    const activeFile = this._app.documents.activeFile
-    if (activeFile === null) {
-      return this._app.notifications.show(trans('system.error.fnf_message'))
+  async run (evt: string, arg: any): Promise<any> {
+    if (!('startPath' in arg)) {
+      return this._app.notifications.show(trans('The requested file was not found.'))
     }
 
     const defaultPath = this._app.config.get('editor.defaultSaveImagePath')
-    const startPath = path.resolve(activeFile.dir, defaultPath)
+    const startPath = path.resolve(arg.startPath, defaultPath)
 
     const target = await this._app.windows.showPasteImageModal(startPath)
     if (target === undefined) {
@@ -52,7 +51,7 @@ export default class SaveImage extends ZettlrCommand {
 
     // A file must be opened and active, and the name valid
     if (targetFile === '') {
-      return this._app.notifications.show(trans('system.error.no_allowed_chars'))
+      return this._app.notifications.show(trans('The provided name did not contain any allowed letters.'))
     }
 
     // Now check the extension of the name (some users may
@@ -73,7 +72,7 @@ export default class SaveImage extends ZettlrCommand {
 
     // If something went wrong or the user did not provide a directory, abort
     if (!isDir(target.targetDir)) {
-      return this._app.notifications.show(trans('system.error.dnf_message'))
+      return this._app.notifications.show(trans('The requested directory was not found.'))
     }
 
     // Build the correct path
@@ -84,7 +83,7 @@ export default class SaveImage extends ZettlrCommand {
 
     // Somebody may have remotely overwritten the clipboard in the meantime
     if (image.isEmpty()) {
-      return this._app.notifications.show(trans('system.error.could_not_save_image'))
+      return this._app.notifications.show(trans('Could not save image'))
     }
 
     let size = image.getSize()
@@ -98,10 +97,7 @@ export default class SaveImage extends ZettlrCommand {
     // properties provided in target.
     if (shouldResizeWidth || shouldResizeHeight) {
       // The resize function requires real integers
-      image = image.resize({
-        'width': resizeWidth,
-        'height': resizeHeight
-      })
+      image = image.resize({ width: resizeWidth, height: resizeHeight })
     }
 
     this._app.log.info(`Saving image ${targetFile} to ${imagePath} ...`)
@@ -112,15 +108,16 @@ export default class SaveImage extends ZettlrCommand {
       await fs.writeFile(imagePath, image.toJPEG(100))
     }
 
-    if (path.isAbsolute(defaultPath) && target.targetDir === defaultPath) {
-      // The user has provided an absolute path as the default image location
-      // and kept this in the save image modal. In this case, it makes sense to
-      // return an absolute path, instead of a path which likely has thousands
-      // of ../../../ in front of it
-      return imagePath
-    } else {
-      // Insert a relative path instead of an absolute one
-      return path.relative(activeFile.dir, imagePath)
-    }
+    return imagePath
+    // if (path.isAbsolute(defaultPath) && target.targetDir === defaultPath) {
+    //   // The user has provided an absolute path as the default image location
+    //   // and kept this in the save image modal. In this case, it makes sense to
+    //   // return an absolute path, instead of a path which likely has thousands
+    //   // of ../../../ in front of it
+    //   return imagePath
+    // } else {
+    //   // Insert a relative path instead of an absolute one
+    //   return path.relative(startPath, imagePath)
+    // }
   }
 }

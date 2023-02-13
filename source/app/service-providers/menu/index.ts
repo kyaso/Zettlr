@@ -30,6 +30,7 @@ import RecentDocumentsProvider from '../recent-docs'
 import WindowProvider from '../windows'
 import CommandProvider from '../commands'
 import LogProvider from '../log'
+import ConfigProvider from '@providers/config'
 
 // Types from the global.d.ts of the window-register module
 interface CheckboxRadioItem {
@@ -221,7 +222,6 @@ export default class MenuProvider extends ProviderContract {
               this._logger.error(`[Menu Provider] Could not click menu item with role ${menuItem.role}, since no handler is implemented!`)
           }
         } else {
-          console.log(`Clicking menu item with ID ${itemID}`)
           menuItem.click(menuItem, focusedWindow)
         }
       }
@@ -291,7 +291,9 @@ export default class MenuProvider extends ProviderContract {
           resolve(resolvedID)
         }, 100)
       })
-      popupMenu.popup({ x: x, y: y })
+      // Enforce integers for the coordinates, otherwise we will get this weird
+      // "conversion failure" error.
+      popupMenu.popup({ x: Math.round(x), y: Math.round(y) })
     })
   }
 

@@ -46,11 +46,13 @@
             v-bind:key="key"
             v-bind:class="{
               'weekday': true,
+              'no-activity': getActivityScore(year, monthIndex + 1, day) === -1,
               'low-activity': getActivityScore(year, monthIndex + 1, day) === 0,
               'low-mid-activity': getActivityScore(year, monthIndex + 1, day) === 1,
               'high-mid-activity': getActivityScore(year, monthIndex + 1, day) === 2,
               'high-activity': getActivityScore(year, monthIndex + 1, day) === 3
             }"
+            v-bind:title="getLocalizedWordCount(year, monthIndex + 1, day)"
           >
             {{ day }}
           </div>
@@ -84,6 +86,7 @@ import { DateTime } from 'luxon'
 import { trans } from '@common/i18n-renderer'
 import ButtonControl from '@common/vue/form/elements/Button.vue'
 import { defineComponent, PropType } from 'vue'
+import localiseNumber from '@common/util/localise-number'
 
 export default defineComponent({
   name: 'CalendarView',
@@ -122,7 +125,7 @@ export default defineComponent({
       return this.now.year === DateTime.local().year
     },
     calendarLabel: function (): string {
-      return trans('dialog.statistics.tabs.calendar_label')
+      return trans('Calendar')
     },
     isMinimumYear: function (): boolean {
       // Returns true if this.now holds the minimum year for which there is
@@ -140,18 +143,18 @@ export default defineComponent({
     months: function (): Array<{ name: string, padding: number, daysInMonth: number }> {
       const ret = []
       const MONTHS = [
-        trans('gui.months.jan'),
-        trans('gui.months.feb'),
-        trans('gui.months.mar'),
-        trans('gui.months.apr'),
-        trans('gui.months.may'),
-        trans('gui.months.jun'),
-        trans('gui.months.jul'),
-        trans('gui.months.aug'),
-        trans('gui.months.sep'),
-        trans('gui.months.oct'),
-        trans('gui.months.nov'),
-        trans('gui.months.dec')
+        trans('January'),
+        trans('February'),
+        trans('March'),
+        trans('April'),
+        trans('May'),
+        trans('June'),
+        trans('July'),
+        trans('August'),
+        trans('September'),
+        trans('October'),
+        trans('November'),
+        trans('December')
       ]
 
       for (let i = 1; i <= 12; i++) {
@@ -167,13 +170,13 @@ export default defineComponent({
       return ret
     },
     lowMidLegend: function (): string {
-      return trans('gui.chart.low_mid_legend')
+      return trans('Below the monthly average')
     },
     highMidLegend: function (): string {
-      return trans('gui.chart.high_mid_legend')
+      return trans('Over the monthly average')
     },
     highLegend: function (): string {
-      return trans('gui.chart.high_legend')
+      return trans('More than twice the monthly average')
     }
   },
   methods: {
@@ -200,7 +203,9 @@ export default defineComponent({
 
       const wordCount = this.wordCounts[`${year}-${parsedMonth}-${parsedDate}`]
 
-      if (wordCount === undefined || wordCount < this.monthlyAverage / 2) {
+      if (wordCount === undefined || wordCount === 0) {
+        return -1
+      } else if (wordCount < this.monthlyAverage / 2) {
         return 0
       } else if (wordCount < this.monthlyAverage) {
         return 1
@@ -209,6 +214,21 @@ export default defineComponent({
       } else {
         return 3 // More than twice the monthly average
       }
+    },
+    getLocalizedWordCount: function (year: number, month: number, date: number): string {
+      let parsedMonth = String(month)
+      let parsedDate = String(date)
+
+      if (parsedMonth.length < 2) {
+        parsedMonth = `0${month}`
+      }
+
+      if (parsedDate.length < 2) {
+        parsedDate = `0${date}`
+      }
+
+      const wordCount = this.wordCounts[`${year}-${parsedMonth}-${parsedDate}`]
+      return localiseNumber(wordCount || 0)
     },
     yearMinus: function (): void {
       this.now = this.now.minus({ years: 1 })
@@ -267,9 +287,10 @@ body div#calendar-container {
         line-height: 20px;
         font-size: 10px;
 
-        // &.low-activity {
-        //   // Basically no change
-        // }
+        // Fade these days a little bit
+        &.no-activity {
+          opacity: 0.5;
+        }
         &.low-mid-activity {
           // Slightly blue-ish
           background-color: @low-mid-bg;

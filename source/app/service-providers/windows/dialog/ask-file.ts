@@ -16,6 +16,7 @@ import { app, BrowserWindow, dialog, FileFilter, OpenDialogOptions, OpenDialogRe
 import path from 'path'
 import isDir from '@common/util/is-dir'
 import { trans } from '@common/i18n-main'
+import ConfigProvider from '@providers/config'
 
 /**
  * Displays a dialog to prompt the user for file paths
@@ -36,17 +37,17 @@ export default async function askFileDialog (config: ConfigProvider, win: Browse
   // Fallback filter: All files
   if (filters === null) {
     filters = [{
-      name: trans('system.all_files'),
+      name: trans('All Files'),
       extensions: ['*']
     }]
   }
 
   // Prepare options
   let opt: OpenDialogOptions = {
-    title: trans('system.open_file'),
+    title: trans('Open file'),
     defaultPath: startDir,
     properties: ['openFile'],
-    filters: filters
+    filters
   }
 
   // Should multiple selections be allowed?

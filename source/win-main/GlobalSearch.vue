@@ -131,7 +131,7 @@ import AutocompleteText from '@common/vue/form/elements/AutocompleteText.vue'
 import { trans } from '@common/i18n-renderer'
 import { defineComponent } from 'vue'
 import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
-import { CodeFileMeta, DirMeta, MDFileMeta } from '@dts/common/fsal'
+import { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
 import { AnyMenuItem } from '@dts/renderer/context'
 import { markText, jumpToLine } from './shared'
@@ -147,14 +147,8 @@ const ipcRenderer = window.ipc
 function getContextMenu (): AnyMenuItem[] {
   return [
     {
-      label: trans('menu.open_new_tab'),
+      label: trans('Open in a new tab'),
       id: 'new-tab',
-      type: 'normal',
-      enabled: true
-    },
-    {
-      label: trans('menu.quicklook'),
-      id: 'open-quicklook',
       type: 'normal',
       enabled: true
     }
@@ -168,6 +162,12 @@ export default defineComponent({
     ProgressControl,
     ButtonControl,
     AutocompleteText
+  },
+  props: {
+    windowId: {
+      type: String,
+      required: true
+    }
   },
   emits: ['jtl'],
   data: function () {
@@ -192,10 +192,6 @@ export default defineComponent({
       toggleState: false,
       // Contains the current search's maximum (combined) weight across the results
       maxWeight: 0,
-      // Is set to a line number if this component is waiting for a file to
-      // become active.
-      jtlIntent: undefined as undefined|number,
-      jtlIntentFlash: undefined as undefined|number,
       // The file list index of the most recently clicked search result.
       activeFileIdx: undefined as undefined|number,
       // The result line index of the most recently clicked search result.
@@ -206,16 +202,13 @@ export default defineComponent({
     recentGlobalSearches: function (): string[] {
       return this.$store.state.config['window.recentGlobalSearches']
     },
-    selectedDir: function (): DirMeta|null {
+    selectedDir: function (): DirDescriptor|null {
       return this.$store.state.selectedDirectory
     },
-    fileTree: function (): Array<MDFileMeta|CodeFileMeta|DirMeta> {
+    fileTree: function (): Array<MDFileDescriptor|CodeFileDescriptor|DirDescriptor> {
       return this.$store.state.fileTree
     },
-    openFiles: function (): MDFileMeta[] {
-      return this.$store.state.openFiles
-    },
-    activeFile: function (): MDFileMeta|null {
+    activeFile: function (): MDFileDescriptor|null {
       return this.$store.state.activeFile
     },
     activeDocumentInfo: function (): any|null {
@@ -231,34 +224,34 @@ export default defineComponent({
       return this.$refs['query-input'] as HTMLInputElement|null
     },
     searchTitle: function () {
-      return trans('gui.global_search.title')
+      return trans('Full-Text Search')
     },
     queryInputLabel: function () {
-      return trans('gui.global_search.query_label')
+      return trans('Enter your search terms below')
     },
     queryInputPlaceholder: function () {
-      return trans('gui.global_search.query_placeholder')
+      return trans('Find …')
     },
     filterPlaceholder: function () {
-      return trans('system.common.filter')
+      return trans('Filter …')
     },
     filterLabel: function () {
-      return trans('gui.global_search.filter_label')
+      return trans('Filter search results')
     },
     restrictDirLabel: function () {
-      return trans('gui.global_search.restrict_dir_label')
+      return trans('Restrict search to directory')
     },
     restrictDirPlaceholder: function () {
-      return trans('gui.global_search.restrict_dir_placeholder')
+      return trans('Restrict to directory …')
     },
     searchButtonLabel: function () {
-      return trans('gui.global_search.search_label')
+      return trans('Search')
     },
     clearButtonLabel: function () {
-      return trans('gui.global_search.clear_label')
+      return trans('Clear search')
     },
     toggleButtonLabel: function () {
-      return trans('gui.global_search.toggle_label')
+      return trans('Toggle results')
     },
     sep: function (): string {
       return path.sep
@@ -301,20 +294,6 @@ export default defineComponent({
     }
   },
   watch: {
-    // We are sneaky here: The activeDocumentInfo is being updated *after* the
-    // editor has completed switching to a new document. If we have a jtl
-    // intent then, it is guaranteed that this means that our document has
-    // finished loading and the editor is able to handle our request as it is
-    // supposed to.
-    activeDocumentInfo: function (newValue, oldValue) {
-      // If we have an intention of jumping to a line,
-      // do so and unset the intent again.
-      if (this.jtlIntent !== undefined) {
-        this.$emit('jtl', [ this.jtlIntent, true, true, this.jtlIntentFlash ])
-        this.jtlIntent = undefined
-        this.jtlIntentFlash = undefined
-      }
-    },
     fileTree: function () {
       this.recomputeDirectorySuggestions()
     }
@@ -365,7 +344,8 @@ export default defineComponent({
             path: treeItem.path,
             relativeDirectoryPath: '',
             filename: treeItem.name,
-            displayName: displayName,
+            displayName,
+            // TODO merge
             hash: treeItem.hash
           })
           continue
@@ -387,7 +367,8 @@ export default defineComponent({
             // app-internal relative path remains. Also, we're removing the leading (back)slash
             relativeDirectoryPath: item.dir.replace(treeItem.dir, '').substr(1),
             filename: item.name,
-            displayName: displayName,
+            displayName,
+            // TODO merge: hash attr exists?
             hash: item.hash
           }
         })
@@ -493,13 +474,13 @@ export default defineComponent({
           command: 'file-search',
           payload: {
             path: fileToSearch.path,
-            terms: terms
+            terms
           }
         })
         if (result.length > 0) {
           const newResult: SearchResultWrapper = {
             file: fileToSearch,
-            result: result,
+            result,
             hideResultSet: false, // If true, the individual results won't be displayed
             weight: result.reduce((accumulator: number, currentValue: SearchResult) => {
               return accumulator + currentValue.weight
@@ -530,7 +511,7 @@ export default defineComponent({
       this.$store.commit('clearSearchResults')
       this.individualResults = 0
 
-      // Clear indeces of active search result
+      // Clear indices of active search result
       this.activeFileIdx = -1
       this.activeLineIdx = -1
 
@@ -551,13 +532,6 @@ export default defineComponent({
           case 'new-tab':
             this.jumpToLine(filePath, lineNumber, true)
             break
-          case 'open-quicklook':
-            ipcRenderer.invoke('application', {
-              command: 'open-quicklook',
-              payload: filePath
-            })
-              .catch(e => console.error(e))
-            break
         }
       })
     },
@@ -568,7 +542,7 @@ export default defineComponent({
         return // Do not handle right-clicks
       }
 
-      // Update indeces so we can keep track of the most recently clicked
+      // Update indices so we can keep track of the most recently clicked
       // search result.
       this.activeFileIdx = idx
       this.activeLineIdx = idx2
@@ -577,36 +551,12 @@ export default defineComponent({
       // The value we are subtracting is the amount of lines we want to
       // show above the target line
       const lineToScroll = Math.max(lineNumber - this.$store.state.config['custom.test.val1'], 0)
-      this.jumpToLine(filePath, lineToScroll, isMiddleClick, lineNumber)
-      // this.jumpToLine(filePath, lineNumber, isMiddleClick)
+      // TODO merge: what to do with lineNumber param?
+      // this.jumpToLine(filePath, lineToScroll, isMiddleClick, lineNumber)
+      this.jumpToLine(filePath, lineNumber, isMiddleClick)
     },
-    jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false, lineToFlash: number = lineNumber) {
-      const isActiveFile = (this.activeFile !== null) ? this.activeFile.path === filePath : false
-
-      if (isActiveFile) {
-        // App.vue will receive the event, and pass it on to MainEditor.vue::jtl().
-        // That in turn calls the jtl() function in markdown-editor::index.ts. 
-        this.$emit('jtl', [ lineNumber, true, true, lineToFlash ])
-      } else {
-        // The wanted file is not yet active -> Do so and then jump to the correct line
-        ipcRenderer.invoke('application', {
-          command: 'open-file',
-          payload: {
-            path: filePath,
-            newTab: openInNewTab // Open in a new tab if wanted
-          }
-        })
-          .then(() => {
-            // As soon as the file becomes active, jump to that line. But only
-            // if it's >= 0. If lineNumber === -1 it means just the file should
-            // be open.
-            if (lineNumber >= 0) {
-              this.jtlIntent = lineNumber
-              this.jtlIntentFlash = lineToFlash
-            }
-          })
-          .catch(e => console.error(e))
-      }
+    jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
+      this.$emit('jtl', filePath, lineNumber, openInNewTab)
     },
     markText: function (resultObject: SearchResult) {
       return markText(resultObject)

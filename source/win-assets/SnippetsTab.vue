@@ -12,7 +12,7 @@
         v-bind:editable="true"
         v-on:select="currentItem = $event"
         v-on:add="addSnippet()"
-        v-on:remove="removeSnippet()"
+        v-on:remove="removeSnippet($event)"
       ></SelectableList>
     </template>
     <template #view2>
@@ -24,6 +24,7 @@
             v-model="currentSnippetText"
             v-bind:inline="true"
             v-bind:disabled="currentItem < 0"
+            v-on:confirm="renameSnippet()"
           ></TextControl>
           <ButtonControl
             v-bind:label="renameSnippetLabel"
@@ -99,13 +100,13 @@ export default defineComponent({
   },
   computed: {
     saveButtonLabel: function (): string {
-      return trans('dialog.button.save')
+      return trans('Save')
     },
     renameSnippetLabel: function (): string {
-      return trans('dialog.snippets.rename')
+      return trans('Rename snippet')
     },
     snippetsExplanation: function (): string {
-      return trans('dialog.snippets.explanation')
+      return trans('Snippets let you define reusable pieces of text with variables.')
     }
   },
   watch: {
@@ -117,7 +118,7 @@ export default defineComponent({
       if (editor.isClean() === true) {
         this.savingStatus = ''
       } else {
-        this.savingStatus = trans('gui.assets_man.status.unsaved_changes')
+        this.savingStatus = trans('Unsaved changes')
       }
     }
   },
@@ -176,7 +177,7 @@ export default defineComponent({
         .catch(err => console.error(err))
     },
     saveSnippet: function () {
-      this.savingStatus = trans('gui.assets_man.status.saving')
+      this.savingStatus = trans('Saving …')
 
       ipcRenderer.invoke('assets-provider', {
         command: 'set-snippet',
@@ -186,7 +187,7 @@ export default defineComponent({
         }
       })
         .then(() => {
-          this.savingStatus = trans('gui.assets_man.status.saved')
+          this.savingStatus = trans('Saved!')
           setTimeout(() => {
             this.savingStatus = ''
           }, 1000)
@@ -207,11 +208,15 @@ export default defineComponent({
         .then(() => { this.updateAvailableSnippets(newName) })
         .catch(err => console.error(err))
     },
-    removeSnippet: function () {
+    removeSnippet: function (idx: number) {
+      if (idx > this.availableSnippets.length - 1 || idx < 0) {
+        return
+      }
+
       // Remove the current snippet.
       ipcRenderer.invoke('assets-provider', {
         command: 'remove-snippet',
-        payload: { name: this.availableSnippets[this.currentItem] }
+        payload: { name: this.availableSnippets[idx] }
       })
         .then(() => { this.updateAvailableSnippets() })
         .catch(err => console.error(err))
@@ -241,8 +246,8 @@ export default defineComponent({
      *
      * @return  {string}             The candidate's name, with a number suffix (-X) if necessary
      */
-    ensureUniqueName: function (candidate: string) {
-      if (this.availableSnippets.includes(candidate) === false) {
+    ensureUniqueName: function (candidate: string): string {
+      if (!this.availableSnippets.includes(candidate)) {
         return candidate // No duplicate detected
       }
 
@@ -252,7 +257,7 @@ export default defineComponent({
       if (match !== null) {
         // The candidate name already ends with a number-suffix --> extract it
         count = parseInt(match[1], 10)
-        candidate = candidate.substr(0, candidate.length - match[1].length - 1)
+        candidate = candidate.substring(0, candidate.length - match[1].length - 1)
       }
 
       while (this.availableSnippets.includes(candidate + '-' + String(count)) === true) {

@@ -12,6 +12,7 @@
  * END HEADER
  */
 
+import ConfigProvider from '@providers/config'
 import LogProvider from '@providers/log'
 import {
   BrowserWindow,
@@ -40,7 +41,10 @@ export default function createPrintWindow (logger: LogProvider, config: ConfigPr
     y: conf.y,
     show: false,
     webPreferences: {
+      // contextIsolation and sandbox mean: Preload scripts have access to
+      // Node modules, the renderers not
       contextIsolation: true,
+      sandbox: false,
       // We are loading an iFrame with a local resource, so we must disable webSecurity for this window
       webSecurity: false,
       preload: PRINT_PRELOAD_WEBPACK_ENTRY
