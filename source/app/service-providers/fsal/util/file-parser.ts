@@ -22,7 +22,8 @@ import extractFileId from './extract-file-id'
 import extractLinks from './extract-links'
 import extractTags from './extract-tags'
 
-const { Index } = require("flexsearch")
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Index = require('flexsearch').default
 
 // Create a new search index
 export const index = new Index({
@@ -82,8 +83,8 @@ export default function getMarkdownFileParser (
     //
     // console.log('[File parser] Adding '+file.name+' to search index.')
     // console.log('fsal-parser: adding to file index: '+file.name)
-    index.add(file.hash, file.name)
-    index.append(file.hash, content)
+    index.add(file.path, file.name)
+    index.append(file.path, content)
 
     // First of all, determine all the things that have nothing to do with any
     // Markdown contents.

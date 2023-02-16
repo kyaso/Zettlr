@@ -126,8 +126,7 @@ export async function parse (
   let content = await fs.readFile(filePath, { encoding: 'utf8' })
 
   // Add to index
-  // TODO merge: hash?
-  const id = file.hash
+  const id = file.path
   if (!index.contain(id)) {
     // console.log('fsal-file: adding to file index: '+file.name)
     index.add(id, file.name)   // The file name

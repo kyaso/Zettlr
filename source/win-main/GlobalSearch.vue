@@ -344,9 +344,7 @@ export default defineComponent({
             path: treeItem.path,
             relativeDirectoryPath: '',
             filename: treeItem.name,
-            displayName,
-            // TODO merge
-            hash: treeItem.hash
+            displayName
           })
           continue
         }
@@ -367,9 +365,7 @@ export default defineComponent({
             // app-internal relative path remains. Also, we're removing the leading (back)slash
             relativeDirectoryPath: item.dir.replace(treeItem.dir, '').substr(1),
             filename: item.name,
-            displayName,
-            // TODO merge: hash attr exists?
-            hash: item.hash
+            displayName
           }
         })
 
@@ -461,9 +457,9 @@ export default defineComponent({
       // console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
 
       // First filter out all NOT files
-      this.filesToSearch = this.filesToSearch.filter(f => !notRes.includes(f.hash))
+      this.filesToSearch = this.filesToSearch.filter(f => !notRes.includes(f.path))
       // Then filter "in" the matched index files
-      this.filesToSearch = this.filesToSearch.filter(f => res.includes(f.hash))
+      this.filesToSearch = this.filesToSearch.filter(f => res.includes(f.path))
 
       // console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
 
