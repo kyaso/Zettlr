@@ -652,7 +652,7 @@ function updateFileDatabase () {
 
   for (const link of wikiLinks) {
     // Add the link to the fileDatabase if it's not already there
-    if (fileDatabase.findIndex((file) => file.filename.toLowerCase() === link.toLowerCase()) === -1) {
+    if (fileDatabase.findIndex((file) => file.filename === link) === -1) {
       fileDatabase.push({
         filename: link,
         id: ''
