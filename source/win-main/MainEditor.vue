@@ -151,7 +151,7 @@ const store = useStore(storeKey)
 const editor = ref<HTMLDivElement|null>(null)
 
 // UNREFFED STUFF
-export let mdEditor: MarkdownEditor|null = null
+let mdEditor: MarkdownEditor|null = null
 
 // AUTHORITY CALLBACKS
 async function pullUpdates (filePath: string, version: number): Promise<false|Update[]> {
@@ -650,8 +650,17 @@ function updateFileDatabase () {
     wikiLinks.push(...file.links)
   }
 
+  for (const link of wikiLinks) {
+    // Add the link to the fileDatabase if it's not already there
+    if (fileDatabase.findIndex((file) => file.filename.toLowerCase() === link.toLowerCase()) === -1) {
+      fileDatabase.push({
+        filename: link,
+        id: ''
+      })
+    }
+  }
+
   mdEditor.setCompletionDatabase('files', fileDatabase)
-  mdEditor.setCompletionDatabase('wikiLinks', wikiLinks)
 }
 
 // SEARCH FUNCTIONALITY BLOCK

@@ -17,6 +17,7 @@ import { StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { AutocompletePlugin } from '.'
 import { configField } from '../util/configuration'
+import fuzzysort from 'fuzzysort'
 
 /**
  * Use this effect to provide the editor state with a set of new citekeys
@@ -98,9 +99,17 @@ export const files: AutocompletePlugin = {
   entries (ctx, query) {
     query = query.toLowerCase()
     const entries = ctx.state.field(filesUpdateField)
-    return entries.filter(entry => {
-      return entry.label.toLowerCase().includes(query) || (entry.info as string|undefined)?.toLowerCase().includes(query)
-    })
+
+    const results = fuzzysort.go(query, entries, { threshold: -window.config.get('custom.test.val3'), keys: ['label'] })
+    return results.map(r => r.obj)
+
+    // @Future me: Notice below it also matches against entry.info.
+    // Maybe we could show the file path in the info, and then we would also
+    // match against that.
+    //
+    // return entries.filter(entry => {
+    //   return entry.label.toLowerCase().includes(query) || (entry.info as string|undefined)?.toLowerCase().includes(query)
+    // })
   },
   fields: [filesUpdateField]
 }
