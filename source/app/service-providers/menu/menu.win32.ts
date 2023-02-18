@@ -429,7 +429,7 @@ export default function getMenu (
         {
           id: 'menu.generate_id',
           label: trans('Generate new ID'),
-          accelerator: 'Ctrl+L',
+          accelerator: 'Ctrl+Shift+L',
           click: function (menuitem, focusedWindow) {
             focusedWindow?.webContents.send('shortcut', 'insert-id', false) // false for base62
           }
@@ -437,7 +437,7 @@ export default function getMenu (
         {
           id: 'menu.copy_id',
           label: 'Insert base62 ID',
-          accelerator: 'Ctrl+Shift+L',
+          accelerator: 'Ctrl+L',
           click: function (menuitem, focusedWindow) {
             focusedWindow?.webContents.send('shortcut', 'insert-id', true) // true for base62
           }
