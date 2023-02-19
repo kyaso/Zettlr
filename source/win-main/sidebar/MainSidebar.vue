@@ -14,8 +14,8 @@
         v-on:jump-to-line="$emit('jump-to-line', $event)"
       ></ToCTab>
       <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab>
-      <RelatedFilesTab v-if="currentTab === 'relatedFiles'"></RelatedFilesTab>
-      <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab>
+      <!-- <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab> -->
+      <BacklinksTab v-if="currentTab === 'mentions'"></BacklinksTab>
     </div>
   </div>
 </template>
@@ -43,6 +43,7 @@ import ToCTab from './ToCTab.vue'
 import ReferencesTab from './ReferencesTab.vue'
 import RelatedFilesTab from './RelatedFilesTab.vue'
 import OtherFilesTab from './OtherFilesTab.vue'
+import BacklinksTab from './BacklinksTab.vue'
 import { OpenDocument } from '@dts/common/documents'
 
 const ipcRenderer = window.ipc
@@ -54,7 +55,8 @@ export default defineComponent({
     ToCTab,
     ReferencesTab,
     RelatedFilesTab,
-    OtherFilesTab
+    // OtherFilesTab,
+    BacklinksTab
   },
   emits: [ 'move-section', 'jump-to-line' ],
   data: function () {
@@ -73,22 +75,28 @@ export default defineComponent({
           label: this.tocLabel
         },
         {
-          icon: 'book',
-          id: 'references',
-          target: 'sidebar-bibliography',
-          label: this.referencesLabel
-        },
-        {
           icon: 'file-group',
           id: 'relatedFiles',
           target: 'sidebar-related-files',
           label: this.relatedFilesLabel
         },
+        // {
+        //   icon: 'attachment',
+        //   id: 'attachments',
+        //   target: 'sidebar-files',
+        //   label: this.otherFilesLabel
+        // },
         {
-          icon: 'attachment',
-          id: 'attachments',
-          target: 'sidebar-files',
-          label: this.otherFilesLabel
+          icon: 'link',
+          id: 'mentions',
+          target: 'sidebar-mentions',
+          label: 'Mentions'
+        },
+        {
+          icon: 'book',
+          id: 'references',
+          target: 'sidebar-bibliography',
+          label: this.referencesLabel
         }
       ]
     },
@@ -124,6 +132,8 @@ export default defineComponent({
       if (!(activePath in this.modifiedFiles)) {
         this.$store.dispatch('updateRelatedFiles')
           .catch(e => console.error('Could not update related files', e))
+        this.$store.dispatch('updateMentions')
+          .catch(e => console.error('Could not update mentions', e))
       }
     }
   },
@@ -132,6 +142,8 @@ export default defineComponent({
     ipcRenderer.on('links', () => {
       this.$store.dispatch('updateRelatedFiles')
         .catch(e => console.error('Could not update related files', e))
+      this.$store.dispatch('updateMentions')
+        .catch(e => console.error('Could not update mentions', e))
     })
   },
   methods: {

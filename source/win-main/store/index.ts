@@ -34,6 +34,7 @@ import documentTreeMutation from './mutations/document-tree'
 import filetreeUpdateAction from './actions/filetree-update'
 import updateOpenDirectoryAction from './actions/update-open-directory'
 import updateRelatedFilesAction from './actions/update-related-files'
+import updateMentionsAction from './actions/update-mentions'
 import updateBibliographyAction from './actions/update-bibliography'
 import documentTreeUpdateAction from './actions/document-tree-update'
 import { AnyDescriptor, DirDescriptor, MaybeRootDescriptor } from '@dts/common/fsal'
@@ -143,6 +144,14 @@ export interface ZettlrState {
    * leafId. Otherwise, it's undefined.
    */
   distractionFreeMode: string|undefined
+  /**
+   * This arrray stores backlinks to the current file.
+   */
+  backlinks: SearchResultWrapper[]
+  /**
+   * This array stores unlinked mentions to the current file.
+   */
+  unlinkedMentions: SearchResultWrapper[]
 }
 
 /**
@@ -175,7 +184,9 @@ function getConfig (): StoreOptions<ZettlrState> {
         distractionFreeMode: undefined,
         snippets: [],
         cslItems: [],
-        searchResults: []
+        searchResults: [],
+        backlinks: [],
+        unlinkedMentions: []
       }
     },
     getters: {
@@ -256,6 +267,22 @@ function getConfig (): StoreOptions<ZettlrState> {
           state.relatedFiles = relatedFiles
         }
       },
+      updateBacklinks: function (state, backlinks: SearchResultWrapper[]) {
+        // Make sure we're only updating if something has changed.
+        if (JSON.stringify(backlinks) !== JSON.stringify(state.backlinks)) {
+          state.backlinks = backlinks
+        }
+      },
+      updateUnlinkedMentions: function (state, unlinkedMentions: SearchResultWrapper[]) {
+        // Make sure we're only updating if something has changed.
+        if (JSON.stringify(unlinkedMentions) !== JSON.stringify(state.unlinkedMentions)) {
+          state.unlinkedMentions = unlinkedMentions
+        }
+      },
+      clearMentions: function (state) {
+        state.backlinks = []
+        state.unlinkedMentions = []
+      },
       updateModifiedFiles: function (state, modifiedDocuments: string[]) {
         state.modifiedDocuments = modifiedDocuments
       },
@@ -301,8 +328,10 @@ function getConfig (): StoreOptions<ZettlrState> {
         ctx.commit('lastLeafId', lastLeafId)
         // Update the related files
         await ctx.dispatch('updateRelatedFiles')
+        await ctx.dispatch('updateMentions')
       },
       updateRelatedFiles: updateRelatedFilesAction,
+      updateMentions: updateMentionsAction,
       updateBibliography: updateBibliographyAction,
       documentTree: documentTreeUpdateAction,
       updateSnippets: updateSnippetsAction,

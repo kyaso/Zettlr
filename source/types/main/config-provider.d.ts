@@ -13,7 +13,7 @@ export interface ConfigOptions {
   window: {
     nativeAppearance: boolean
     sidebarVisible: boolean
-    currentSidebarTab: 'toc'|'references'|'relatedFiles'|'attachments'
+    currentSidebarTab: 'toc'|'references'|'relatedFiles'|'attachments'|'mentions'
     recentGlobalSearches: string[]
   }
   attachmentExtensions: string[]
