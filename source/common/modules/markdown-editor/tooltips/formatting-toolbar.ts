@@ -14,7 +14,7 @@
 
 import { Tooltip, showTooltip } from '@codemirror/view'
 import { EditorState, StateField } from '@codemirror/state'
-import { applyBold, applyCode, applyComment, applyItalic, insertImage, insertLink } from '../commands/markdown'
+import { applyBold, applyCode, applyComment, applyItalic, applyZknLink, insertImage, insertLink } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
 
 function getToolbar (state: EditorState): Tooltip[] {
@@ -67,7 +67,12 @@ function getToolbar (state: EditorState): Tooltip[] {
       code.setAttribute('title', trans('Code'))
       code.innerHTML = '<clr-icon shape="code"></clr-icon>'
 
-      buttonWrapper.append(bold, italic, link, image, comment, code)
+      const zknlink = document.createElement('button')
+      zknlink.classList.add('formatting-toolbar-button')
+      zknlink.setAttribute('title', trans('Wikilink'))
+      zknlink.innerHTML = '<clr-icon shape="angle-double"></clr-icon>'
+
+      buttonWrapper.append(bold, italic, link, image, comment, code, zknlink)
       dom.append(buttonWrapper)
       return {
         dom,
@@ -78,6 +83,7 @@ function getToolbar (state: EditorState): Tooltip[] {
           image.onclick = function (event) { insertImage(view) }
           comment.onclick = function (event) { applyComment(view) }
           code.onclick = function (event) { applyCode(view) }
+          zknlink.onclick = function (event) { applyZknLink(view) }
         }
       }
     }
