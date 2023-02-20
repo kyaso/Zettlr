@@ -15,7 +15,10 @@
       ></ToCTab>
       <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab>
       <!-- <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab> -->
-      <BacklinksTab v-if="currentTab === 'mentions'"></BacklinksTab>
+      <BacklinksTab
+        v-if="currentTab === 'mentions'"
+        v-on:jtl="(filePath, lineNumber, newTab) => $emit('jtl', filePath, lineNumber, newTab)"
+      ></BacklinksTab>
     </div>
   </div>
 </template>
@@ -58,7 +61,7 @@ export default defineComponent({
     // OtherFilesTab,
     BacklinksTab
   },
-  emits: [ 'move-section', 'jump-to-line' ],
+  emits: [ 'move-section', 'jump-to-line', 'jtl' ],
   data: function () {
     return {}
   },

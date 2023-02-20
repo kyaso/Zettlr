@@ -63,7 +63,7 @@
             v-bind:key="idx2"
             class="result-line"
             v-on:mousedown.stop.prevent="
-              onResultClick($event, idx, idx2, result.file.path, singleRes.line)
+              onResultClick($event, result.file.path, singleRes.line)
             "
           >
             <span v-if="singleRes.line !== -1">
@@ -145,7 +145,7 @@
             v-bind:key="idx2"
             class="result-line"
             v-on:mousedown.stop.prevent="
-              onResultClick($event, idx, idx2, result.file.path, singleRes.line)
+              onResultClick($event, result.file.path, singleRes.line)
             "
           >
             <span v-if="singleRes.line !== -1">
@@ -254,12 +254,13 @@ export default defineComponent({
       const isMiddleClick = event.type === 'mousedown' && event.button === 1
       // The value we are subtracting is the amount of lines we want to
       // show above the target line
+      // TODO merge
       const lineToScroll = Math.max(
         lineNumber - this.$store.state.config['custom.test.val1'],
         0
       )
       // TODO merge: lineToFlash
-      this.jumpToLine(filePath, lineToScroll, isMiddleClick)
+      this.jumpToLine(filePath, lineNumber, isMiddleClick)
     },
     // **** Adapted from GlobalSearch.vue ****
     jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
