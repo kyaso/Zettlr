@@ -187,7 +187,7 @@ body {
       width: @button-size;
       height: @button-size;
 
-      clr-icon {
+      cds-icon {
         width: @button-icon-size;
         height: @button-icon-size;
       }

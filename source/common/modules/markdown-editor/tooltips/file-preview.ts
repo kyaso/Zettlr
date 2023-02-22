@@ -157,7 +157,7 @@ function getPreviewElement (metadata: [string, string, number, number], linkCont
     const openButtonNT = document.createElement('button')
     openButtonNT.setAttribute('id', 'open-note-new-tab')
     // openButtonNT.textContent = trans('menu.open_new_tab')
-    openButtonNT.innerHTML = '<clr-icon shape="pop-out"></clr-icon>'
+    openButtonNT.innerHTML = '<cds-icon shape="pop-out"></cds-icon>'
     openButtonNT.addEventListener('click', openFuncNewTab)
     openButtonNT.style.marginLeft = '10px'
     actions.appendChild(openButtonNT)
@@ -196,7 +196,7 @@ function getOpenButton (linkContents: String): HTMLButtonElement {
 
   const openButton = document.createElement('button')
   openButton.setAttribute('id', 'open-note')
-  openButton.innerHTML = '<clr-icon shape="arrow" style="transform: rotate(45deg);"></clr-icon>'
+  openButton.innerHTML = '<cds-icon shape="arrow" style="transform: rotate(45deg);"></cds-icon>'
   openButton.addEventListener('click', openFunc)
 
   return openButton

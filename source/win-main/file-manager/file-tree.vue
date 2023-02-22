@@ -328,7 +328,7 @@ body {
     &.hidden { left:-100%; }
 
     #directories-dirs-header, #directories-files-header {
-      clr-icon {
+      cds-icon {
         width: 12px;
         height: 12px;
         margin-left: 3px;
@@ -373,7 +373,7 @@ body.darwin {
       font-size: inherit;
       margin: 20px 0px 5px 10px;
 
-      clr-icon { display: none; }
+      cds-icon { display: none; }
     }
   }
 }

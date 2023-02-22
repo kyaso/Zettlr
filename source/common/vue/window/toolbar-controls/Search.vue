@@ -64,7 +64,7 @@ body {
   .toolbar-search-container {
     position: relative;
 
-    clr-icon {
+    cds-icon {
       position: absolute;
       top: 2px;
       left: 2px;
@@ -91,7 +91,7 @@ body.darwin {
     &:not(:focus-within) {
       padding: 4px 8px;
 
-      // While the input is hidden anyway, we must reset the CLR-ICON's position
+      // While the input is hidden anyway, we must reset the cds-icon's position
       cds-icon { position: initial; }
     }
 

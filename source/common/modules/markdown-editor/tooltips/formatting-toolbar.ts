@@ -70,7 +70,7 @@ function getToolbar (state: EditorState): Tooltip[] {
       const zknlink = document.createElement('button')
       zknlink.classList.add('formatting-toolbar-button')
       zknlink.setAttribute('title', trans('Wikilink'))
-      zknlink.innerHTML = '<clr-icon shape="angle-double"></clr-icon>'
+      zknlink.innerHTML = '<cds-icon shape="angle-double"></cds-icon>'
 
       buttonWrapper.append(bold, italic, link, image, comment, code, zknlink)
       dom.append(buttonWrapper)
