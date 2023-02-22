@@ -38,9 +38,6 @@ export default async function (
     return
   }
 
-  console.warn('updateMentionsAction')
-  // context.commit('clearMentions')
-
   let unlinkedMentions: SearchResultWrapper[] = []
   let backlinks: SearchResultWrapper[] = []
 
