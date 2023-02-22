@@ -27,6 +27,7 @@ import { jsonLanguage } from '@codemirror/lang-json'
 // Now from the legacy modes package
 import { c, cpp, csharp, java, kotlin, objectiveC, dart, scala } from '@codemirror/legacy-modes/mode/clike'
 import { clojure } from '@codemirror/legacy-modes/mode/clojure'
+import { cobol } from '@codemirror/legacy-modes/mode/cobol'
 import { elm } from '@codemirror/legacy-modes/mode/elm'
 import { fSharp } from '@codemirror/legacy-modes/mode/mllike'
 import { fortran } from '@codemirror/legacy-modes/mode/fortran'
@@ -70,6 +71,7 @@ import { sloppyParser } from './sloppy-parser'
 import { gridTableParser, pipeTableParser } from './pandoc-table-parser'
 import { zknLinkParser } from './zkn-link-parser'
 import { pandocAttributesParser } from './pandoc-attributes-parser'
+import { highlightParser } from './highlight-parser'
 
 const codeLanguages: Array<{ mode: Language|LanguageDescription|null, selectors: string[] }> = [
   {
@@ -88,6 +90,7 @@ const codeLanguages: Array<{ mode: Language|LanguageDescription|null, selectors:
   { mode: python().language, selectors: [ 'python', 'py' ] },
   { mode: StreamLanguage.define(c), selectors: ['c'] },
   { mode: StreamLanguage.define(clojure), selectors: ['clojure'] },
+  { mode: StreamLanguage.define(cobol), selectors: ['cobol'] },
   { mode: StreamLanguage.define(commonLisp), selectors: [ 'clisp', 'commonlisp' ] },
   { mode: StreamLanguage.define(cpp), selectors: [ 'c\\+\\+', 'cpp' ] },
   { mode: StreamLanguage.define(csharp), selectors: [ 'c\\#', 'csharp', 'cs' ] },
@@ -172,7 +175,8 @@ export default function markdownParser (): LanguageSupport {
         plainLinkParser,
         sloppyParser,
         zknLinkParser,
-        pandocAttributesParser
+        pandocAttributesParser,
+        highlightParser
       ],
       // We have to notify the markdown parser about the additional Node Types
       // that the YAML block parser utilizes
@@ -188,9 +192,12 @@ export default function markdownParser (): LanguageSupport {
         { name: 'YAMLFrontmatterSeq', style: customTags.YAMLFrontmatterSeq },
         { name: 'YAMLFrontmatterMap', style: customTags.YAMLFrontmatterMap },
         { name: 'Citation', style: customTags.Citation },
+        { name: 'Highlight', style: customTags.Highlight },
+        { name: 'HighlightContent', style: customTags.HighlightContent },
         { name: 'Footnote', style: customTags.Footnote },
         { name: 'FootnoteRef', style: customTags.FootnoteRef },
-        { name: 'FootnoteBody', style: customTags.FootnoteBody },
+        { name: 'FootnoteRefLabel', style: customTags.FootnoteRefLabel },
+        { name: 'FootnoteRefBody', style: customTags.FootnoteRefBody },
         { name: 'ZknLink', style: customTags.ZknLink },
         { name: 'ZknLinkContent', style: customTags.ZknLinkContent },
         { name: 'PandocAttribute', style: customTags.PandocAttribute }

@@ -127,16 +127,24 @@ export default class CiteprocProvider extends ProviderContract {
     this._watcher.on('all', (eventName, affectedPath) => {
       const db = this.databases.get(affectedPath)
 
-      if (db === undefined) {
-        this._logger.warning(`[Citeproc Provider] Chokidar reported the event ${eventName}:${affectedPath}, but no such database was loaded`)
-        return
-      }
-
-      if (eventName === 'change') {
-        this.unloadDatabase(affectedPath)
-        this.loadDatabase(affectedPath)
+      if (db === undefined && eventName === 'change') {
+        // This indicates that the library had been loaded, but threw an error
+        // on reload (happens frequently, e.g., with Zotero). In that case,
+        // simply load it.
+        this.loadDatabase(affectedPath, false)
+          .catch(err => { this._logger.error(`[Citeproc] Could not reload database ${affectedPath}: ${String(err.message)}`, err) })
+      } else if (db === undefined) {
+        this._logger.warning(`[Citeproc] Received an event ${eventName} for path ${affectedPath}: Could not handle.`)
+      } else if (eventName === 'change') {
+        // NOTE: We have to ask the engine to not unwatch the database.
+        // Sometimes, errors may be, and if we unwatch the database on change
+        // events, this would lead any error to no more changes being detected.
+        // And an error can be as simple as "the program was not finished
+        // writing the changes to disk." (looking at you, BetterBibTex :P)
+        this.unloadDatabase(affectedPath, false)
+        this.loadDatabase(affectedPath, false)
           .then(() => broadcastIpcMessage('citeproc-database-updated', affectedPath))
-          .catch(err => { this._logger.error(err.message, err) })
+          .catch(err => { this._logger.error(`[Citeproc Provider] Error while reloading database ${affectedPath}: ${String(err.message)}`, err) })
       } else if (eventName === 'unlink') {
         this.unloadDatabase(affectedPath)
         broadcastIpcMessage('citeproc-database-updated', affectedPath)
@@ -286,7 +294,7 @@ export default class CiteprocProvider extends ProviderContract {
    *
    * @return  {Promise<DatabaseRecord>}                Resolves with the DatabaseRecord
    */
-  private async loadDatabase (databasePath: string): Promise<void> {
+  private async loadDatabase (databasePath: string, watch = true): Promise<void> {
     if (this.databases.has(databasePath)) {
       return // No need to load the database again
     }
@@ -313,7 +321,7 @@ export default class CiteprocProvider extends ProviderContract {
       case '.yaml': {
         let yamlData = YAML.parse(data)
         if ('references' in yamlData) {
-          yamlData = yamlData.references // CSL YAML is stored in references
+          yamlData = yamlData.references // CSL YAML is stored in `references`
         } else if (!Array.isArray(yamlData)) {
           throw new Error('The CSL YAML file did not contain valid contents.')
         }
@@ -343,7 +351,9 @@ export default class CiteprocProvider extends ProviderContract {
     this.databases.set(databasePath, record)
 
     // Now that the database has been successfully loaded, watch it for changes.
-    this._watcher.add(databasePath)
+    if (watch) {
+      this._watcher.add(databasePath)
+    }
   }
 
   /**
@@ -351,10 +361,14 @@ export default class CiteprocProvider extends ProviderContract {
    *
    * @param   {string}  dbPath  The database file path
    */
-  private unloadDatabase (dbPath: string): void {
+  private unloadDatabase (dbPath: string, unwatch = true): void {
     if (this.databases.has(dbPath)) {
       this._logger.info(`[Citeproc Provider] Unloading database ${dbPath}`)
-      this._watcher.unwatch(dbPath)
+
+      if (unwatch) {
+        this._watcher.unwatch(dbPath)
+      }
+
       this.databases.delete(dbPath)
     }
   }
@@ -367,10 +381,6 @@ export default class CiteprocProvider extends ProviderContract {
   private selectDatabase (dbPath: string): void {
     if (dbPath === CITEPROC_MAIN_DB) {
       dbPath = this.mainLibrary // No specific database requested
-    }
-
-    if (this.lastSelectedDatabase === dbPath) {
-      return // Nothing to do
     }
 
     const database = this.databases.get(dbPath)

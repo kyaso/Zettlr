@@ -72,7 +72,7 @@ export default defineComponent({
     tabs: function (): TabbarControl[] {
       return [
         {
-          icon: 'indented-view-list',
+          icon: 'indent',
           id: 'toc',
           target: 'sidebar-toc',
           label: this.tocLabel
@@ -84,7 +84,7 @@ export default defineComponent({
           label: this.relatedFilesLabel
         },
         // {
-        //   icon: 'attachment',
+        //   icon: 'paperclip',
         //   id: 'attachments',
         //   target: 'sidebar-files',
         //   label: this.otherFilesLabel

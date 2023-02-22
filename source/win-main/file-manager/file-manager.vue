@@ -20,12 +20,13 @@
       class="hidden"
       v-on:click="toggleFileList"
     >
-      <clr-icon
+      <cds-icon
         role="presentation"
-        shape="caret left"
-        class="is-solid"
-        size="20"
-      ></clr-icon>
+        shape="angle"
+        solid="true"
+        direction="left"
+        size="l"
+      ></cds-icon>
     </div>
 
     <!-- Filter field -->

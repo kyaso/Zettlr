@@ -15,9 +15,9 @@
 import { EditorView, hoverTooltip, Tooltip } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
-import { getConverter } from '@common/util/md-to-html'
 import { configField } from '../util/configuration'
 import { trans } from '@common/i18n-renderer'
+import { md2html } from '@common/modules/markdown-utils'
 
 /**
  * Given fn in the format [^some-identifier], this function attempts to find a
@@ -41,17 +41,18 @@ function findRefForFootnote (state: EditorState, fn: string): { from: number, to
         return false // Do not traverse down
       }
 
-      // Check the contents
-      const ref = state.sliceDoc(node.from, node.to)
+      const label = node.node.getChild('FootnoteRefLabel')
+      const body = node.node.getChild('FootnoteRefBody')
 
-      if (ref !== fn + ':') {
-        return false
+      if (label === null || body === null) {
+        return false // Should not happen, but you never know
       }
 
-      // We got the actual ref. The next sibling is the footnote's body (if any).
-      const body = node.node.nextSibling
-      if (body === null) {
-        return false
+      // Check the contents
+      const ref = state.sliceDoc(label.from, label.to)
+
+      if (ref !== fn + ':') {
+        return false // Not the right one
       }
 
       text = {
@@ -96,8 +97,7 @@ function footnotesTooltip (view: EditorView, pos: number, side: 1 | -1): Tooltip
   const fnBody = findRefForFootnote(view.state, fn)
 
   const { library } = view.state.field(configField).metadata
-  const md2html = getConverter(window.getCitationCallback(library))
-  const tooltipContent = md2html(fnBody?.text ?? trans('No footnote text found.'))
+  const tooltipContent = md2html(fnBody?.text ?? trans('No footnote text found.'), library)
 
   return {
     pos: from + (footnoteMatch.index as number),

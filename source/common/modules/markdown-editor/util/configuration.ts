@@ -59,6 +59,11 @@ export interface EditorConfiguration {
   readabilityMode: boolean
   typewriterMode: boolean
   distractionFree: boolean
+  lintMarkdown: boolean
+  lintLanguageTool: boolean
+  showStatusbar: boolean
+  darkMode: boolean
+  margins: 'S'|'M'|'L'
 }
 
 export function getDefaultConfig (): EditorConfiguration {
@@ -101,7 +106,12 @@ export function getDefaultConfig (): EditorConfiguration {
     inputMode: 'default',
     readabilityMode: false,
     typewriterMode: false,
-    distractionFree: false
+    distractionFree: false,
+    lintMarkdown: false,
+    lintLanguageTool: false,
+    showStatusbar: false,
+    darkMode: false,
+    margins: 'M'
   }
 }
 

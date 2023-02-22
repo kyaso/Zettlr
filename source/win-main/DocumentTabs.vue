@@ -7,11 +7,11 @@
   >
     <!-- Left scroller arrow -->
     <div v-if="showScrollers" class="scroller left" v-on:click="scrollLeft()">
-      <clr-icon shape="caret left"></clr-icon>
+      <cds-icon shape="angle" direction="left"></cds-icon>
     </div>
     <!-- Right scroller arrow -->
-    <div v-if="showScrollers" class="scroller right">
-      <clr-icon shape="caret right" v-on:click="scrollRight()"></clr-icon>
+    <div v-if="showScrollers" class="scroller right" v-on:click="scrollRight()">
+      <cds-icon shape="angle" direction="right"></cds-icon>
     </div>
 
     <div
@@ -45,8 +45,9 @@
           class="filename"
           role="button"
         >
-          <clr-icon v-if="file.pinned" shape="pin"></clr-icon>
+          <cds-icon v-if="file.pinned" shape="pin"></cds-icon>
           {{ getTabText(file) }}
+          <span v-if="hasDuplicate(file)" class="deduplicate">{{ getDirBasename(file) }}</span>
         </span>
         <span
           v-if="!file.pinned"
@@ -355,6 +356,18 @@ export default defineComponent({
       } else {
         return file.name.replace(file.ext, '')
       }
+    },
+    hasDuplicate (doc: OpenDocument) {
+      const focalTabname = this.getTabText(doc).toLowerCase()
+      const duplicates = this.openFiles.filter(doc => {
+        return this.getTabText(doc).toLowerCase() === focalTabname
+      })
+
+      // NOTE that `doc` is also contained in `openFiles`, i.e. we should have 1
+      return duplicates.length !== 1
+    },
+    getDirBasename (doc: OpenDocument) {
+      return path.basename(path.dirname(doc.path))
     },
     /**
      * Handles a click on the close button
@@ -789,6 +802,12 @@ body div.tab-container {
     .filename {
       line-height: 30px;
       white-space: nowrap;
+
+      .deduplicate {
+        font-style: italic;
+        font-size: 80%;
+        opacity: 0.8;
+      }
     }
 
     // Mark modification status classically

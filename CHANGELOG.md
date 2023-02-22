@@ -188,6 +188,14 @@ there.
 - **New Feature**: Zettlr can now automatically update internal links (Wiki/
   Zettelkasten style) if you rename a file
 - **New Feature**: When you hover over a link, you can now get a link preview
+- **New Feature**: Zettlr now features a LanguageTool integration. You can turn
+  it on in the Spellchecker settings and even provide your LanguageTool username
+  and an API key to unlock premium features
+- **New Feature**: You can now activate a statusbar that shows some context-
+  specific information for each editor pane you have open
+- Replaced the old Markdown-to-HTML and HTML-to-Markdown converter with more up-
+  to-date modules. This should not change how pasting from HTML or copying as
+  HTML work, but it could.
 - The TableEditor now has a clear data saving strategy: Whenever you change a
   table, you need to manually click the disk icon at the top of the table to
   apply all your changes to the document so that it can then be saved
@@ -261,6 +269,14 @@ there.
   enables you to define links to files that you may want to create at another
   point in time and ensure that all files that link to this file include the
   correct link
+- The editor now uses the built-in search panel from CodeMirror
+- Added support for COBOL syntax highlighting
+- Zettlr can now recognize changes to the Zettlr directory files (where things
+  such as sorting and project settings are stored), which means that, if you
+  have Zettlr open on two computers and synchronize your files, changes you make
+  in one app should be picked up by the other
+- Zettlr can now detect changes to the status of a directory as a git repository
+  during runtime
 
 ## Under the Hood
 
@@ -271,6 +287,7 @@ there.
 - Upgrade Chart.js to `4.x.x`
 - Upgrade CodeMirror to version 6
 - Upgrade to Yarn v2
+- Switch from deprecated `@clr/icons` to `@cds/core`
 - Pandoc logs are now logged in every case
 - Improve the display and functionality of log messages
 - Switched the configuration file management for the different service providers

@@ -1,15 +1,12 @@
 const rules = require('./webpack.rules')
 const path = require('path')
 
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
-const ESLintPlugin = require('eslint-webpack-plugin')
 const { VueLoaderPlugin } = require('vue-loader')
 const { DefinePlugin } = require('webpack')
 
 const plugins = [
   // Apply webpack rules to the corresponding language blocks in .vue files
   new VueLoaderPlugin(),
-  new ESLintPlugin(),
 
   // Set a few Vue 3 options; see: http://link.vuejs.org/feature-flags
   new DefinePlugin({
@@ -17,13 +14,6 @@ const plugins = [
     __VUE_PROD_DEVTOOLS__: false
   })
 ]
-
-if (process.env.SKIP_TYPECHECKING !== 'true') {
-  // Enhanced typescript support (e.g. moves typescript type checking to separate process)
-  plugins.push(new ForkTsCheckerWebpackPlugin())
-} else {
-  console.log('Skipping typechecking for this build!')
-}
 
 rules.push({
   test: /\.less$/,

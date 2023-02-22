@@ -90,6 +90,7 @@ export default function getConfigTemplate (): ConfigOptions {
       cslLibrary: '', // Path to a CSL JSON library file
       cslStyle: '', // Path to a CSL Style file
       useBundledPandoc: true, // Whether to use the bundled Pandoc
+      exportQmdWithQuarto: false, // Whether .qmd-files should be exported with Quarto
       singleFileLastExporter: 'html' // Remembers the last chosen exporter for easy re-exporting
     },
     // Zettelkasten stuff (IDs, as well as link matchers)
@@ -124,8 +125,17 @@ export default function getConfigTemplate (): ConfigOptions {
       boldFormatting: '**', // Can be ** or __
       italicFormatting: '_', // Can be * or _
       readabilityAlgorithm: 'dale-chall', // The algorithm to use with readability mode.
+      showStatusbar: false,
       lint: {
-        markdown: true // Should Markdown be linted?
+        markdown: true, // Should Markdown be linted?
+        languageTool: {
+          active: false, // Utilize languageTool?
+          level: 'picky', // API: https://languagetool.org/http-api/#!/default/post_check
+          provider: 'official',
+          customServer: '',
+          username: '',
+          apiKey: ''
+        }
       },
       autoCorrect: {
         active: true, // AutoCorrect is on by default

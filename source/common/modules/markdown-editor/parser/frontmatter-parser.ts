@@ -52,6 +52,10 @@ export const frontmatterParser: BlockParser = {
       return false
     }
 
+    if (yamlLines.length === 0) {
+      return false // A frontmatter must have content
+    }
+
     // A final check: A frontmatter is NOT a valid document if there is
     // whitespace at the top (i.e. no blank lines between the delimiters and the
     // frontmatter content). NOTE: Whitespace AFTER the frontmatter content is
@@ -72,6 +76,11 @@ export const frontmatterParser: BlockParser = {
       ctx.elt('CodeText', 4, ctx.lineStart - 1, [treeElem]),
       ctx.elt('YAMLFrontmatterEnd', ctx.lineStart, ctx.lineStart + 3)
     ])
+
+    // Now that we are certain that we have a frontmatter, we must "consume" the
+    // final line of the frontmatter so that the HorizontalRule parser cannot
+    // detect this as a HorizontalRule (if the frontmatter ends with ---)
+    ctx.nextLine()
 
     ctx.addElement(wrapperNode)
     return true // Signal that we've parsed this block

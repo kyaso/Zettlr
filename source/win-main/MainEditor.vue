@@ -19,16 +19,6 @@
       <!-- This element will be replaced with Codemirror's wrapper element on mount -->
     </div>
 
-    <EditorSearchPanel
-      v-show="showSearch"
-      v-bind:show-search="showSearch"
-      v-on:search-next="searchNext($event)"
-      v-on:search-previous="searchPrevious($event)"
-      v-on:replace-next="replaceNext($event)"
-      v-on:replace-all="replaceAll($event)"
-      v-on:end-search="showSearch = false"
-    ></EditorSearchPanel>
-
     <div
       v-if="documentTabDrag"
       v-bind:class="{
@@ -40,7 +30,7 @@
       v-on:dragenter="handleDragEnter($event, 'top')"
       v-on:dragleave="handleDragLeave($event)"
     >
-      <clr-icon v-if="documentTabDragWhere === 'top'" shape="caret up"></clr-icon>
+      <cds-icon v-if="documentTabDragWhere === 'top'" shape="angle" direction="up"></cds-icon>
     </div>
     <div
       v-if="documentTabDrag"
@@ -53,7 +43,7 @@
       v-on:dragenter="handleDragEnter($event, 'left')"
       v-on:dragleave="handleDragLeave($event)"
     >
-      <clr-icon v-if="documentTabDragWhere === 'left'" shape="caret left"></clr-icon>
+      <cds-icon v-if="documentTabDragWhere === 'left'" shape="angle" direction="left"></cds-icon>
     </div>
     <div
       v-if="documentTabDrag"
@@ -66,7 +56,7 @@
       v-on:dragenter="handleDragEnter($event, 'bottom')"
       v-on:dragleave="handleDragLeave($event)"
     >
-      <clr-icon v-if="documentTabDragWhere === 'bottom'" shape="caret down"></clr-icon>
+      <cds-icon v-if="documentTabDragWhere === 'bottom'" shape="angle" direction="down"></cds-icon>
     </div>
     <div
       v-if="documentTabDrag"
@@ -79,7 +69,7 @@
       v-on:dragenter="handleDragEnter($event, 'right')"
       v-on:dragleave="handleDragLeave($event)"
     >
-      <clr-icon v-if="documentTabDragWhere === 'right'" shape="caret right"></clr-icon>
+      <cds-icon v-if="documentTabDragWhere === 'right'" shape="angle" direction="right"></cds-icon>
     </div>
   </div>
 </template>
@@ -117,7 +107,6 @@ import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 import { EditorConfigOptions } from '@common/modules/markdown-editor/util/configuration'
 import { CodeFileDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import getBibliographyForDescriptor from '@common/util/get-bibliography-for-descriptor'
-import { SearchQuery } from '@codemirror/search'
 import { EditorSelection } from '@codemirror/state'
 import { TagRecord } from '@providers/tags'
 
@@ -278,7 +267,7 @@ ipcRenderer.on('links', e => {
 // MOUNTED HOOK
 onMounted(() => {
   // As soon as the component is mounted, initiate the editor
-  mdEditor = new MarkdownEditor(undefined, getDoc, pullUpdates, pushUpdates)
+  mdEditor = new MarkdownEditor(undefined, props.leafId, getDoc, pullUpdates, pushUpdates)
 
   const wrapper = document.getElementById(editorId.value)
 
@@ -333,6 +322,7 @@ onMounted(() => {
 
   // Supply the configuration object once initially
   mdEditor.setOptions(editorConfiguration.value)
+  mdEditor.darkMode = darkMode.value
 })
 
 // DATA SETUP
@@ -352,6 +342,7 @@ const node = computed(() => store.state.paneData.find(leaf => leaf.id === props.
 const activeFile = computed(() => node.value?.activeFile) // TODO: MAYBE REMOVE
 const lastLeafId = computed(() => store.state.lastLeafId)
 const snippets = computed(() => store.state.snippets)
+const darkMode = computed(() => store.state.config.darkMode)
 
 const activeFileDescriptor = ref<undefined|MDFileDescriptor|CodeFileDescriptor>(undefined)
 
@@ -361,7 +352,6 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
   // everything all the time, but rather do one initial configuration, so
   // even if we incur a performance penalty, it won't be noticed that much.
   return {
-    // keyMap: store.state.config['editor.inputMode'], TODO
     indentUnit: store.state.config['editor.indentUnit'],
     indentWithTabs: store.state.config['editor.indentWithTabs'],
     autoCloseBrackets: store.state.config['editor.autoCloseBrackets'],
@@ -395,7 +385,11 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
     linkPreference: store.state.config['zkn.linkWithFilename'],
     linkFilenameOnly: store.state.config['zkn.linkFilenameOnly'],
     inputMode: store.state.config['editor.inputMode'],
-    distractionFree: props.distractionFree.valueOf()
+    lintMarkdown: store.state.config['editor.lint.markdown'],
+    // The editor only needs to know if it should use languageTool
+    lintLanguageTool: store.state.config['editor.lint.languageTool.active'],
+    distractionFree: props.distractionFree.valueOf(),
+    showStatusbar: store.state.config['editor.showStatusbar']
   } as EditorConfigOptions
 })
 
@@ -456,6 +450,11 @@ watch(toRef(props.editorCommands, 'replaceSelection'), () => {
   const textToInsert: string = props.editorCommands.data
   mdEditor?.replaceSelection(textToInsert)
 })
+watch(darkMode, () => {
+  if (mdEditor !== null) {
+    mdEditor.darkMode = darkMode.value
+  }
+})
 
 const isMarkdown = computed(() => {
   if (activeFile.value == null) {
@@ -511,14 +510,6 @@ watch(globalSearchResults, () => {
 
 watch(activeFile, async () => {
   await loadActiveFile()
-})
-
-watch(showSearch, (newValue, oldValue) => {
-  if (newValue === false) {
-    // Always "stopSearch" if the input is not shown, since this will clear
-    // out, e.g., the matches on the scrollbar
-    mdEditor?.stopSearch()
-  }
 })
 
 watch(snippets, (newValue) => {
@@ -676,12 +667,6 @@ async function updateFileDatabase () {
 
   mdEditor.setCompletionDatabase('files', fileDatabase)
 }
-
-// SEARCH FUNCTIONALITY BLOCK
-function searchNext (query: SearchQuery) { mdEditor?.searchNext(query) }
-function searchPrevious (query: SearchQuery) { mdEditor?.searchPrevious(query) }
-function replaceNext (query: SearchQuery) { mdEditor?.replaceNext(query) }
-function replaceAll (query: SearchQuery) { mdEditor?.replaceAll(query) }
 
 function maybeHighlightSearchResults () {
   const doc = activeFile.value
@@ -905,10 +890,6 @@ function handleDragLeave (event: DragEvent) {
 @editor-margin-fullscreen-xl:  20vw;
 @editor-margin-fullscreen-xxl: 30vw;
 
-@editor-margin-normal-sm:  20px;
-@editor-margin-normal-md:  50px;
-@editor-margin-normal-lg: 100px;
-
 @dropzone-size: 60px;
 
 .main-editor-wrapper {
@@ -922,8 +903,7 @@ function handleDragLeave (event: DragEvent) {
 
   &.fullscreen {
     position: fixed;
-    z-index: 1000; // Ensure this editor instance is on top of any other pane
-    top: 40px; // Titlebar height
+    z-index: 100; // Ensure this editor instance is on top of any other pane
     bottom: 0;
     left: 0;
     right: 0;
@@ -964,7 +944,7 @@ function handleDragLeave (event: DragEvent) {
     // ... and in white (against the dragover background color)
     color: white;
 
-    clr-icon { margin: 0; }
+    cds-icon { margin: 0; }
 
     &.dragover {
       background-color: rgba(21, 61, 107, 0.5);
@@ -977,7 +957,7 @@ function handleDragLeave (event: DragEvent) {
       width: 100%;
       height: @dropzone-size;
       flex-direction: column-reverse;
-      clr-icon { animation: 1s ease-out infinite running caretup; }
+      cds-icon { animation: 1s ease-out infinite running caretup; }
     }
 
     &.left {
@@ -986,7 +966,7 @@ function handleDragLeave (event: DragEvent) {
       height: 100%;
       width: @dropzone-size;
       flex-direction: row-reverse;
-      clr-icon { animation: 1s ease-out infinite running caretleft; }
+      cds-icon { animation: 1s ease-out infinite running caretleft; }
     }
 
     &.right {
@@ -995,7 +975,7 @@ function handleDragLeave (event: DragEvent) {
       height: 100%;
       width: @dropzone-size;
       flex-direction: row;
-      clr-icon { animation: 1s ease-out infinite running caretright; }
+      cds-icon { animation: 1s ease-out infinite running caretright; }
     }
 
     &.bottom {
@@ -1004,20 +984,12 @@ function handleDragLeave (event: DragEvent) {
       height: @dropzone-size;
       justify-content: center;
       align-items: flex-start;
-      clr-icon { animation: 1s ease-out infinite running caretdown; }
+      cds-icon { animation: 1s ease-out infinite running caretdown; }
     }
   }
 
   .cm-editor {
-    // The CodeMirror editor needs to respect the new tabbar; it cannot take
-    // up 100 % all for itself anymore.
-    margin-left: 0.5em;
-    font-family: inherit;
-    background-color: transparent;
-
-    @media(min-width: 1025px) { margin: 0 @editor-margin-normal-lg; }
-    @media(max-width: 1024px) { margin: 0 @editor-margin-normal-md; }
-    @media(max-width:  900px) { margin: 0 @editor-margin-normal-sm; }
+    .cm-scroller { padding: 50px 50px; }
 
     .code { // BEGIN: CODE BLOCK/FILE THEME
       // We're using this solarized theme here: https://ethanschoonover.com/solarized/
@@ -1068,51 +1040,12 @@ function handleDragLeave (event: DragEvent) {
   &.code-file .cm-editor {
     font-family: 'Inconsolata', Consolas, Menlo, monospace;
 
-    margin-left: 0px;
-
     // Reset the margins for code files
-    .cm-scroller {
-      padding: 0px;
-      margin: 0;
-    }
-  }
-
-  .cm-editor .cm-scroller {
-    // Apply some padding so that Markdown documents aren't glued to the edges
-    padding-top: 50px;
-    padding-bottom: 50px;
-
-    .muted { opacity: 0.2; }
+    .cm-scroller { padding: 0px; }
   }
 
   .cm-content {
-    // padding-right: 5em;
-    padding-right: 5%;
     overflow-x: hidden !important; // Necessary to hide the horizontal scrollbar
-
-    // We need to override a negative margin
-    // and a bottom padding from the standard
-    // CSS for some calculations to be correct
-    // such as the table editor
-    margin-bottom: 0px;
-    padding-bottom: 0px;
-  }
-
-  .CodeMirror.CodeMirror-readonly {
-    .CodeMirror-cursor { display: none !important; }
-  }
-
-  // Math equations in text mode
-  .katex {
-    font-size: 1.1em; // reduce font-size of math a bit
-    display: inline-block; // needed for display math to behave properly
-    user-select: none; // Disable user text selection
-  }
-
-  // Math equations in display mode
-  .katex-display, .katex-display > .katex > .katex-html {
-    display: inline-block; // needed for display math to behave properly
-    width: 100%; // display math should be centred
   }
 }
 
@@ -1121,38 +1054,29 @@ body.dark .main-editor-wrapper {
   .CodeMirror .CodeMirror-gutters { background-color: rgba(20, 20, 30, 1); }
 }
 
-body.darwin .main-editor-wrapper {
-  // On macOS the tabbar is 30px high.
-  &:not(.fullscreen) {
-    height: calc(100% - 30px);
-  }
-}
-
-body.win32 .main-editor-wrapper, body.linux .main-editor-wrapper {
-  // On Windows, the tab bar is 30px high
-  &:not(.fullscreen) {
-    height: calc(100% - 30px);
-  }
+// Account for the tabbar
+.main-editor-wrapper:not(.fullscreen) {
+  height: calc(100% - 30px);
 }
 
 // CodeMirror fullscreen
 .main-editor-wrapper.fullscreen {
-    .cm-editor {
-    @media(min-width: 1301px) { margin-left: @editor-margin-fullscreen-xxl !important; }
-    @media(max-width: 1300px) { margin-left: @editor-margin-fullscreen-xl  !important; }
-    @media(max-width: 1100px) { margin-left: @editor-margin-fullscreen-lg  !important; }
-    @media(max-width: 1000px) { margin-left: @editor-margin-fullscreen-md  !important; }
-    @media(max-width:  800px) { margin-left: @editor-margin-fullscreen-sm  !important; }
+  .cm-scroller {
+    @media(min-width: 1301px) { padding: 0 @editor-margin-fullscreen-xxl; }
+    @media(max-width: 1300px) { padding: 0 @editor-margin-fullscreen-xl; }
+    @media(max-width: 1100px) { padding: 0 @editor-margin-fullscreen-lg; }
+    @media(max-width: 1000px) { padding: 0 @editor-margin-fullscreen-md; }
+    @media(max-width:  800px) { padding: 0 @editor-margin-fullscreen-sm; }
 
-    .cm-content {
-      @media(min-width: 1301px) { padding-right: @editor-margin-fullscreen-xxl !important; }
-      @media(max-width: 1300px) { padding-right: @editor-margin-fullscreen-xl  !important; }
-      @media(max-width: 1100px) { padding-right: @editor-margin-fullscreen-lg  !important; }
-      @media(max-width: 1000px) { padding-right: @editor-margin-fullscreen-md  !important; }
-      @media(max-width:  800px) { padding-right: @editor-margin-fullscreen-sm  !important; }
-    }
   }
 }
+
+// Ensure the editor ALWAYS stays below the menubar
+// On macOS, we have the traffic lights, therefore we can literally make the
+// editor take the full space of the window in distraction free
+body.win32 .main-editor-wrapper.fullscreen { top: 30px; }
+// TODO: Interferes on Linux with whether we have a menubar or not!
+body.linux .main-editor-wrapper.fullscreen { top: 41px; }
 
 body.darwin {
     .main-editor-wrapper.fullscreen {
@@ -1166,35 +1090,4 @@ body.darwin {
   }
 }
 
-// Define the readability classes
-// Red, orange, and yellow indicate bad scores
-// Purple and blue indicate average scores
-// Green indicates good scores
-body {
-  .cm-readability-0   { background-color: #ff0000aa; color: #444444 !important; }
-  .cm-readability-1   { background-color: #f67b2baa; color: #444444 !important; }
-  .cm-readability-2   { background-color: #e5a14faa; color: #444444 !important; }
-  .cm-readability-3   { background-color: #e3e532aa; color: #444444 !important; }
-  .cm-readability-4   { background-color: #d4c1fdaa; color: #444444 !important; }
-  .cm-readability-5   { background-color: #538fe9aa; color: #444444 !important; }
-  .cm-readability-6   { background-color: #53bce9aa; color: #444444 !important; }
-  .cm-readability-7   { background-color: #53e7e9aa; color: #444444 !important; }
-  .cm-readability-8   { background-color: #4ad14caa; color: #444444 !important; }
-  .cm-readability-9   { background-color: #53e955aa; color: #444444 !important; }
-  .cm-readability-10  { background-color: #7cf87eaa; color: #444444 !important; }
-}
-
-body.dark {
-  .cm-readability-0,
-  .cm-readability-1,
-  .cm-readability-2,
-  .cm-readability-3,
-  .cm-readability-4,
-  .cm-readability-5,
-  .cm-readability-6,
-  .cm-readability-7,
-  .cm-readability-8,
-  .cm-readability-9,
-  .cm-readability-10 { color: #cccccc !important; }
-}
 </style>

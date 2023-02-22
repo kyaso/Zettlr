@@ -22,35 +22,38 @@ import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
 import { bracketMatching, codeFolding, foldGutter, indentOnInput, indentUnit, StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { yaml } from '@codemirror/legacy-modes/mode/yaml'
-import { search } from '@codemirror/search'
+import { search, searchKeymap } from '@codemirror/search'
 import { Compartment, EditorState, Extension, Prec } from '@codemirror/state'
 import { keymap, drawSelection, EditorView, lineNumbers, ViewUpdate, DOMEventHandlers, dropCursor } from '@codemirror/view'
 import { autocomplete } from './autocomplete'
 import { customKeymap } from './commands/keymap'
-import { codeSyntaxHighlighter, markdownSyntaxHighlighter } from './highlight/get-syntax-highlighter'
+import { codeSyntaxHighlighter, markdownSyntaxHighlighter } from './theme/syntax'
 import markdownParser from './parser/markdown-parser'
 import { syntaxExtensions } from './parser/syntax-extensions'
 import { defaultContextMenu } from './plugins/default-context-menu'
 import { readabilityMode } from './plugins/readability'
 import { hookDocumentAuthority } from './plugins/remote-doc'
-import { lintGutter } from '@codemirror/lint'
+import { lintGutter, linter } from '@codemirror/lint'
 import { spellcheck } from './linters/spellcheck'
 import { mdLint } from './linters/md-lint'
 import { mdStatistics } from './plugins/statistics-fields'
 import { tocField } from './plugins/toc-field'
 import { typewriter } from './plugins/typewriter'
-import { initRenderers } from './renderers'
 import { formattingToolbar, footnoteHover, filePreview, urlHover } from './tooltips'
 import { EditorConfiguration, configField } from './util/configuration'
 import { highlightRanges } from './plugins/highlight-ranges'
 import { jsonFolding } from './code-folding/json'
 import { markdownFolding } from './code-folding/markdown'
-import { jsonLanguage } from '@codemirror/lang-json'
+import { jsonLanguage, jsonParseLinter } from '@codemirror/lang-json'
 import { softwrapVisualIndent } from './plugins/visual-indent'
 import { codeblockBackground } from './plugins/codeblock-background'
 import { vim } from '@replit/codemirror-vim'
 import { emacs } from '@replit/codemirror-emacs'
 import { distractionFree } from './plugins/distraction-free'
+import { languageTool } from './linters/language-tool'
+import { statusbar } from './statusbar'
+import { themeManager } from './theme'
+import { renderers } from './renderers'
 
 /**
  * This interface describes the required properties which the extension sets
@@ -62,6 +65,7 @@ export interface CoreExtensionOptions {
   remoteConfig: {
     filePath: string
     startVersion: number
+    editorId: string
     pullUpdates: (filePath: string, version: number) => Promise<Update[]|false>
     pushUpdates: (filePath: string, version: number, updates: Update[]) => Promise<boolean>
   }
@@ -120,10 +124,11 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     keymap.of([
       ...defaultKeymap, // Minimal default keymap
       ...historyKeymap, // , // History commands (redo/undo)
-      ...closeBracketsKeymap // Binds Backspace to deletion of matching brackets
-      // ...searchKeymap // Search commands (Ctrl+F, etc.)
+      ...closeBracketsKeymap, // Binds Backspace to deletion of matching brackets
+      ...searchKeymap // Search commands (Ctrl+F, etc.)
     ]),
     softwrapVisualIndent, // Always indent visually
+    themeManager(options),
     // CODE FOLDING
     codeFolding(),
     foldGutter(),
@@ -134,12 +139,17 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     drawSelection({ drawRangeCursor: false, cursorBlinkRate: 1000 }),
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
+    // Ensure the cursor never completely sticks to the top or bottom of the editor
+    EditorView.scrollMargins.of(view => { return { top: 30, bottom: 30 } }),
     search({ top: true }), // Add a search
     // TAB SIZES/INDENTATION -> Depend on the configuration field
     EditorState.tabSize.from(configField, (val) => val.indentUnit),
     indentUnit.from(configField, (val) => val.indentWithTabs ? '\t' : ' '.repeat(val.indentUnit)),
     EditorView.lineWrapping, // Enable line wrapping,
     closeBrackets(),
+
+    // Add the statusbar
+    statusbar,
 
     // Add the configuration and preset it with whatever is in the cached
     // config.
@@ -151,6 +161,7 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
 
     // Enables the editor to fetch updates to the document from main
     hookDocumentAuthority(
+      options.remoteConfig.editorId,
       options.remoteConfig.filePath,
       options.remoteConfig.startVersion,
       options.remoteConfig.pullUpdates,
@@ -220,6 +231,10 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     mdLinterExtensions.push(mdLint)
   }
 
+  if (options.initialConfig.lintLanguageTool) {
+    hasLinters = true // We always add this linter
+  }
+
   if (hasLinters) {
     // If there's any linter (except the spellchecker), add a lint gutter
     mdLinterExtensions.push(
@@ -227,7 +242,7 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
         markerFilter (diagnostics) {
           // Show any linter warnings and errors in the gutter *except* wrongly
           // spelled words, since that would be weird.
-          return diagnostics.filter(d => d.source !== 'spellcheck')
+          return diagnostics.filter(d => d.source !== 'spellcheck' && d.source?.startsWith('language-tool') === false)
         }
       })
     )
@@ -243,18 +258,9 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     // ... which can then be styled with a highlighter
     markdownSyntaxHighlighter(),
     syntaxExtensions, // Add our own specific syntax plugin
-    initRenderers({
-      renderImages: options.initialConfig.renderImages,
-      renderLinks: options.initialConfig.renderLinks,
-      renderMath: options.initialConfig.renderMath,
-      renderTasks: options.initialConfig.renderTasks,
-      renderHeadings: options.initialConfig.renderHeadings,
-      renderCitations: options.initialConfig.renderCitations,
-      renderMermaid: true,
-      renderTables: options.initialConfig.renderTables,
-      renderEmphasis: options.initialConfig.renderEmphasis
-    }),
+    renderers(options.initialConfig),
     mdLinterExtensions,
+    languageTool,
     // Some statistics we need for Markdown documents
     mdStatistics,
     typewriter,
@@ -286,7 +292,8 @@ export function getJSONExtensions (options: CoreExtensionOptions): Extension[] {
   return [
     ...getGenericCodeExtensions(options),
     jsonFolding,
-    jsonLanguage
+    jsonLanguage,
+    linter(jsonParseLinter())
   ]
 }
 

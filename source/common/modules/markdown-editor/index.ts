@@ -26,46 +26,74 @@ import './editor.less'
  */
 import EventEmitter from 'events'
 
+// CodeMirror imports
 import { EditorView } from '@codemirror/view'
-import { EditorSelection, EditorState, Extension, SelectionRange } from '@codemirror/state'
 import {
-  getSearchQuery,
-  SearchQuery,
-  setSearchQuery,
-  findNext,
-  findPrevious,
-  replaceNext as _replaceNext,
-  replaceAll as _replaceAll
-} from '@codemirror/search'
+  EditorSelection,
+  EditorState,
+  Extension,
+  SelectionRange
+} from '@codemirror/state'
+import { Update } from '@codemirror/collab'
+import { syntaxTree } from '@codemirror/language'
 
-import safeAssign from '@common/util/safe-assign'
-
-import { charCountField, charCountNoSpacesField, wordCountField } from './plugins/statistics-fields'
-
-// Renderer plugins
-import { reconfigureRenderers } from './renderers'
-import { ToCEntry, tocField } from './plugins/toc-field'
-import { citekeyUpdate, filesUpdate, tagsUpdate, snippetsUpdate } from './autocomplete'
-
-// Keymap plugins
+// Keymaps/Input modes
 import { vim } from '@replit/codemirror-vim'
 import { emacs } from '@replit/codemirror-emacs'
 
+import {
+  charCountField,
+  charCountNoSpacesField,
+  wordCountField
+} from './plugins/statistics-fields'
+
+import { ToCEntry, tocField } from './plugins/toc-field'
+import {
+  citekeyUpdate,
+  filesUpdate,
+  tagsUpdate,
+  snippetsUpdate
+} from './autocomplete'
+
 // Main configuration
-import { configField, configUpdateEffect, EditorConfigOptions, EditorConfiguration, getDefaultConfig } from './util/configuration'
-import { Update } from '@codemirror/collab'
-import { DocumentType } from '@dts/common/documents'
-import { copyAsHTML, pasteAsPlain } from './util/copy-paste-cut'
-import { CoreExtensionOptions, getJSONExtensions, getMarkdownExtensions, getTexExtensions, getYAMLExtensions, inputModeCompartment } from './editor-extension-sets'
-import { highlightRangesEffect } from './plugins/highlight-ranges'
-import { applyComment, applyTaskList, insertImage, insertLink } from './commands/markdown'
+import {
+  CoreExtensionOptions,
+  getJSONExtensions,
+  getMarkdownExtensions,
+  getTexExtensions,
+  getYAMLExtensions,
+  inputModeCompartment
+} from './editor-extension-sets'
+
+import {
+  configField,
+  configUpdateEffect,
+  EditorConfigOptions,
+  EditorConfiguration,
+  getDefaultConfig
+} from './util/configuration'
+
+// Custom commands
+import {
+  applyComment,
+  applyTaskList,
+  insertImage,
+  insertLink
+} from './commands/markdown'
 import { addNewFootnote } from './commands/footnotes'
-import countWords from '@common/util/count-words'
-import { syntaxTree } from '@codemirror/language'
+
+// Utilities
+import { copyAsHTML, pasteAsPlain } from './util/copy-paste-cut'
 import openMarkdownLink from './util/open-markdown-link'
+import { highlightRangesEffect } from './plugins/highlight-ranges'
+
+import safeAssign from '@common/util/safe-assign'
+import countWords from '@common/util/count-words'
+import { DocumentType, DP_EVENTS } from '@dts/common/documents'
 import { TagRecord } from '@providers/tags'
 
 const path = window.path
+const ipcRenderer = window.ipc
 
 export interface DocumentWrapper {
   path: string
@@ -100,6 +128,7 @@ export interface DocumentInfo {
 
 export default class MarkdownEditor extends EventEmitter {
   private readonly _instance: EditorView
+  private readonly editorId: string
   private readonly fetchDoc: (filePath: string) => Promise<{ content: string, type: DocumentType, startVersion: number }>
   private readonly pullUpdates: (filePath: string, version: number) => Promise<Update[]|false>
   private readonly pushUpdates: (filePath: string, version: number, updates: Update[]) => Promise<boolean>
@@ -111,6 +140,14 @@ export default class MarkdownEditor extends EventEmitter {
     snippets: Array<{ name: string, content: string }>
     files: Array<{ filename: string, displayName: string, id: string }>
   }
+
+  /**
+   * Holds all documents that are still open as a cache so the sometimes quite
+   * large initial configuration doesn't always have to be re-added
+   *
+   * @var {Map<string, EditorState>}
+   */
+  private readonly stateCache: Map<string, EditorState>
 
   // "What is this?", you may ask. This is a cache to remember anything important
   // that has to be set for a document that is open but that is not saved inside
@@ -134,6 +171,7 @@ export default class MarkdownEditor extends EventEmitter {
    */
   constructor (
     anchorElement: Element|DocumentFragment|undefined,
+    editorId: string,
     getDocument: (path: string) => Promise<{ content: string, type: DocumentType, startVersion: number }>,
     pullUpdates: (filePath: string, version: number) => Promise<Update[]|false>,
     pushUpdates: (filePath: string, version: number, updates: Update[]) => Promise<boolean>
@@ -143,10 +181,13 @@ export default class MarkdownEditor extends EventEmitter {
     this.fetchDoc = getDocument
     this.pullUpdates = pullUpdates
     this.pushUpdates = pushUpdates
+
+    this.editorId = editorId
     // Since the editor state needs to be rebuilt whenever the document changes,
     // we have to persist the databases (and feed them to the state) everytime
     // we have to rebuild it (during swapDoc).
     this.databaseCache = { tags: [], citations: [], snippets: [], files: [] }
+    this.stateCache = new Map()
 
     // This remembers the last seen scroll positions per document and restores them
     // if possible.
@@ -179,6 +220,19 @@ export default class MarkdownEditor extends EventEmitter {
         }
       }
     }, true)
+
+    // Listen to file close events so that we can keep the document cache clean
+    ipcRenderer.on('documents-update', (e, payload: { event: DP_EVENTS, context?: any }) => {
+      const { event, context } = payload
+      if (
+        event === DP_EVENTS.CLOSE_FILE &&
+        context !== undefined &&
+        context.filePath !== undefined &&
+        this.stateCache.has(context.filePath)
+      ) {
+        this.stateCache.delete(context.filePath)
+      }
+    })
   } // END CONSTRUCTOR
 
   private _getExtensions (filePath: string, type: DocumentType, startVersion: number): Extension[] {
@@ -192,6 +246,7 @@ export default class MarkdownEditor extends EventEmitter {
       remoteConfig: {
         filePath,
         startVersion,
+        editorId: this.editorId,
         pullUpdates: this.pullUpdates,
         pushUpdates: this.pushUpdates
       },
@@ -205,6 +260,19 @@ export default class MarkdownEditor extends EventEmitter {
         }
         if (update.selectionSet) {
           this.emit('cursorActivity')
+        }
+
+        // Listen for config updates, and parse them into the internal cache. We
+        // do it this way, because the editor itself is also capable of changing
+        // its configuration (e.g., via the statusbar). This way we ensure that
+        // both external updates (via setOptions) as well as internal updates
+        // both end up in our cache.
+        for (const transaction of update.transactions) {
+          for (const effect of transaction.effects) {
+            if (effect.is(configUpdateEffect)) {
+              this.onConfigUpdate(effect.value)
+            }
+          }
         }
 
         // Update the selection in our cache
@@ -364,7 +432,7 @@ export default class MarkdownEditor extends EventEmitter {
    * @param  {boolean}  force         Optional. If not given or not true, prevents
    *                                  reloading the same document again.
    */
-  async swapDoc (documentPath: string, force = false): Promise<void> {
+  async swapDoc (documentPath: string, force: boolean = false): Promise<void> {
     // Do not reload the document unless explicitly specified. The reason is
     // that sometimes we do need to programmatically reload the document, but in
     // 99% of the cases, this only leads to unnecessary flickering.
@@ -372,19 +440,31 @@ export default class MarkdownEditor extends EventEmitter {
       return
     }
 
-    // We need to set the file's path already here so that it's available on
-    // the initial rendering round for any extensions that need it
-    this.config.metadata.path = documentPath
+    // Before exchanging anything, cache the current state
+    this.stateCache.set(this.config.metadata.path, this._instance.state)
+
+    // Get the scroll position cache before so it is not overridden by the
+    // initial state update
+    const cache = this.documentViewCache.get(documentPath)
+
     const { content, type, startVersion } = await this.fetchDoc(documentPath)
 
-    const state = EditorState.create({
-      doc: content,
-      extensions: this._getExtensions(documentPath, type, startVersion)
-    })
+    // Now set the correct state, either from cache or create anew
+    const stateToBeRestored = this.stateCache.get(documentPath)
+    if (stateToBeRestored !== undefined) {
+      this._instance.setState(stateToBeRestored)
+    } else {
+      // We need to set the file's path already here so that it's available on
+      // the initial rendering round for any extensions that need it
+      this.config.metadata.path = documentPath
 
-    // Get the cache before so it is not overridden by the initial state update
-    const cache = this.documentViewCache.get(documentPath)
-    this._instance.setState(state)
+      const state = EditorState.create({
+        doc: content,
+        extensions: this._getExtensions(documentPath, type, startVersion)
+      })
+
+      this._instance.setState(state)
+    }
 
     // Provide the cached databases to the state (can be overridden by the
     // caller afterwards by calling setCompletionDatabase)
@@ -431,36 +511,6 @@ export default class MarkdownEditor extends EventEmitter {
   public emptyEditor (): void {
     this._instance.setState(EditorState.create())
   }
-
-  // SEARCH FUNCTIONALITY
-  private maybeExchangeQuery (query: SearchQuery): void {
-    const currentQuery = getSearchQuery(this._instance.state)
-    if (!currentQuery.eq(query)) {
-      this._instance.dispatch({ effects: setSearchQuery.of(query) })
-    }
-  }
-
-  searchNext (query: SearchQuery): void {
-    this.maybeExchangeQuery(query)
-    console.log(findNext(this._instance))
-  }
-
-  searchPrevious (query: SearchQuery): void {
-    this.maybeExchangeQuery(query)
-    findPrevious(this._instance)
-  }
-
-  replaceNext (query: SearchQuery): void {
-    this.maybeExchangeQuery(query)
-    _replaceNext(this._instance)
-  }
-
-  replaceAll (query: SearchQuery): void {
-    this.maybeExchangeQuery(query)
-    _replaceAll(this._instance)
-  }
-
-  stopSearch (): void {}
 
   /**
    * Allows highlighting of arbitrary ranges independent of a search
@@ -549,29 +599,28 @@ export default class MarkdownEditor extends EventEmitter {
    * @param   {Object}  newOptions  The new options
    */
   setOptions (newOptions: EditorConfigOptions): void {
-    console.log(newOptions)
+    // Here, we only trigger an update in the state itself. Then, we grab the
+    // update via an effect to ensure we can cache the final, correct
+    // configuration. However, in case there's no state (initial update), we
+    // still need to cache the config here, as the updateListener won't be
+    // firing yet.
+    this.config = safeAssign(newOptions, this.config)
+    this._instance.dispatch({ effects: configUpdateEffect.of(this.config) })
+  }
+
+  /**
+   * This function is called by an updateListener that listens for changes to
+   * the main configuration. We do so to ensure that the editor state is the
+   * main source of truth, but that the editor class can cache the config in
+   * case we need to exchange the states.
+   *
+   * @param   {Partial<EditorConfiguration>}  newOptions  The new options passed via the effect
+   */
+  private onConfigUpdate (newOptions: Partial<EditorConfiguration>): void {
     const inputModeChanged = newOptions.inputMode !== undefined && newOptions.inputMode !== this.config.inputMode
 
     // Cache the current config first, and then apply it
     this.config = safeAssign(newOptions, this.config)
-
-    // First: The configuration updates themselves. This will already update a
-    // bunch of other facets and values (such as tab size and unit)
-    this._instance.dispatch({ effects: configUpdateEffect.of(this.config) })
-
-    // Second: The renderers
-    reconfigureRenderers(this._instance, {
-      renderImages: this.config.renderImages,
-      renderLinks: this.config.renderLinks,
-      renderMath: this.config.renderMath,
-      renderTasks: this.config.renderTasks,
-      renderHeadings: this.config.renderHeadings,
-      renderCitations: this.config.renderCitations,
-      renderTables: this.config.renderTables,
-      renderIframes: this.config.renderIframes,
-      renderEmphasis: this.config.renderEmphasis,
-      renderMermaid: true
-    })
 
     // Third: The input mode, if applicable
     if (inputModeChanged) {
@@ -707,7 +756,7 @@ export default class MarkdownEditor extends EventEmitter {
     // First, we need the main selection's main offset in the document and
     // compute the correct line number for that offset, in order to arrive at
     // a cursor position.
-    const mainOffset = this._instance.state.selection.main.from
+    const mainOffset = this._instance.state.selection.main.head
     const line = this._instance.state.doc.lineAt(mainOffset)
     return {
       words: this.wordCount ?? 0,
@@ -721,8 +770,8 @@ export default class MarkdownEditor extends EventEmitter {
         .map(sel => {
           // Analogous to how we determine the cursor position we do it here for
           // each selection present.
-          const anchorLine = this._instance.state.doc.lineAt(sel.from)
-          const headLine = this._instance.state.doc.lineAt(sel.to)
+          const anchorLine = this._instance.state.doc.lineAt(sel.anchor)
+          const headLine = this._instance.state.doc.lineAt(sel.head)
           const selContent = this._instance.state.sliceDoc(sel.from, sel.to)
           return {
             anchor: { line: anchorLine.number, ch: sel.from - anchorLine.from + 1 },
@@ -770,6 +819,14 @@ export default class MarkdownEditor extends EventEmitter {
     this._instance.dispatch({
       effects: configUpdateEffect.of({ typewriterMode: shouldBeTypewriter })
     })
+  }
+
+  get darkMode (): boolean {
+    return this.config.darkMode
+  }
+
+  set darkMode (newValue: boolean) {
+    this.setOptions({ darkMode: newValue })
   }
 
   /**
