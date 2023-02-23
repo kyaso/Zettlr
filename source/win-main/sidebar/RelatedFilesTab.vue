@@ -82,7 +82,8 @@ export default defineComponent({
   },
   computed: {
     relatedFilesLabel: function (): string {
-      return trans('Related files')
+      const relLabel = trans('Related files')
+      return (relLabel + ' (' + this.numRelatedFiles + ')')
     },
     noRelatedFilesMessage: function (): string {
       return trans('No related files')
@@ -119,6 +120,9 @@ export default defineComponent({
       } else {
         return this.$store.state.relatedFiles
       }
+    },
+    numRelatedFiles: function (): number {
+      return this.relatedFiles.length
     },
     useH1: function (): boolean {
       return this.$store.state.config.fileNameDisplay.includes('heading')
