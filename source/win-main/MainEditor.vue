@@ -293,6 +293,8 @@ onMounted(() => {
     store.dispatch('lastLeafId', props.leafId).catch(err => console.error(err))
     if (mdEditor !== null) {
       store.commit('updateTableOfContents', mdEditor.tableOfContents)
+      store.dispatch('updateRelatedFiles')
+        .catch(e => console.error('Could not update related files', e))
     }
   })
 
@@ -557,6 +559,8 @@ async function swapDocument (doc: string) {
   await mdEditor.swapDoc(doc)
   store.commit('updateTableOfContents', mdEditor?.tableOfContents)
   store.commit('activeDocumentInfo', mdEditor?.documentInfo)
+  store.dispatch('updateRelatedFiles')
+    .catch(e => console.error('Could not update related files', e))
   // Check if there are search results available for this file that we can
   // pull in and highlight
   maybeHighlightSearchResults()
