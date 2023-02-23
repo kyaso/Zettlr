@@ -295,6 +295,8 @@ onMounted(() => {
       store.commit('updateTableOfContents', mdEditor.tableOfContents)
       store.dispatch('updateRelatedFiles')
         .catch(e => console.error('Could not update related files', e))
+      store.dispatch('updateMentions')
+        .catch(e => console.error('Could not update mentions', e))
     }
   })
 
@@ -561,6 +563,8 @@ async function swapDocument (doc: string) {
   store.commit('activeDocumentInfo', mdEditor?.documentInfo)
   store.dispatch('updateRelatedFiles')
     .catch(e => console.error('Could not update related files', e))
+  store.dispatch('updateMentions')
+    .catch(e => console.error('Could not update mentions', e))
   // Check if there are search results available for this file that we can
   // pull in and highlight
   maybeHighlightSearchResults()
