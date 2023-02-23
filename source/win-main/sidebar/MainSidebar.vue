@@ -7,6 +7,12 @@
     ></TabBar>
 
     <!-- Now the tab containers -->
+    <cds-icon
+      class="tab-refresh-button"
+      shape="refresh"
+      title="Refresh sidebar"
+      v-on:click.stop="refreshSidebar()"
+    ></cds-icon>
     <div id="sidebar-tab-container">
       <ToCTab
         v-if="currentTab === 'toc'"
@@ -16,9 +22,14 @@
       <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab>
       <!-- <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab> -->
       <BacklinksTab
-        v-if="currentTab === 'mentions'"
+        v-if="currentTab === 'mentions' || currentTab === 'toc'"
+        v-bind:not-in-toc="currentTab==='mentions'"
         v-on:jtl="(filePath, lineNumber, newTab) => $emit('jtl', filePath, lineNumber, newTab)"
       ></BacklinksTab>
+      <RelatedFilesTab
+        v-if="currentTab === 'relatedFiles' || currentTab === 'toc'"
+        v-bind:in-toc="currentTab==='toc'"
+      ></RelatedFilesTab>
     </div>
   </div>
 </template>
@@ -152,6 +163,13 @@ export default defineComponent({
   methods: {
     setCurrentTab: function (which: string) {
       (global as any).config.set('window.currentSidebarTab', which)
+    },
+    refreshSidebar: function () {
+      // Update related files and backlinks
+      this.$store.dispatch('updateRelatedFiles')
+        .catch(e => console.error('Could not update related files', e))
+      this.$store.dispatch('updateMentions')
+        .catch(e => console.error('Could not update mentions', e))
     }
   }
 })
@@ -178,6 +196,11 @@ body {
       right: 0px;
       padding: 0px 5px 5px 0px;
       overflow-y: auto;
+
+      #toc-tab {
+        overflow-y: auto;
+        max-height: 70%;
+      }
     }
 
     #open-dir-external {
@@ -335,5 +358,20 @@ body.darwin {
       background-color: transparent;
     }
   }
+}
+
+// Tab headers
+.header-toggle {
+  border-top: 1px solid rgb(175, 175, 175);
+
+  h1, cds-icon {
+    display: inline-block;
+    margin-left: 6px;
+  }
+}
+
+// Remove top border for ToC header
+.remove-border-top {
+  border-top: none;
 }
 </style>

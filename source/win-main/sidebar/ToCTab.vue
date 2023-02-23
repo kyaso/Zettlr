@@ -1,31 +1,40 @@
 <template>
-  <div role="tabpanel">
+  <div id="toc-tab" role="tabpanel">
     <!-- Table of Contents -->
-    <h1>{{ titleOrTocLabel }}</h1>
-    <!-- Show the ToC entries -->
-    <div
-      v-for="(entry, idx) of tableOfContents"
-      v-bind:key="idx"
-      v-bind:data-line="entry.line"
-      class="toc-entry-container"
-      draggable="true"
-      v-bind:style="{
-        'margin-left': `${entry.level * 10}px`
-      }"
-      v-on:click="$emit('jump-to-line', entry.line)"
-      v-on:dragstart="startDragging"
-      v-on:dragover="dragOver"
-      v-on:drop="drop"
-    >
-      <div class="toc-level">
-        {{ entry.renderedLevel }}
-      </div>
-      <div
-        v-bind:class="{ 'toc-entry': true, 'toc-entry-active': tocEntryIsActive(entry.line, idx) }"
-        v-bind:data-line="entry.line"
-        v-html="toc2html(entry.text)"
-      ></div>
+    <div class="remove-border-top header-toggle" v-on:click="hide = !hide">
+      <cds-icon
+        shape="angle" v-bind:direction="(hide) ? 'right' : 'down'"
+      ></cds-icon>
+      <h1>
+        {{ titleOrTocLabel }}
+      </h1>
     </div>
+    <!-- Show the ToC entries -->
+    <div v-if="!hide">
+      <div
+        v-for="(entry, idx) of tableOfContents"
+        v-bind:key="idx"
+        v-bind:data-line="entry.line"
+        class="toc-entry-container"
+        draggable="true"
+        v-bind:style="{
+          'margin-left': `${entry.level * 10}px`
+        }"
+        v-on:click="$emit('jump-to-line', entry.line)"
+        v-on:dragstart="startDragging"
+        v-on:dragover="dragOver"
+        v-on:drop="drop"
+      >
+        <div class="toc-level">
+          {{ entry.renderedLevel }}
+        </div>
+        <div
+          v-bind:class="{ 'toc-entry': true, 'toc-entry-active': tocEntryIsActive(entry.line, idx) }"
+          v-bind:data-line="entry.line"
+          v-html="toc2html(entry.text)"
+        ></div>
+      </div>
+    </div> <!-- hide -->
   </div>
 </template>
 
@@ -47,7 +56,8 @@ export default defineComponent({
   data () {
     return {
       activeFileDescriptor: null as AnyDescriptor|null,
-      library: CITEPROC_MAIN_DB
+      library: CITEPROC_MAIN_DB,
+      hide: false
     }
   },
   computed: {

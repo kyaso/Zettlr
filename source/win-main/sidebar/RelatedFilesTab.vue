@@ -1,7 +1,19 @@
 <template>
   <div role="tabpanel">
-    <h1>{{ relatedFilesLabel }}</h1>
-    <div class="related-files-container">
+    <div v-if="inToc" class="header-toggle" v-on:click="hide = !hide">
+      <cds-icon
+        shape="angle" v-bind:direction="(hide) ? 'right' : 'down'"
+      ></cds-icon>
+      <h1>
+        {{ relatedFilesLabel }}
+      </h1>
+    </div>
+    <div v-else>
+      <h1>
+        {{ relatedFilesLabel }}
+      </h1>
+    </div>
+    <div v-if="!inToc || !hide" class="related-files-container">
       <div v-if="relatedFiles.length === 0">
         {{ noRelatedFilesMessage }}
       </div>
@@ -74,10 +86,14 @@ export default defineComponent({
   components: {
     RecycleScroller
   },
+  props: {
+    inToc: Boolean
+  },
   data: function () {
     const searchParams = new URLSearchParams(window.location.search)
     return {
-      windowId: searchParams.get('window_id') as string
+      windowId: searchParams.get('window_id') as string,
+      hide: false
     }
   },
   computed: {

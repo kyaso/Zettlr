@@ -1,8 +1,13 @@
 <template>
   <div role="tabpanel">
-    <h1 class="backlinks-title" v-on:click="hideBacklinks = !hideBacklinks">
-      Backlinks ({{ numBacklinks }})
-    </h1>
+    <div v-bind:class="{ 'remove-border-top': notInToc }" class="header-toggle" v-on:click="hideBacklinks = !hideBacklinks">
+      <cds-icon
+        shape="angle" v-bind:direction="(hideBacklinks) ? 'right' : 'down'"
+      ></cds-icon>
+      <h1 class="backlinks-title">
+        {{ backlinksTitle }}
+      </h1>
+    </div>
 
     <div v-if="!hideBacklinks">
       <ButtonControl
@@ -77,14 +82,14 @@
     </div>
     <!-- hideBacklinks -->
 
-    <hr />
-
-    <h1
-      class="backlinks-title"
-      v-on:click="hideUnlinkedMentions = !hideUnlinkedMentions"
-    >
-      Unlinked Mentions ({{ numUnlinkedMentions }})
-    </h1>
+    <div class="header-toggle" v-on:click="hideUnlinkedMentions = !hideUnlinkedMentions">
+      <cds-icon
+        shape="angle" v-bind:direction="(hideUnlinkedMentions) ? 'right' : 'down'"
+      ></cds-icon>
+      <h1 class="backlinks-title">
+        {{ unlinkedMentionsTitle }}
+      </h1>
+    </div>
 
     <div v-if="!hideUnlinkedMentions">
       <ButtonControl
@@ -190,6 +195,9 @@ export default defineComponent({
   components: {
     ButtonControl
   },
+  props: {
+    notInToc: Boolean
+  },
   emits: ['jtl'],
   data () {
     return {
@@ -222,6 +230,12 @@ export default defineComponent({
         sum += x.result.length
       })
       return sum
+    },
+    backlinksTitle: function (): string {
+      return ('Backlinks (' + this.numBacklinks + ')')
+    },
+    unlinkedMentionsTitle: function (): string {
+      return ('Unlinked Mentions (' + this.numUnlinkedMentions + ')')
     }
   },
   methods: {
