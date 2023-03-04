@@ -71,21 +71,28 @@ export default defineComponent({
      * @return  {string}  The title for the ToC sidebar
      */
     titleOrTocLabel: function (): string {
-      if (
-        this.activeFileDescriptor === null ||
-        this.activeFileDescriptor.type !== 'file' ||
-        this.activeFileDescriptor.frontmatter == null
-      ) {
-        return this.tocLabel
-      }
-
-      const frontmatter = this.activeFileDescriptor.frontmatter
-
-      if ('title' in frontmatter && frontmatter.title.length > 0) {
-        return frontmatter.title
+      if (this.activeFileDescriptor !== null) {
+        return this.activeFileDescriptor.name
       } else {
         return this.tocLabel
       }
+
+      // if (
+      //   this.activeFileDescriptor === null ||
+      //   this.activeFileDescriptor.type !== 'file' ||
+      //   this.activeFileDescriptor.frontmatter == null
+      // ) {
+      //   console.log('foobar')
+      //   return this.tocLabel
+      // }
+
+      // const frontmatter = this.activeFileDescriptor.frontmatter
+
+      // if ('title' in frontmatter && frontmatter.title.length > 0) {
+      //   return frontmatter.title
+      // } else {
+      //   return this.tocLabel
+      // }
     },
     activeFile: function (): OpenDocument|null {
       return this.$store.getters.lastLeafActiveFile()
