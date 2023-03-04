@@ -74,11 +74,6 @@ export default function (): any {
       ],
       [
         {
-          type: 'switch',
-          label: 'Enable link tooltips',
-          model: 'zkn.tooltipEnable'
-        },
-        {
           type: 'number',
           label: 'Link tooltip delay (ms)',
           model: 'zkn.tooltipDelay',
