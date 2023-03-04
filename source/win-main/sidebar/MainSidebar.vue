@@ -334,7 +334,7 @@ body {
       background-color: rgba(30, 30, 30, 1);
       color: rgb(230, 230, 230);
 
-      div.related-files-container div.related-file:hover {
+      div.related-files-container div.related-file:hover, div.backlinks-container div.result-line:hover {
         background-color: rgb(80, 80, 80);
       }
     }
