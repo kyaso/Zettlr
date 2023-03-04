@@ -683,6 +683,7 @@ export default defineComponent({
         .then(() => {
           this.globalSearchComponent.$data.query = terms
           this.globalSearchComponent.startSearch()
+          this.$store.commit('updateSearchTerm', terms)
         })
         .catch(err => console.error(err))
     },

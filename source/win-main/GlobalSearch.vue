@@ -505,6 +505,7 @@ export default defineComponent({
     },
     emptySearchResults: function () {
       this.$store.commit('clearSearchResults')
+      this.$store.commit('updateSearchTerm', '')
       this.individualResults = 0
 
       // Clear indices of active search result
