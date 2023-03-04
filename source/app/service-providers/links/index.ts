@@ -18,6 +18,8 @@ import ProviderContract from '../provider-contract'
 import FSAL from '@providers/fsal'
 import LogProvider from '@providers/log'
 
+import path from 'path'
+
 /**
  * This class manages the coloured tags of the app. It reads the tags on each
  * start of the app and writes them after they have been changed.
@@ -50,6 +52,21 @@ export default class LinkProvider extends ProviderContract {
       } else if (command === 'get-link-database') {
         // NOTE: We need to compact the Map into something JSONable
         return Object.fromEntries(this._fileLinkDatabase)
+      } else if (command === 'get-files-with-link') {
+        const { link } = message.payload
+        return {
+          files: this.retrieveFilesWithLink(link)
+        }
+      } else if (command === 'get-non-file-links') {
+        const { filePath } = message.payload
+        return {
+          links: this.retrieveNonFileLinks(filePath)
+        }
+      } else if (command === 'get-all-outbound-links') {
+        const { filePath } = message.payload
+        return {
+          links: this.retrieveAllOutboundLinks(filePath)
+        }
       }
     })
   }
@@ -179,5 +196,78 @@ export default class LinkProvider extends ProviderContract {
     }
 
     return outboundLinks
+  }
+
+  /**
+   * Retrieves a set of files which contain the link
+   *
+   * @param link The link to look for
+   * @returns A list of files
+   */
+  // TODO merge: There has tobe a better name
+  retrieveFilesWithLink (link: string): string[] {
+    const sourceFiles: string[] = []
+
+    // Search all recorded links
+    for (const [ file, outbound ] of this._fileLinkDatabase.entries()) {
+      if (outbound.includes(link)) {
+        sourceFiles.push(file)
+      }
+    }
+
+    return sourceFiles
+  }
+
+  /**
+   * For the given file retrieves the set of links that don't point
+   * to any file.
+   * @param sourceFilePath
+   * @returns A list of links
+   */
+  retrieveNonFileLinks (sourceFilePath: string): string[] {
+    const dbLinks = this._fileLinkDatabase.get(sourceFilePath)
+    if (dbLinks === undefined) {
+      return []
+    }
+
+    const nonFileLinks: string[] = []
+
+    for (const link of dbLinks) {
+      const descriptor = this._fsal.findExact(link)
+      if (descriptor === undefined) {
+        // For some reason the database doesn't remove duplicates, so we do it manually here
+        if (!nonFileLinks.includes(link)) {
+          nonFileLinks.push(link)
+        }
+      }
+    }
+
+    return nonFileLinks
+  }
+
+  /**
+   * For the given file retrieves _all_ unique outbound links.
+   * This includes both links pointing to actual files as well as
+   * non-file links.
+   * @param sourceFilePath The file
+   */
+  retrieveAllOutboundLinks (sourceFilePath: string): string[] {
+    const dbLinks = this._fileLinkDatabase.get(sourceFilePath)
+    if (dbLinks === undefined) {
+      return []
+    }
+
+    const links: string[] = []
+
+    for (const link of dbLinks) {
+      // For some reason the database doesn't remove duplicates, so we do it manually here
+      if (!links.includes(link)) {
+        // Do not include links to the file itself
+        if (link === path.basename(sourceFilePath, '.md') || link === path.basename(sourceFilePath)) continue
+
+        links.push(link)
+      }
+    }
+    return links
   }
 }
