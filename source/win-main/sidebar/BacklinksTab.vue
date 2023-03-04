@@ -51,7 +51,7 @@
             {{ result.file.displayName }}
           </div>
 
-          <div class="collapse-icon">
+          <div class="controls collapse-icon">
             <cds-icon
               shape="angle" v-bind:direction="(result.hideResultSet) ? 'left' : 'down'"
             ></cds-icon>
@@ -133,7 +133,7 @@
             {{ result.file.displayName }}
           </div>
 
-          <div class="collapse-icon">
+          <div class="controls collapse-icon">
             <cds-icon
               shape="angle" v-bind:direction="(result.hideResultSet) ? 'left' : 'down'"
             ></cds-icon>
@@ -163,6 +163,93 @@
       <!-- v-for -->
     </div>
     <!-- hideUnlinkedMentions -->
+
+    <!-- Outbound links -->
+    <div class="header-toggle" v-on:click="hideOutboundLinks = !hideOutboundLinks">
+      <cds-icon
+        shape="angle" v-bind:direction="(hideOutboundLinks) ? 'right' : 'down'"
+      ></cds-icon>
+      <h1 class="backlinks-title">
+        {{ outboundLinksTitle }}
+      </h1>
+    </div>
+    <div v-if="!hideOutboundLinks">
+      <ButtonControl
+        class="mentions-toggle"
+        v-bind:label="'Toggle'"
+        v-bind:inline="true"
+        v-on:click="toggleResults('outbound')"
+      ></ButtonControl>
+      <div
+        v-for="link in outboundLinks"
+        v-bind:key="link"
+        class="backlinks-container"
+      >
+        <div
+          class="filename"
+          v-on:click="link.hideFileSet = !link.hideFileSet"
+        >
+          <div
+            class="overflow-hidden"
+            v-bind:title="link.link"
+          >
+            {{ getLinkStr(link) }}
+          </div>
+          <div class="buttons">
+            <div
+              v-if="hasBacklink(link)"
+            >
+              <cds-icon
+                class="backlink-arrow-icon"
+                shape="arrow"
+                direction="left"
+                title="This note links back to the active file"
+              ></cds-icon>
+            </div>
+            <div
+              v-if="linkIsFile(link)"
+              class="controls file-icon"
+              v-on:click.stop="requestFile($event, link.targetFilePath)"
+            >
+              <cds-icon
+                shape="file"
+                title="Open note"
+              ></cds-icon>
+            </div>
+            <div
+              class="controls search-icon"
+              v-on:click.stop="onSearchClick(link)"
+            >
+              <cds-icon
+                shape="search"
+                title="Search"
+              ></cds-icon>
+            </div>
+            <div
+              v-if="link.files.length !== 0"
+              class="controls collapse-icon"
+            >
+              <cds-icon
+                shape="angle" v-bind:direction="(link.hideFileSet) ? 'left' : 'down'"
+              ></cds-icon>
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="!link.hideFileSet"
+          class="results-container"
+        >
+          <div
+            v-for="file in link.files"
+            v-bind:key="file"
+            class="result-line"
+            v-on:click.stop="requestFile($event, file)"
+          >
+            {{ getFileName(file) }}
+          </div> <!-- v-for link.files -->
+        </div>
+      </div> <!-- v-for outboundLink -->
+    </div>
   </div>
 </template>
 
@@ -185,10 +272,13 @@
 
 import ButtonControl from '@common/vue/form/elements/Button.vue'
 import { SearchResult, SearchResultWrapper } from '@dts/common/search'
+import { OutboundLink } from '@dts/renderer/misc'
 import { defineComponent } from '@vue/runtime-core'
 import { markText } from '../shared'
+import { copyZknLink } from '@common/util/clipboard'
 
 const path = window.path
+const ipcRenderer = window.ipc
 
 export default defineComponent({
   name: 'BacklinksTab',
@@ -200,11 +290,16 @@ export default defineComponent({
   },
   emits: ['jtl'],
   data () {
+    const searchParams = new URLSearchParams(window.location.search)
     return {
+      windowId: searchParams.get('window_id') as string,
       hideBacklinks: true,
       hideUnlinkedMentions: true,
+      hideOutboundLinks: true,
       maxWeight: 0,
-      toggleState: false
+      toggleStateBacklinks: false,
+      toggleStateUnlinked: false,
+      toggleStateOutbound: false
     }
   },
   computed: {
@@ -213,6 +308,9 @@ export default defineComponent({
     },
     unlinkedMentions: function (): SearchResultWrapper[] {
       return this.$store.state.unlinkedMentions
+    },
+    outboundLinks: function (): OutboundLink[] {
+      return this.$store.state.outboundLinks
     },
     sep: function (): string {
       return path.sep
@@ -231,25 +329,40 @@ export default defineComponent({
       })
       return sum
     },
+    numOutboundLinks: function (): number {
+      return this.outboundLinks.length
+    },
     backlinksTitle: function (): string {
       return ('Backlinks (' + this.numBacklinks + ')')
     },
     unlinkedMentionsTitle: function (): string {
       return ('Unlinked Mentions (' + this.numUnlinkedMentions + ')')
+    },
+    outboundLinksTitle: function (): string {
+      return ('Outbound links (' + this.numOutboundLinks + ')')
+    },
+    // **** Copied from RelatedFilesTab.vue ****
+    lastLeafId: function (): string {
+      return this.$store.state.lastLeafId
     }
   },
   methods: {
     // **** Adapted from GlobalSearch.vue ****
     toggleResults (type: string): void {
       if (type === 'backlinks') {
-        this.toggleState = !this.toggleState
+        this.toggleStateBacklinks = !this.toggleStateBacklinks
         for (const b of this.backlinks) {
-          b.hideResultSet = this.toggleState
+          b.hideResultSet = this.toggleStateBacklinks
         }
       } else if (type === 'unlinked') {
-        this.toggleState = !this.toggleState
+        this.toggleStateUnlinked = !this.toggleStateUnlinked
         for (const u of this.unlinkedMentions) {
-          u.hideResultSet = this.toggleState
+          u.hideResultSet = this.toggleStateUnlinked
+        }
+      } else if (type === 'outbound') {
+        this.toggleStateOutbound = !this.toggleStateOutbound
+        for (const n of this.outboundLinks) {
+          n.hideFileSet = this.toggleStateOutbound
         }
       }
     },
@@ -284,6 +397,48 @@ export default defineComponent({
     // **** Copied from GlobalSearch.vue ****
     markText: function (resultObject: SearchResult) {
       return markText(resultObject)
+    },
+    getFileName: function (absolutePath: string): string {
+      return path.basename(absolutePath, '.md')
+    },
+    getLinkStr: function (link: OutboundLink): string {
+      const linkWithBrackets = '[[ ' + link.link + ' ]]'
+      // Add number of files if any
+      if (link.files.length > 0) {
+        return linkWithBrackets + ' - (' + link.files.length + ')'
+      }
+      return linkWithBrackets
+    },
+    onSearchClick: function (link: OutboundLink) {
+      const linkText = link.link
+      ipcRenderer.invoke('application', {
+        command: 'start-global-search',
+        payload: linkText
+      })
+        .catch(err => console.error(err))
+
+      // Also copy the link to the clipboard
+      copyZknLink(linkText)
+    },
+    // **** Copied from RelatedFilesTab.vue ****
+    requestFile: function (event: MouseEvent, filePath: string) {
+      ipcRenderer.invoke('documents-provider', {
+        command: 'open-file',
+        payload: {
+          path: filePath,
+          windowId: this.windowId,
+          leafId: this.lastLeafId,
+          newTab: event.type === 'mousedown' && event.button === 1
+        }
+      })
+        .catch(e => console.error(e))
+    },
+    linkIsFile: function (link: OutboundLink) {
+      return (link.targetFilePath !== undefined)
+    },
+    // Returns true if the outbound link also links back to the active file
+    hasBacklink: function (link: OutboundLink): Boolean {
+      return this.backlinks.some((b) => b.file.path === link.targetFilePath)
     }
   }
 })
@@ -300,8 +455,12 @@ div.backlinks-container {
     font-weight: bold;
     display: flex;
     justify-content: space-between;
+    margin-bottom: 5px;
     div.overflow-hidden {
       overflow: hidden;
+    }
+    div.buttons {
+      display: flex;
     }
   }
   div.filepath {
@@ -315,7 +474,7 @@ div.backlinks-container {
     padding: 5px;
     font-size: 12px;
     &:hover {
-      background-color: rgb(180, 180, 180);
+      background-color: rgb(200, 200, 200);
     }
     .search-result-highlight {
       font-weight: bold;
@@ -325,5 +484,18 @@ div.backlinks-container {
 }
 .mentions-toggle {
   padding-left: 10px;
+}
+
+.controls {
+  margin-left: 5px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: rgb(200, 200, 200);
+  }
+}
+
+.backlink-arrow-icon {
+  margin-left: 5px;
 }
 </style>

@@ -18,7 +18,7 @@ import { StoreOptions, createStore as baseCreateStore, Store } from 'vuex'
 import { InjectionKey } from 'vue'
 import { ColoredTag } from '@providers/tags'
 import { SearchResultWrapper } from '@dts/common/search'
-import { RelatedFile } from '@dts/renderer/misc'
+import { OutboundLink, RelatedFile } from '@dts/renderer/misc'
 import locateByPath from '@providers/fsal/util/locate-by-path'
 import configToArrayMapper from './config-to-array'
 import { BranchNodeJSON, LeafNodeJSON, OpenDocument } from '@dts/common/documents'
@@ -35,6 +35,7 @@ import filetreeUpdateAction from './actions/filetree-update'
 import updateOpenDirectoryAction from './actions/update-open-directory'
 import updateRelatedFilesAction from './actions/update-related-files'
 import updateMentionsAction from './actions/update-mentions'
+import updateOutboundLinksAction from './actions/update-outbound-links'
 import updateBibliographyAction from './actions/update-bibliography'
 import documentTreeUpdateAction from './actions/document-tree-update'
 import { AnyDescriptor, DirDescriptor, MaybeRootDescriptor } from '@dts/common/fsal'
@@ -156,6 +157,7 @@ export interface ZettlrState {
    * This array stores unlinked mentions to the current file.
    */
   unlinkedMentions: SearchResultWrapper[]
+  outboundLinks: OutboundLink[]
 }
 
 /**
@@ -191,7 +193,8 @@ function getConfig (): StoreOptions<ZettlrState> {
         searchResults: [],
         searchTerm: '',
         backlinks: [],
-        unlinkedMentions: []
+        unlinkedMentions: [],
+        outboundLinks: []
       }
     },
     getters: {
@@ -288,6 +291,9 @@ function getConfig (): StoreOptions<ZettlrState> {
         state.backlinks = []
         state.unlinkedMentions = []
       },
+      updateOutboundLinks: function (state, outboundLinks: OutboundLink[]) {
+        state.outboundLinks = outboundLinks
+      },
       updateModifiedFiles: function (state, modifiedDocuments: string[]) {
         state.modifiedDocuments = modifiedDocuments
       },
@@ -338,9 +344,11 @@ function getConfig (): StoreOptions<ZettlrState> {
         // Update the related files
         await ctx.dispatch('updateRelatedFiles')
         await ctx.dispatch('updateMentions')
+        await ctx.dispatch('updateOutboundLinks')
       },
       updateRelatedFiles: updateRelatedFilesAction,
       updateMentions: updateMentionsAction,
+      updateOutboundLinks: updateOutboundLinksAction,
       updateBibliography: updateBibliographyAction,
       documentTree: documentTreeUpdateAction,
       updateSnippets: updateSnippetsAction,

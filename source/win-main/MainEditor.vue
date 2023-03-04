@@ -297,6 +297,8 @@ onMounted(() => {
         .catch(e => console.error('Could not update related files', e))
       store.dispatch('updateMentions')
         .catch(e => console.error('Could not update mentions', e))
+      store.dispatch('updateOutboundLinks')
+        .catch(e => console.error('Could not update outbound links', e))
     }
   })
 
@@ -565,6 +567,8 @@ async function swapDocument (doc: string) {
     .catch(e => console.error('Could not update related files', e))
   store.dispatch('updateMentions')
     .catch(e => console.error('Could not update mentions', e))
+  store.dispatch('updateOutboundLinks')
+    .catch(e => console.error('Could not update outbound links', e))
   // Check if there are search results available for this file that we can
   // pull in and highlight
   maybeHighlightSearchResults()

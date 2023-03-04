@@ -158,6 +158,8 @@ export default defineComponent({
         .catch(e => console.error('Could not update related files', e))
       this.$store.dispatch('updateMentions')
         .catch(e => console.error('Could not update mentions', e))
+      this.$store.dispatch('updateOutboundLinks')
+        .catch(e => console.error('Could not update outbound links', e))
     })
   },
   methods: {
@@ -170,6 +172,8 @@ export default defineComponent({
         .catch(e => console.error('Could not update related files', e))
       this.$store.dispatch('updateMentions')
         .catch(e => console.error('Could not update mentions', e))
+      this.$store.dispatch('updateOutboundLinks')
+        .catch(e => console.error('Could not update outbound links', e))
     }
   }
 })
