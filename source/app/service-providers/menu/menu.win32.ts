@@ -437,7 +437,7 @@ export default function getMenu (
           }
         },
         {
-          id: 'menu.copy_id',
+          id: 'menu.copy_id', // TODO KY: Why did we hijack this instead of creating a new entry?
           label: 'Insert base62 ID',
           accelerator: 'Ctrl+L',
           click: function (menuitem, focusedWindow) {

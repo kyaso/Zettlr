@@ -53,6 +53,10 @@ export interface ConfigOptions {
     tooltipDelay: number
     copyOnClick: boolean
     copyIDWithBrackets: boolean
+    blockIds: {
+      addRootIndicator: boolean
+      rootIndicator: string
+    }
   }
   editor: {
     autocompleteAcceptSpace: boolean

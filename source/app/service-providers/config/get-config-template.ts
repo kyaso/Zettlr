@@ -105,7 +105,11 @@ export default function getConfigTemplate (): ConfigOptions {
       customDirectory: '', // If present, saves auto-created files here
       tooltipDelay: 250, // Tooltip popup delay (ms)
       copyOnClick: true, // Whether to copy the ID/tag on click (search)
-      copyIDWithBrackets: false // Whether to copy the ID with "[[ ]]"
+      copyIDWithBrackets: false, // Whether to copy the ID with "[[ ]]"
+      blockIds: {
+        addRootIndicator: true, // Whether to append symbol after block ID
+        rootIndicator: '🟨' // What symbol to use
+      }
     },
     // Editor related stuff
     editor: {

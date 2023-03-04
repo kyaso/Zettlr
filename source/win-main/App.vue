@@ -196,6 +196,12 @@ export default defineComponent({
     }
   },
   computed: {
+    shouldInsertRootIDSymbol: function (): boolean {
+      return this.$store.state.config['zkn.blockIds.addRootIndicator']
+    },
+    getRootIDSymbol: function (): string {
+      return this.$store.state.config['zkn.blockIds.rootIndicator']
+    },
     mousePrevBackShouldSwitch: function (): boolean {
       return this.$store.state.config['custom.mousePrevBack']
     },
@@ -518,7 +524,11 @@ export default defineComponent({
         if (!base62) {
           clipboard.writeText(generateId(window.config.get('zkn.idGen')))
         } else {
-          clipboard.writeText('[[' + generateId('%base62') + ']]')
+          let id = '[[' + generateId('%base62') + ']]'
+          if (this.shouldInsertRootIDSymbol) {
+            id += this.getRootIDSymbol
+          }
+          clipboard.writeText(id)
         }
         // Paste the ID
         ipcRenderer.send('window-controls', { command: 'paste' })

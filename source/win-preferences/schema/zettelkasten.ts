@@ -88,6 +88,18 @@ export default function (): any {
           type: 'checkbox',
           label: 'Add "[[ ]]" when copying ID',
           model: 'zkn.copyIDWithBrackets'
+        },
+        {
+          type: 'checkbox',
+          label: 'Automatically append root indication symbol when inserting custom ID',
+          model: 'zkn.blockIds.addRootIndicator',
+          reset: true
+        },
+        {
+          type: 'text',
+          label: 'Block ID root indicator symbol',
+          model: 'zkn.blockIds.rootIndicator',
+          reset: '🟨'
         }
       ]
     ]
