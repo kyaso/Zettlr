@@ -212,7 +212,7 @@ export default defineComponent({
       return this.$store.getters.lastLeafActiveFile()
     },
     readabilityActive: function (): boolean {
-      const lastLeaf = this.$store.state.lastLeafId
+      const lastLeaf = this.lastLeafId
       if (typeof lastLeaf !== 'string') {
         return false
       }
@@ -538,11 +538,17 @@ export default defineComponent({
         //   clipboard.write({ text, html, rtf })
         // }, 10) // Why do a timeout? Because the paste event is asynchronous.
       } else if (shortcut === 'copy-current-id') {
-        const activeFile = this.$store.state.activeFile
-
-        if (activeFile !== null && activeFile.id !== '') {
-          clipboard.writeText(activeFile.id)
-        }
+        const activeFile = this.$store.getters.lastLeafActiveFile()
+        ipcRenderer.invoke('application', {
+          command: 'get-descriptor',
+          payload: activeFile.path
+        })
+          .then(descriptor => {
+            if (descriptor !== undefined && descriptor.id !== undefined && descriptor.id !== '') {
+              clipboard.writeText(descriptor.id)
+            }
+          })
+          .catch(err => console.error(err))
       } else if (shortcut === 'global-search') {
         this.fileManagerVisible = true
         this.mainSplitViewVisibleComponent = 'globalSearch'
@@ -578,7 +584,7 @@ export default defineComponent({
           command: 'navigate-back',
           payload: {
             windowId: this.windowId,
-            leafId: this.$store.state.lastLeafId
+            leafId: this.lastLeafId
           }
         }).catch(err => console.error(err))
       } else if (shortcut === 'navigate-forward') {
@@ -586,7 +592,7 @@ export default defineComponent({
           command: 'navigate-forward',
           payload: {
             windowId: this.windowId,
-            leafId: this.$store.state.lastLeafId
+            leafId: this.lastLeafId
           }
         }).catch(err => console.error(err))
       }
@@ -672,7 +678,7 @@ export default defineComponent({
         payload: {
           path: filePath,
           windowId: this.windowId,
-          leafId: this.$store.state.lastLeafId,
+          leafId: this.lastLeafId,
           newTab
         }
       })
@@ -717,7 +723,7 @@ export default defineComponent({
           command: 'navigate-back',
           payload: {
             windowId: this.windowId,
-            leafId: this.$store.state.lastLeafId
+            leafId: this.lastLeafId
           }
         }).catch(err => console.error(err))
       } else if (clickedID === 'next-file') {
@@ -725,7 +731,7 @@ export default defineComponent({
           command: 'navigate-forward',
           payload: {
             windowId: this.windowId,
-            leafId: this.$store.state.lastLeafId
+            leafId: this.lastLeafId
           }
         }).catch(err => console.error(err))
       } else if (clickedID === 'export') {

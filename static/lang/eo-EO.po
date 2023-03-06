@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zettlr 2.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Zettlr/Zettlr/issues\n"
-"POT-Creation-Date: 2023-02-19 02:41+0000\n"
+"POT-Creation-Date: 2023-03-02 02:43+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -620,7 +620,7 @@ msgstr ""
 
 #: source/app/service-providers/commands/file-duplicate.ts:43
 #: source/app/service-providers/commands/file-duplicate.ts:59
-#: source/app/service-providers/commands/file-new.ts:161
+#: source/app/service-providers/commands/file-new.ts:156
 msgid "Could not create file"
 msgstr ""
 
@@ -865,7 +865,7 @@ msgstr ""
 
 #: source/tmp/file-item.vue.ts:132 source/tmp/file-item.vue.ts:205
 #: source/tmp/PopoverDocInfo.vue.ts:71
-#: source/common/modules/markdown-editor/statusbar/index.ts:108
+#: source/common/modules/markdown-editor/statusbar/index.ts:263
 #, javascript-format
 msgid "%s characters"
 msgstr ""
@@ -873,7 +873,7 @@ msgstr ""
 #: source/tmp/file-item.vue.ts:134 source/tmp/file-item.vue.ts:207
 #: source/tmp/PopoverDocInfo.vue.ts:73 source/tmp/PopoverDirProps.vue.ts:144
 #: source/tmp/PopoverFileProps.vue.ts:89
-#: source/common/modules/markdown-editor/statusbar/index.ts:89
+#: source/common/modules/markdown-editor/statusbar/index.ts:244
 #, javascript-format
 msgid "%s words"
 msgstr ""
@@ -1041,27 +1041,27 @@ msgstr ""
 msgid "Saved!"
 msgstr ""
 
-#: source/tmp/PopoverTags.vue.ts:77
+#: source/tmp/PopoverTags.vue.ts:36
 msgid "Name"
 msgstr ""
 
-#: source/tmp/PopoverTags.vue.ts:78
+#: source/tmp/PopoverTags.vue.ts:37
 msgid "Count"
 msgstr ""
 
-#: source/tmp/PopoverTags.vue.ts:103
+#: source/tmp/PopoverTags.vue.ts:55
 msgid "Filter tags…"
 msgstr "Filtri etikedojn ..."
 
-#: source/tmp/PopoverTags.vue.ts:106
+#: source/tmp/PopoverTags.vue.ts:58
 msgid "Tag Cloud"
 msgstr "Etikeda Nubo"
 
-#: source/tmp/PopoverTags.vue.ts:109
+#: source/tmp/PopoverTags.vue.ts:61
 msgid "Suggested tags for the current file"
 msgstr "Proponitaj etikedoj por la nuna dosiero"
 
-#: source/tmp/PopoverTags.vue.ts:112
+#: source/tmp/PopoverTags.vue.ts:64
 msgid "Add to file"
 msgstr "Aldonu al dosiero"
 
@@ -2285,44 +2285,65 @@ msgid "Serbian"
 msgstr "Serbo"
 
 #: source/common/util/map-lang-code.ts:118
+#, fuzzy
+msgid "Albanian"
+msgstr "Rumana"
+
+#: source/common/util/map-lang-code.ts:119
+#, fuzzy
+msgid "Albanian (Albania)"
+msgstr "Malajzia (Malajzio)"
+
+#: source/common/util/map-lang-code.ts:120
 msgid "Swedish"
 msgstr "Sveda"
 
-#: source/common/util/map-lang-code.ts:119
+#: source/common/util/map-lang-code.ts:121
 #, fuzzy
 msgid "Tamil (India)"
 msgstr "La angla (Barato)"
 
-#: source/common/util/map-lang-code.ts:120
+#: source/common/util/map-lang-code.ts:122
+msgid "Thai"
+msgstr ""
+
+#: source/common/util/map-lang-code.ts:123
 msgid "Tagalog (Filipino)"
 msgstr ""
 
-#: source/common/util/map-lang-code.ts:121
+#: source/common/util/map-lang-code.ts:124
 msgid "Turkish"
 msgstr "Turka"
 
-#: source/common/util/map-lang-code.ts:122
+#: source/common/util/map-lang-code.ts:125
 msgid "Ukrainian"
 msgstr "Ukraina"
 
-#: source/common/util/map-lang-code.ts:123
+#: source/common/util/map-lang-code.ts:126
 msgid "Urdu"
 msgstr ""
 
-#: source/common/util/map-lang-code.ts:124
+#: source/common/util/map-lang-code.ts:127
 msgid "Vietnamese"
 msgstr "Vjetnama"
 
-#: source/common/util/map-lang-code.ts:125
+#. NOTE: According to ISO 639-2, while hsb and dsb denote Higher and Lower
+#. Sorbian, wen denotes the language family as such
+#: source/common/util/map-lang-code.ts:130
+#, fuzzy
+msgid "Sorbian"
+msgstr "Serbo"
+
+#: source/common/util/map-lang-code.ts:131
 msgid "Chinese (China)"
 msgstr "Ĉina (Ĉinio)"
 
-#: source/common/util/map-lang-code.ts:126
+#: source/common/util/map-lang-code.ts:132
 #, fuzzy
 msgid "Chinese (Taiwan)"
 msgstr "Ĉina (Ĉinio)"
 
-#: source/common/util/map-lang-code.ts:127
+#: source/common/util/map-lang-code.ts:133
 #, fuzzy
 msgid "Chinese"
 msgstr "Ĉina (Ĉinio)"
@@ -2425,20 +2446,29 @@ msgstr ""
 msgid "No highlighting"
 msgstr ""
 
-#: source/common/modules/markdown-editor/statusbar/index.ts:52
+#: source/common/modules/markdown-editor/statusbar/index.ts:134
+msgid "Disabled"
+msgstr ""
+
+#: source/common/modules/markdown-editor/statusbar/index.ts:141
+#, fuzzy
+msgid "Custom"
+msgstr "Propra CSS"
+
+#: source/common/modules/markdown-editor/statusbar/index.ts:207
 #, javascript-format
 msgid "Readability mode (%s)"
 msgstr ""
 
-#: source/common/modules/markdown-editor/statusbar/index.ts:252
+#: source/common/modules/markdown-editor/statusbar/index.ts:407
 msgid "Detect automatically"
 msgstr ""
 
-#: source/common/modules/markdown-editor/statusbar/index.ts:294
+#: source/common/modules/markdown-editor/statusbar/index.ts:449
 msgid "Open diagnostics panel"
 msgstr ""
 
-#: source/common/modules/markdown-editor/linters/spellcheck.ts:148
+#: source/common/modules/markdown-editor/linters/spellcheck.ts:149
 msgid "Spelling mistake"
 msgstr ""
 
