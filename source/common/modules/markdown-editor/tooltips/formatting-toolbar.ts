@@ -16,6 +16,7 @@ import { Tooltip, showTooltip } from '@codemirror/view'
 import { EditorState, StateField } from '@codemirror/state'
 import { applyBold, applyCode, applyComment, applyItalic, applyZknLink, insertImage, insertLink } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
+import { copyAsPlain } from '../util/copy-paste-cut'
 
 function getToolbar (state: EditorState): Tooltip[] {
   const mainSel = state.selection.main
@@ -23,7 +24,7 @@ function getToolbar (state: EditorState): Tooltip[] {
     return []
   }
 
-  // Bold | Italic | Link | Image | Comment | Code
+  // Bold | Italic | Link | Image | Comment | Code  ̣| Wikilink | Copy
 
   return [{
     pos: mainSel.head,
@@ -52,15 +53,15 @@ function getToolbar (state: EditorState): Tooltip[] {
       link.setAttribute('title', trans('Link'))
       link.innerHTML = '<cds-icon shape="link"></cds-icon>'
 
-      const image = document.createElement('button')
-      image.classList.add('formatting-toolbar-button')
-      image.setAttribute('title', trans('Image'))
-      image.innerHTML = '<cds-icon shape="image"></cds-icon>'
+      // const image = document.createElement('button')
+      // image.classList.add('formatting-toolbar-button')
+      // image.setAttribute('title', trans('Image'))
+      // image.innerHTML = '<cds-icon shape="image"></cds-icon>'
 
-      const comment = document.createElement('button')
-      comment.classList.add('formatting-toolbar-button')
-      comment.setAttribute('title', trans('Comment'))
-      comment.innerHTML = '<cds-icon shape="code-alt"></cds-icon>'
+      // const comment = document.createElement('button')
+      // comment.classList.add('formatting-toolbar-button')
+      // comment.setAttribute('title', trans('Comment'))
+      // comment.innerHTML = '<cds-icon shape="code-alt"></cds-icon>'
 
       const code = document.createElement('button')
       code.classList.add('formatting-toolbar-button')
@@ -72,7 +73,12 @@ function getToolbar (state: EditorState): Tooltip[] {
       zknlink.setAttribute('title', trans('Wikilink'))
       zknlink.innerHTML = '<cds-icon shape="angle-double"></cds-icon>'
 
-      buttonWrapper.append(bold, italic, link, image, comment, code, zknlink)
+      const copy = document.createElement('button')
+      copy.classList.add('formatting-toolbar-button')
+      copy.setAttribute('title', trans('Copy'))
+      copy.innerHTML = '<cds-icon shape="copy"></cds-icon>'
+
+      buttonWrapper.append(bold, italic, link, /* image, comment, */ code, zknlink, copy)
       dom.append(buttonWrapper)
       return {
         dom,
@@ -80,10 +86,11 @@ function getToolbar (state: EditorState): Tooltip[] {
           bold.onclick = function (event) { applyBold(view) }
           italic.onclick = function (event) { applyItalic(view) }
           link.onclick = function (event) { insertLink(view) }
-          image.onclick = function (event) { insertImage(view) }
-          comment.onclick = function (event) { applyComment(view) }
+          // image.onclick = function (event) { insertImage(view) }
+          // comment.onclick = function (event) { applyComment(view) }
           code.onclick = function (event) { applyCode(view) }
           zknlink.onclick = function (event) { applyZknLink(view) }
+          copy.onclick = function (event) { copyAsPlain(view) }
         }
       }
     }
