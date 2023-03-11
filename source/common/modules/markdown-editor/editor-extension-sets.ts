@@ -39,7 +39,7 @@ import { mdLint } from './linters/md-lint'
 import { mdStatistics } from './plugins/statistics-fields'
 import { tocField } from './plugins/toc-field'
 import { typewriter } from './plugins/typewriter'
-import { formattingToolbar, footnoteHover, filePreview, urlHover } from './tooltips'
+import { formattingToolbar, footnoteHover, filePreview, urlHover, tagTooltipExt } from './tooltips'
 import { EditorConfiguration, configField } from './util/configuration'
 import { highlightRanges } from './plugins/highlight-ranges'
 import { jsonFolding } from './code-folding/json'
@@ -273,6 +273,7 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     footnoteHover,
     urlHover,
     filePreview,
+    tagTooltipExt,
     codeblockBackground, // Add a background behind codeblocks
     defaultContextMenu, // A default context menu
     EditorView.domEventHandlers(options.domEventsListeners)
