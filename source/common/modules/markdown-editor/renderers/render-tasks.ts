@@ -13,9 +13,9 @@
  */
 
 import { renderInlineWidgets } from './base-renderer'
-import { SyntaxNodeRef, SyntaxNode } from '@lezer/common'
-import { EditorView, WidgetType } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
+import { type SyntaxNodeRef, type SyntaxNode } from '@lezer/common'
+import { WidgetType, type EditorView } from '@codemirror/view'
+import { type EditorState } from '@codemirror/state'
 
 class TaskWidget extends WidgetType {
   constructor (readonly isChecked: boolean, readonly node: SyntaxNode) {
@@ -42,7 +42,7 @@ class TaskWidget extends WidgetType {
   }
 
   ignoreEvent (event: Event): boolean {
-    return false // By default ignore all events
+    return event instanceof MouseEvent && event.type === 'mousedown'// Allows clicking on the checkbox without checklist toggling
   }
 }
 

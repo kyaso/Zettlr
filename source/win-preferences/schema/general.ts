@@ -13,14 +13,15 @@
  */
 
 import { trans } from '@common/i18n-renderer'
+import { type FormSchema } from '@common/vue/form/Form.vue'
 
-export default function (): any {
+export default function (): FormSchema {
   return {
     fieldsets: [
       [
         {
           type: 'select',
-          label: trans('Application language (<strong>Restart required!</strong>)'),
+          label: trans('Application language'),
           model: 'appLang',
           options: {} // Will be set dynamically
         }
@@ -96,7 +97,8 @@ export default function (): any {
         {
           type: 'checkbox',
           label: trans('Display Markdown file extensions'),
-          model: 'display.markdownFileExtensions'
+          model: 'display.markdownFileExtensions',
+          disabled: window.config.get('fileNameDisplay') !== 'filename'
         }
       ],
       [
@@ -138,5 +140,5 @@ export default function (): any {
         }
       ]
     ]
-  }
+  } satisfies FormSchema
 }

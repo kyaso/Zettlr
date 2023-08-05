@@ -47,8 +47,8 @@
         >
           <cds-icon v-if="file.pinned" shape="pin"></cds-icon>
           {{ getTabText(file) }}
-          <span v-if="hasDuplicate(file)" class="deduplicate">{{ getDirBasename(file) }}</span>
         </span>
+        <span v-if="hasDuplicate(file)" class="deduplicate">{{ getDirBasename(file) }}</span>
         <span
           v-if="!file.pinned"
           class="close"
@@ -312,15 +312,17 @@ export default defineComponent({
       // an array manually. Also, we know every element will be a DIV.
       const tabs = [...this.container.querySelectorAll('[role="tab"]')] as HTMLDivElement[]
 
-      // Then, get the first one for which the left edge is less than the scrollLeft
-      // property, but the right edge is bigger.
+      // Test this from the back
+      tabs.reverse()
+
+      // Find the first tab whose left border is hidden behind the left edge of
+      // the container
       for (const tab of tabs) {
         const left = tab.offsetLeft
-        const right = left + tab.getBoundingClientRect().width
         const leftEdge = this.container.scrollLeft
 
-        if (left < leftEdge && right >= leftEdge) {
-          tab.scrollIntoView()
+        if (left < leftEdge) {
+          tab.scrollIntoView({ inline: 'start' })
           break
         }
       }
@@ -329,15 +331,15 @@ export default defineComponent({
       // Similar to scrollLeft, this does the same for the right hand side
       const tabs = [...this.container.querySelectorAll('[role="tab"]')] as HTMLDivElement[]
 
-      // Then, get the first one for which the right edge is less than the scrollLeft
-      // property, but the right edge is bigger.
-      const rightEdge = this.container.scrollLeft + this.container.getBoundingClientRect().width + 1
+      // Find the first tab whose right border is hidden behind the right edge
+      // of the container
+      const rightEdge = this.container.scrollLeft + this.container.getBoundingClientRect().width
       for (const tab of tabs) {
-        const left = tab.offsetLeft
-        const right = left + tab.getBoundingClientRect().width
+        const right = tab.offsetLeft + tab.getBoundingClientRect().width
 
-        if (left <= rightEdge && right > rightEdge) {
-          tab.scrollIntoView()
+        // NOTE: This is the width of the arrow buttons; TODO: Make dynamic!
+        if (right > rightEdge + 40) {
+          tab.scrollIntoView({ inline: 'end' })
           break
         }
       }
@@ -731,7 +733,6 @@ export default defineComponent({
       if (hasDocumentTab) {
         this.documentTabDragOver = true
       } else {
-        console.log('Something else drag over.')
         this.documentTabDragOver = false
       }
     },
@@ -772,7 +773,7 @@ body div.document-tablist-wrapper {
 
 body div.tab-container {
   width: 100%;
-  height: 30px;
+  height: 31px;
   background-color: rgb(215, 215, 215);
   border-bottom: 1px solid grey;
   display: flex;
@@ -797,7 +798,7 @@ body div.tab-container {
     display: flex;
     position: relative;
     min-width: fit-content;
-    max-width: 250px;
+    max-width: 150px;
     line-height: @tabbar-height;
     padding: 0 10px; // Give the filenames a little more spacing
 
@@ -806,12 +807,15 @@ body div.tab-container {
     .filename {
       line-height: 30px;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
 
-      .deduplicate {
-        font-style: italic;
-        font-size: 80%;
-        opacity: 0.8;
-      }
+    .deduplicate {
+      font-style: italic;
+      font-size: 80%;
+      opacity: 0.8;
     }
 
     // Mark modification status classically
@@ -861,8 +865,11 @@ body.darwin {
 
       .filename {
         padding: 0 5px;
-        margin: 0 (@tabbar-height / 3 * 1.9);
-        overflow: hidden;
+        margin: 0 10px;
+      }
+
+      .deduplicate {
+        margin-right: 10px;
       }
 
       &.pinned .filename { margin: 0; }

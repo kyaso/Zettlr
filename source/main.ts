@@ -19,15 +19,15 @@ import { bootApplication, shutdownApplication } from './app/lifecycle'
 
 // Helper function to extract files to open from process.argv
 import extractFilesFromArgv from './app/util/extract-files-from-argv'
-import AppServiceContainer from './app/app-service-container'
+import type AppServiceContainer from './app/app-service-container'
 import {
   DATA_DIR,
   DISABLE_HARDWARE_ACCELERATION,
   getCLIArgument,
-  handleGeneralArguments
+  handleExitArguments
 } from '@providers/cli-provider'
 
-handleGeneralArguments()
+handleExitArguments()
 
 // We need the service container, as long as this object is in memory, and hence
 // not garbage collected, the app will run.
@@ -144,7 +144,7 @@ app.on('second-instance', (event, argv, cwd) => {
 
   // openWindow calls the appropriate function of the windowManager, which deals
   // with the nitty-gritty of actually making the main window visible.
-  serviceContainer?.windows.showMainWindows()
+  serviceContainer?.windows.showAnyWindow()
 
   const commands = serviceContainer?.commands
 

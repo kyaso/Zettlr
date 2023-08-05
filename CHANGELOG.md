@@ -38,6 +38,22 @@ quick list:
    that nobody needs to configure this, and it makes many parts of our code
    easier.
 
+## New Icons on Windows and Linux
+
+For 3.0, we decided that it's time to give our app icons a facelift. For the
+past six years, Zettlr sported working, but relatively bland icons to convey its
+existence on the taskbar to its users. The new icons still convey the same
+message, but you will notice that they now integrate much better into the new
+Windows 11 Fluent UI.
+
+We decided to exchange the icons on Linux as well. They may not seamlessly
+integrate into your specific UI, but we feel they will definitely look more
+modern than the previous iteration of icons.
+
+With this move, the Windows and Linux experience of Zettlr finally moves on par
+to the macOS experience, which has received an updated icon with the release of
+Zettlr 2.0.
+
 ## Split-Panes and Multiple Windows
 
 A long awaited feature has made it into this version: Now you can open multiple
@@ -192,7 +208,24 @@ there.
   it on in the Spellchecker settings and even provide your LanguageTool username
   and an API key to unlock premium features
 - **New Feature**: You can now activate a statusbar that shows some context-
-  specific information for each editor pane you have open
+  specific information for each editor pane you have open; this statusbar also
+  shows you information for code editor panels, e.g., in the assets manager
+- **New Feature**: Changing a certain set of configuration options will make
+  Zettlr ask you whether you wish to restart the app for the changes to take
+  effect
+- **New Feature**: While modifying import and export profiles, Zettlr will now
+  check them for validity, and inform you of any potential errors
+- **New Feature**: You can now specify the Pandoc working directory in a file's
+  frontmatter with the property `pandoc_working_dir` within the `zettlr`
+  object
+- **New Feature**: Right-clicking on a file or directory now also gives you the
+  option to copy the absolute file or folder path to the clipboard
+- **New Feature**: There is now a new menu item that allows you to conveniently
+  clear the FSAL cache in case of some errors
+- Note preview tooltips now display a sanitized HTML version of the note's
+  Markdown contents
+- Removed the "Get LaTeX" menu item since (hopefully) now the advice in the docs
+  and in the tutorial are sufficient
 - Replaced the old Markdown-to-HTML and HTML-to-Markdown converter with more up-
   to-date modules. This should not change how pasting from HTML or copying as
   HTML work, but it could.
@@ -211,12 +244,14 @@ there.
   up within a long list just to see the tabbar
 - Lists (especially in the assets manager) now also allow you to remove entries
   with a right click
+- Fixed the Simple PDF, Textbundle, and Textpack exporters
 - Added new variables for snippets:
   - `CURRENT_ID`: Holds the currently assigned Zettelkasten ID to the file
   - `FILENAME`: Holds the filename of the current file
   - `DIRECTORY`: Holds the directory path for the current file
   - `EXTENSION`: Holds the file extension for the current file
 - Fixed inability to move the text cursor while renaming files in the file tree
+- Fixed ability to case-sensitively rename files
 - Fixed an incredibly dangerous bug that would lead to data loss if the app was
   being shut down before the statistics provider has been booted up; in which
   case the provider would overwrite sometimes several years worth of statistics
@@ -277,16 +312,40 @@ there.
   in one app should be picked up by the other
 - Zettlr can now detect changes to the status of a directory as a git repository
   during runtime
+- The "Characters without spaces" info is no longer present in the toolbar
+  counter widget; the "characters" count now represents always the count without
+  spaces across the app
+- Mermaid charts now dynamically switch themes between `default` and `dark`
+  depending on the app's display
+- In various parts of the app, URLs will now be displayed in a shortened format
+  if they are long and the space is limited
+- If you make use of glob-patterns to filter which files will be exported during
+  project exports, you will now get a visible error message if your glob-
+  patterns have removed all files so that none remain to be exported
+- Clicking on the "Project Properties" button in a directory properties popup
+  with activated project functionality now closes the popup
+- Redid the emphasis renderer to work on the SyntaxTree directly, which makes
+  the emphasis render more properly and now works much faster than before
+- Users on macOS can now disable window vibrancy
+- Non-existing citekeys in the document no longer cause the list of references
+  to be empty
+- Dark mode is now set to `system` by default for all operating systems, not
+  just macOS/Windows
+- A new "match whole word" setting allows to control whether AutoCorrect can
+  also correct partial words
 
 ## Under the Hood
 
 - Refactored the main editor component further
 - Refactored the Sidebar panels into their own respective components
-- Upgrade Electron to `22.x.x`
-- Upgrade Pandoc to `2.19.2`
+- Upgrade Electron to `24.x.x`
+- Upgrade Pandoc to `3.1.5`
+- Pandoc is now also available natively for Apple Silicon (darwin arm64)
 - Upgrade Chart.js to `4.x.x`
 - Upgrade CodeMirror to version 6
 - Upgrade to Yarn v2
+- Exchange `electron-devtools-installer` with `electron-devtools-assembler`, as
+  the former appears to be unmaintained
 - Switch from deprecated `@clr/icons` to `@cds/core`
 - Pandoc logs are now logged in every case
 - Improve the display and functionality of log messages

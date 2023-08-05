@@ -16,7 +16,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { info, success, error } from './console-colour.mjs' // Colourful output
 import ZIP from 'adm-zip'
-import rimraf from 'rimraf'
+import { rimraf } from 'rimraf'
 
 const __dirname = process.platform === 'win32'
   ? path.dirname(decodeURI(import.meta.url.substring(8))) // file:///C:/...
@@ -81,12 +81,7 @@ async function getCSLLocales () {
   info('Cleaning up ...')
   try {
     await fs.unlink(localesZip)
-    await new Promise((resolve, reject) => {
-      rimraf(localesUnzip, (err) => {
-        if (err) reject(err)
-        else resolve()
-      })
-    })
+    await rimraf(localesUnzip)
   } catch (e) {
     error(`An error occurred during cleanup: ${e.message}. Please remove the files manually.`)
   }

@@ -60,8 +60,6 @@ import OtherFilesTab from './OtherFilesTab.vue'
 import BacklinksTab from './BacklinksTab.vue'
 import { OpenDocument } from '@dts/common/documents'
 
-const ipcRenderer = window.ipc
-
 export default defineComponent({
   name: 'MainSidebar',
   components: {
@@ -133,35 +131,6 @@ export default defineComponent({
       return this.$store.state.modifiedDocuments
     }
   },
-  watch: {
-    // TODO: MOVE THIS TO THE STORE
-    modifiedFiles: function () {
-      if (this.activeFile == null) {
-        return
-      }
-
-      // Update the related files when the current document is not modified to
-      // immediately account for any changes in the related files.
-      const activePath = this.activeFile.path
-      if (!(activePath in this.modifiedFiles)) {
-        this.$store.dispatch('updateRelatedFiles')
-          .catch(e => console.error('Could not update related files', e))
-        this.$store.dispatch('updateMentions')
-          .catch(e => console.error('Could not update mentions', e))
-      }
-    }
-  },
-  mounted: function () {
-    // TODO: MOVE THIS TO THE STORE
-    ipcRenderer.on('links', () => {
-      this.$store.dispatch('updateRelatedFiles')
-        .catch(e => console.error('Could not update related files', e))
-      this.$store.dispatch('updateMentions')
-        .catch(e => console.error('Could not update mentions', e))
-      this.$store.dispatch('updateOutboundLinks')
-        .catch(e => console.error('Could not update outbound links', e))
-    })
-  },
   methods: {
     setCurrentTab: function (which: string) {
       (global as any).config.set('window.currentSidebarTab', which)
@@ -191,13 +160,10 @@ body {
     height: 100%;
     width: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     #sidebar-tab-container {
-      position: absolute;
-      top: 40px;
-      bottom: 0;
-      left: 0px;
-      right: 0px;
       padding: 0px 5px 5px 0px;
       overflow-y: auto;
 
@@ -347,9 +313,6 @@ body {
 
 body.darwin {
   div#sidebar {
-    // On macOS the toolbar is 40px high and the documents titlebar is 30px high,
-    // so we want to offset the sidebar by that.
-    top: calc(40px + 30px);
     background-color: transparent;
 
     div.related-files-container {

@@ -90,7 +90,7 @@ In the following, every customization so far is listed, as well as the related v
   Zettlr [<em>ˈset·lər</em>]
 </h1>
 
-<p align="center"><strong>A Markdown Editor for the 21<sup>st</sup> century</strong>.</p>
+<p align="center"><strong>Your One-Stop Publication Workbench</strong>.</p>
 
 <p align="center">
   <a href="https://doi.org/10.5281/zenodo.2580173">
@@ -119,20 +119,24 @@ In the following, every customization so far is listed, as well as the related v
 
 ![screenshot](/resources/screenshots/zettlr_view.png)
 
-With Zettlr, writing professional texts is easy and motivating: Whether you are a college student, a researcher, a journalist, or an author — Zettlr has the right tools for you. [Watch the video](https://www.youtube.com/watch?v=BJ27r6YGpAs) or continue reading to see what they are!
+Zettlr brings simplicity back to your texts. Open-minded writing that adapts to your style. Fast information retrieval that finds what matters to you. Versatile exporting that enables you to adapt to whatever publication pipeline your employer or school uses.
 
-[Visit our Website](https://zettlr.com/).
+Focus on what matters to you.
+
+**Publish, not perish.**
+
+> [Learn more on our website](https://zettlr.com/).
 
 ## Features
 
-- Available in over a dozen languages
-- Tight and ever-growing **integration with your favourite reference manager** (such as Zotero or JabRef)
-- **Cite with Zettlr** using `citeproc` and your existing literature database
-- Five **themes and dark mode support**
-- File-agnostic writing: Enjoy **full control over your own files**
-- Keep all your notes and texts **in one place** — searchable and accessible
+- Your Notes are your notes: Zettlr is **privacy-first**
+- **Citations** made easy: Tight and ever-growing integration with your favourite reference manager (Zotero, JabRef, and many others)
+- Available in over a **dozen languages**
+- Draft your publications in a professional environment, with **LaTeX and Word template support**
+- Simple and beautiful exports with [Pandoc](https://pandoc.org/), [LaTeX](https://www.latex-project.org/), and [Textbundle](http://textbundle.org/)
+- **Snippets** allow you to automate insertion of boilerplate code
+- Themes, dark modes, and full flexibility with **custom CSS**
 - **Code highlighting** for many languages
-- Simple and beautiful **exports** with [Pandoc](https://pandoc.org/), [LaTeX](https://www.latex-project.org/), and [Textbundle](http://textbundle.org/)
 - Support for state of the art knowledge management techniques (**Zettelkasten**)
 - A powerful **full text search** that helps you find anything, anywhere
 
@@ -144,7 +148,7 @@ To install Zettlr, just [download the latest release](https://www.zettlr.com/dow
 
 On our website and here on GitHub, we provide a set of installers for the most common use-cases. We provide both 64-bit installers as well as installers for ARM systems (called "Apple Silicon" in the macOS ecosystem). 32-bit is not supported. We offer the following binaries directly:
 
-* Windows (x64 and ARM)
+* Windows (x64)
 * macOS (Intel and Apple Silicon)
 * Debian and Fedora (x64 and ARM)
 * AppImage (x64 and ARM)
@@ -153,7 +157,7 @@ Thanks to our community, we can also offer you a variety of other installation o
 
 * [Chocolatey (Windows)](https://community.chocolatey.org/packages/zettlr/)
 * [Homebrew (macOS)](https://formulae.brew.sh/cask/zettlr)
-* [AUR (Arch Linux)](https://wiki.archlinux.org/title/Zettlr)
+* [Arch Linux](https://wiki.archlinux.org/title/Zettlr)
 * [FlatPack (Linux)](https://flathub.org/apps/details/com.zettlr.Zettlr)
 
 All other [platforms that Electron supports](https://www.electronjs.org/docs/latest/development/build-instructions-gn#platform-prerequisites) are supported as well, but you will need to build the app yourself for this to work.
@@ -184,7 +188,7 @@ As soon as you are happy with your changes, open a Pull Request here that update
 
 Zettlr is an [Electron](https://www.electronjs.org/)-based app, so to start developing, you'll need to have the following installed on your computer:
 
-1. A [NodeJS](https://nodejs.org/)-stack. Make sure it's at least Node 14 (`lts/fermium`). To test what version you have, run `node -v`.
+1. A [NodeJS](https://nodejs.org/)-stack. Make sure it's at least Node 18 (`lts/hydrogen`). To test what version you have, run `node -v`.
 2. [Yarn](https://yarnpkg.com/en/). This is the package manager for the project, as we do not commit `package-lock.json`-files and many commands require yarn. You can install this globally using `npm install -g yarn` or Homebrew, if you are on macOS.
 3. On Windows, we recommend to [install the Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install), which will make many of the next steps easier.
 4. A few command-line utilities that the build script requires to download Pandoc to your development setup:
@@ -200,10 +204,10 @@ Then, simply clone the repository and install the dependencies on your local com
 ```bash
 $ git clone https://github.com/Zettlr/Zettlr.git
 $ cd Zettlr
-$ yarn install --frozen-lockfile
+$ yarn install --immutable
 ```
 
-The `--frozen-lockfile` flag ensures that yarn will stick to the versions as listed in the `yarn.lock` and not attempt to update them.
+The `--immutable` flag ensures that yarn will stick to the versions as listed in the `yarn.lock` and not attempt to update them.
 
 During development, hot module reloading (HMR) is active so that you can edit the renderer's code easily and hit `F5` after the changes have been compiled by `electron-forge`. You can keep the developer tools open to see when HMR has finished loading your changes.
 

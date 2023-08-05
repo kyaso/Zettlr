@@ -12,8 +12,8 @@
  * END HEADER
  */
 
-import { Tooltip, showTooltip } from '@codemirror/view'
-import { EditorState, StateField } from '@codemirror/state'
+import { showTooltip, type Tooltip } from '@codemirror/view'
+import { type EditorState, StateField } from '@codemirror/state'
 import { applyBold, applyCode, applyComment, applyItalic, applyZknLink, insertImage, insertLink } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
 import { copyAsPlain } from '../util/copy-paste-cut'
@@ -103,10 +103,6 @@ export const formattingToolbar = StateField.define<readonly Tooltip[]>({
   },
 
   update (tooltips, transaction) {
-    if (transaction.selection === undefined) {
-      return tooltips
-    }
-
     return getToolbar(transaction.state)
   },
 

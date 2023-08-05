@@ -14,7 +14,8 @@
  */
 
 import markdownParser from '@common/modules/markdown-editor/parser/markdown-parser'
-import { ASTNode, parseNode, TextNode } from './markdown-ast'
+import { parseNode, type ASTNode, type ASTNodeType, type TextNode } from './markdown-ast'
+import { type Tree } from '@lezer/common'
 
 export { md2html } from './markdown-to-html'
 
@@ -24,14 +25,67 @@ export { md2html } from './markdown-to-html'
  * converts it to a custom Markdown AST implementation.
  *
  * @param   {string}   markdown  The Markdown source
+ * @param   {Tree}     tree      Optional: If you already have a parsed tree,
+ *                               you can pass it here to save some time re-
+ *                               parsing the source. Please NOTE: If you pass in
+ *                               a tree, you MUST pass the full Markdown source
+ *                               that has been used to generate the parse tree,
+ *                               since otherwise the offsets in the parse tree
+ *                               will be wrong!
  *
  * @return  {ASTNode}            The root node of the AST
  */
-export function markdownToAST (markdown: string): ASTNode {
-  const { parser } = markdownParser().language
-  const tree = parser.parse(markdown)
+export function markdownToAST (markdown: string, tree?: Tree): ASTNode {
+  if (tree === undefined) {
+    const { parser } = markdownParser().language
+    tree = parser.parse(markdown)
+  }
   const ast = parseNode(tree.topNode, markdown)
   return ast
+}
+
+/**
+ * Extracts arbitrary AST nodes. Providing a NodeType that is not used within
+ * the AST will return an empty array.
+ *
+ * @param   {ASTNode}      ast       The AST to extract nodes from
+ * @param   {ASTNodeType}  nodeType  The Node type to query
+ * @param   {Function}     filter    An optional filter. Receives a node and
+ *                                   returns a boolean indicating if the node
+ *                                   should be visited.
+ *
+ * @return  {ASTNode[]}              An array of all found nodes
+ */
+export function extractASTNodes (ast: ASTNode, nodeType: ASTNodeType, filter?: (node: ASTNode) => boolean): ASTNode[] {
+  if (filter !== undefined && !filter(ast)) {
+    return []
+  }
+
+  if (ast.type === nodeType) {
+    return [ast]
+  } else if (ast.type === 'FootnoteRef' || ast.type === 'Highlight' || ast.type === 'ListItem' || ast.type === 'Generic' || ast.type === 'Emphasis') {
+    let returnNodes: ASTNode[] = []
+    for (const child of ast.children) {
+      returnNodes = returnNodes.concat(extractASTNodes(child, nodeType, filter))
+    }
+    return returnNodes
+  } else if (ast.type === 'OrderedList' || ast.type === 'BulletList') {
+    let returnNodes: ASTNode[] = []
+    for (const item of ast.items) {
+      returnNodes = returnNodes.concat(extractASTNodes(item, nodeType, filter))
+    }
+    return returnNodes
+  } else if (ast.type === 'Table') {
+    let returnNodes: ASTNode[] = []
+    for (const row of ast.rows) {
+      for (const cell of row.cells) {
+        returnNodes = returnNodes.concat(extractASTNodes(cell, nodeType, filter))
+      }
+    }
+    return returnNodes
+  } else {
+    return []
+  }
 }
 
 /**
@@ -53,7 +107,7 @@ export function extractTextnodes (ast: ASTNode, filter?: (node: ASTNode) => bool
   let textNodes: TextNode[] = []
   if (ast.type === 'Text') {
     textNodes.push(ast)
-  } else if (ast.type === 'Heading' || ast.type === 'Citation') {
+  } else if (ast.type === 'Heading') {
     textNodes.push(ast.value)
   } else if (ast.type === 'FootnoteRef' || ast.type === 'Highlight' || ast.type === 'ListItem') {
     for (const child of ast.children) {
@@ -61,11 +115,10 @@ export function extractTextnodes (ast: ASTNode, filter?: (node: ASTNode) => bool
     }
   } else if (ast.type === 'Image' || ast.type === 'Link') {
     textNodes.push(ast.alt)
-    textNodes.push(ast.url)
     if (ast.title !== undefined) {
       textNodes.push(ast.title)
     }
-  } else if (ast.type === 'List') {
+  } else if (ast.type === 'OrderedList' || ast.type === 'BulletList') {
     for (const item of ast.items) {
       textNodes = textNodes.concat(extractTextnodes(item, filter))
     }

@@ -13,19 +13,26 @@
  */
 
 import { acceptCompletion, deleteBracketPair } from '@codemirror/autocomplete'
-import { copyLineDown, copyLineUp, indentLess, indentMore, moveLineDown, moveLineUp } from '@codemirror/commands'
-import { KeyBinding } from '@codemirror/view'
+import { copyLineDown, copyLineUp, indentLess, indentMore, insertNewlineAndIndent, moveLineDown, moveLineUp } from '@codemirror/commands'
+import { type KeyBinding } from '@codemirror/view'
 import { abortSnippet, nextSnippet } from '../autocomplete/snippets'
-import { copyAsHTML, paste, pasteAsPlain } from '../util/copy-paste-cut'
+import { copyAsHTML, pasteAsPlain } from '../util/copy-paste-cut'
 import { handleReplacement, handleBackspace, handleQuote } from './autocorrect'
 import { addNewFootnote } from './footnotes'
 import { maybeIndentList, maybeUnindentList } from './lists'
 import { insertLink, insertImage, applyBold, applyItalic, applyComment, applyTaskList } from './markdown'
+import { insertNewlineContinueMarkup } from '@codemirror/lang-markdown'
 
-// Custom keymap implementing less complex keyboard shortcuts
+/**
+ * Zettlr's custom keymap. It defines many of the default key bindings
+ *
+ * @var {KeyBinding[]}
+ */
 export const customKeymap: KeyBinding[] = [
   { key: 'Mod-k', run: insertLink },
-  { key: 'Mod-Alt-i', run: insertImage },
+  // NOTE: We have to do it like this, because the Mod-Shift-i is occupied on
+  // Windows/Linux by the DevTools shortcut, and Mod-Alt-i is the same for Mac.
+  { key: 'Mod-Alt-i', mac: 'Mod-Shift-i', run: insertImage },
   { key: 'Mod-b', run: applyBold },
   { key: 'Mod-i', run: applyItalic },
   { key: 'Mod-Shift-c', run: applyComment },
@@ -37,6 +44,9 @@ export const customKeymap: KeyBinding[] = [
   { key: 'Esc', run: abortSnippet },
   { key: 'Space', run: handleReplacement },
   { key: 'Enter', run: handleReplacement },
+  // If no replacement can be handled, the default should be newlineAndIndent
+  { key: 'Enter', run: insertNewlineContinueMarkup },
+  { key: 'Enter', run: insertNewlineAndIndent },
   // TODO: We're including the pre-made keymap that defines the next line
   // already in our core extensions (see editor-extension-sets.ts), but somehow
   // it never gets called if we don't also define it here. Double check why.
@@ -45,7 +55,7 @@ export const customKeymap: KeyBinding[] = [
   { key: 'Alt-Up', run: moveLineUp, shift: copyLineUp },
   { key: 'Alt-Down', run: moveLineDown, shift: copyLineDown },
   { key: 'Mod-t', run: applyTaskList },
-  { key: 'Mod-v', run: view => { paste(view); return true }, shift: view => { pasteAsPlain(view); return true } },
+  { key: 'Mod-Shift-v', run: view => { pasteAsPlain(view); return true } },
   { key: 'Mod-Alt-c', run: view => { copyAsHTML(view); return true } },
   { key: '"', run: handleQuote('"') },
   { key: "'", run: handleQuote("'") }

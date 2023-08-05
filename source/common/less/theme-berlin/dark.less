@@ -11,6 +11,11 @@ body.dark {
     color: var(--grey-4);
   }
 
+  // Main default styles
+  a {
+    color: rgb(124, 150, 255);
+  }
+
   .main-editor-wrapper .cm-editor {
     color: var(--grey-0);
 
@@ -112,7 +117,8 @@ body.dark {
     }
 
     // Style the code block line wrapper classes
-    .code-block-line-background {
+    .code-block-line-background,
+    .cm-monospace {
       background-color: #333;
     }
 
@@ -160,17 +166,6 @@ body.dark {
       }
     }
 
-    // Mermaid charts
-    .mermaid-chart {
-
-      // THEMING
-      // For now, a simple background
-      // for easy recognition
-      svg {
-        background-color: var(--grey-4);
-      }
-    }
-
     .cm-escape {
       color: var(--grey-4);
     }
@@ -205,13 +200,7 @@ body.dark {
 
     .cm-tooltip.cm-formatting-bar {
       button.formatting-toolbar-button {
-        background-color: var(--grey-5);
         color: var(--grey-2);
-  
-        &:hover {
-          background-color: var(--grey-3);
-          color: var(--grey-1);
-        }
       }
     }
 
@@ -220,8 +209,8 @@ body.dark {
     }
   } // END: All the editor-wrapper shenanigans
 
-  .cm-editor.cm-focused .cm-selectionBackground,
-  .cm-editor .cm-selectionBackground {
+  .cm-editor.cm-focused .cm-layer.cm-selectionLayer .cm-selectionBackground,
+  .cm-editor .cm-layer.cm-selectionLayer .cm-selectionBackground {
     background-color: var(--selection-dark);
   }
 

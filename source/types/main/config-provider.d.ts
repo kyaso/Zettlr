@@ -12,6 +12,7 @@ export interface ConfigOptions {
   }
   window: {
     nativeAppearance: boolean
+    vibrancy: boolean
     sidebarVisible: boolean
     currentSidebarTab: 'toc'|'references'|'relatedFiles'|'attachments'|'mentions'
     recentGlobalSearches: string[]
@@ -41,6 +42,7 @@ export interface ConfigOptions {
     useBundledPandoc: boolean
     singleFileLastExporter: string
     exportQmdWithQuarto: boolean
+    customCommands: Array<{ displayName: string, command: string }>
   }
   zkn: {
     idRE: string
@@ -80,6 +82,7 @@ export interface ConfigOptions {
       languageTool: {
         active: boolean
         level: 'picky'|'default'
+        motherTongue: string // e.g., en-US, de-DE
         provider: 'official'|'custom'
         customServer: string
         username: string
@@ -93,6 +96,7 @@ export interface ConfigOptions {
         secondary: string
       }
       replacements: Array<{ key: string, value: string }>
+      matchWholeWords: boolean
     }
   }
   display: {

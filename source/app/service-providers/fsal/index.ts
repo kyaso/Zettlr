@@ -25,10 +25,10 @@ import * as FSALFile from './fsal-file'
 import * as FSALCodeFile from './fsal-code-file'
 import * as FSALDir from './fsal-directory'
 import * as FSALAttachment from './fsal-attachment'
-import FSALWatchdog, { WatchdogEvent } from './fsal-watchdog'
+import FSALWatchdog, { type WatchdogEvent } from './fsal-watchdog'
 import FSALCache from './fsal-cache'
-import getSorter, { GenericSorter } from './util/sort'
-import {
+import getSorter, { type GenericSorter } from './util/sort'
+import type {
   AnyDescriptor,
   DirDescriptor,
   MDFileDescriptor,
@@ -36,22 +36,22 @@ import {
   OtherFileDescriptor,
   MaybeRootDescriptor,
   SortMethod,
-  FSALStats, FSALHistoryEvent
+  FSALStats, FSALHistoryEvent, ProjectSettings
 } from '@dts/common/fsal'
-import { SearchTerm } from '@dts/common/search'
+import type { SearchTerm } from '@dts/common/search'
 import generateStats from './util/generate-stats'
 import ProviderContract from '@providers/provider-contract'
 import { app } from 'electron'
-import LogProvider from '@providers/log'
+import type LogProvider from '@providers/log'
 import { hasCodeExt, hasMarkdownExt, hasMdOrCodeExt, isMdOrCodeFile } from './util/is-md-or-code-file'
 import { mdFileExtensions } from './util/valid-file-extensions'
 import getMarkdownFileParser from './util/file-parser'
 import broadcastIpcMessage from '@common/util/broadcast-ipc-message'
 import { getIDRE } from '@common/regular-expressions'
-import ConfigProvider from '@providers/config'
+import type ConfigProvider from '@providers/config'
 import { promises as fs } from 'fs'
 import { safeDelete } from './util/safe-delete'
-import DocumentManager from '@providers/documents'
+import type DocumentManager from '@providers/documents'
 
 // Re-export all interfaces necessary for other parts of the code (Document Manager)
 export {
@@ -842,24 +842,29 @@ export default class FSAL extends ProviderContract {
    */
   public async createFile (src: DirDescriptor, options: { name: string, content: string, type: 'code'|'file' }): Promise<void> {
     this._fsalIsBusy = true
+    const fullPath = path.join(src.path, options.name)
     // This action needs the cache because it'll parse a file
     // NOTE: Generates an add-event
-    this._watchdog.ignoreEvents([{
-      event: 'add',
-      path: path.join(src.path, options.name)
-    }])
+    this._watchdog.ignoreEvents([{ event: 'add', path: fullPath }])
 
-    const sorter = this.getDirectorySorter()
+    const isOutsideOfFSAL = this.findDir(src.path) === undefined
 
-    await FSALDir.createFile(
-      src,
-      options,
-      this._cache,
-      this.getMarkdownFileParser(),
-      sorter
-    )
-    await this.sortDirectory(src)
-    this._recordFiletreeChange('add', path.join(src.path, options.name))
+    if (isOutsideOfFSAL) {
+      // The user wants a file outside of the FSAL
+      await fs.writeFile(fullPath, '')
+      await this.loadPath(fullPath)
+    } else {
+      // The file will be created inside the FSAL
+      await FSALDir.createFile(
+        src,
+        options,
+        this._cache,
+        this.getMarkdownFileParser(),
+        this.getDirectorySorter()
+      )
+      await this.sortDirectory(src)
+      this._recordFiletreeChange('add', fullPath)
+    }
     this._fsalIsBusy = false
     this._afterRemoteChange()
   }
@@ -977,7 +982,14 @@ export default class FSAL extends ProviderContract {
    */
   public async createProject (src: DirDescriptor, initialProps: any): Promise<void> {
     this._fsalIsBusy = true
-    // NOTE: Generates no events as dotfiles are not watched
+
+    const dotfilePath = path.join(src.path, '.ztr-directory')
+    if (isFile(dotfilePath)) {
+      this._watchdog.ignoreEvents([{ event: 'change', path: dotfilePath }])
+    } else {
+      this._watchdog.ignoreEvents([{ event: 'add', path: dotfilePath }])
+    }
+
     await FSALDir.makeProject(src, initialProps)
 
     this._recordFiletreeChange('change', src.path)
@@ -989,18 +1001,23 @@ export default class FSAL extends ProviderContract {
   /**
    * Updates the given properties for this project
    *
-   * @param   {DirDescriptor}  src      The project dir
-   * @param   {any}            options  New options
+   * @param   {DirDescriptor}    src      The project dir
+   * @param   {ProjectSettings}  options  New options
    */
-  public async updateProject (src: DirDescriptor, options: any): Promise<void> {
-    this._fsalIsBusy = true
-    // NOTE: Generates no events as dotfiles are not watched
-    // Updates the project properties on a directory.
-    const hasChanged = await FSALDir.updateProjectProperties(src, options)
-
-    if (hasChanged) {
-      this._recordFiletreeChange('change', src.path)
+  public async updateProject (src: DirDescriptor, options: ProjectSettings): Promise<void> {
+    if (JSON.stringify(src.settings.project) === JSON.stringify(options)) {
+      return
     }
+
+    this._fsalIsBusy = true
+
+    const dotfilePath = path.join(src.path, '.ztr-directory')
+    this._watchdog.ignoreEvents([{ event: 'change', path: dotfilePath }])
+
+    // Updates the project properties on a directory.
+    await FSALDir.updateProjectProperties(src, options)
+
+    this._recordFiletreeChange('change', src.path)
 
     this._fsalIsBusy = false
     this._afterRemoteChange()
@@ -1013,7 +1030,14 @@ export default class FSAL extends ProviderContract {
    */
   public async removeProject (src: DirDescriptor): Promise<void> {
     this._fsalIsBusy = true
-    // NOTE: Generates no events as dotfiles are not watched
+
+    const dotfilePath = path.join(src.path, '.ztr-directory')
+    if (FSALDir.hasDefaultSettings(src)) {
+      this._watchdog.ignoreEvents([{ event: 'unlink', path: dotfilePath }])
+    } else {
+      this._watchdog.ignoreEvents([{ event: 'change', path: dotfilePath }])
+    }
+
     await FSALDir.removeProject(src)
 
     this._recordFiletreeChange('change', src.path)

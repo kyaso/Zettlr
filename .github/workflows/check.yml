@@ -1,17 +1,19 @@
 name: Unit Tests / Lint
 
-# On every push, and whenever another workflow calls this one
-on: [push, workflow_call]
+# On every push, for every pull-request and whenever another workflow calls this one
+on: [push, pull_request, workflow_call]
 
 permissions:
   contents: read
 
 env:
-  NODE_VERSION: '16'
+  NODE_VERSION: '18'
 
-# Ensure only a single unit test workflow runs at any one time for any event
+# Ensure only a single unit test workflow runs at any one time for any event and
+# ref. This allows multiple unit tests/linters to run, but at most one per ref.
+# NOTE: Changed `ref` to `sha`, since even for PRs, `ref` will be `develop`.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:

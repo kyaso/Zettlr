@@ -12,7 +12,8 @@
  * END HEADER
  */
 
-import { InlineParser } from '@lezer/markdown'
+import { type InlineParser } from '@lezer/markdown'
+
 export const highlightParser: InlineParser = {
   name: 'highlights',
   // before: 'Link',
@@ -30,7 +31,7 @@ export const highlightParser: InlineParser = {
     }
 
     const idx = slice.startsWith('::') ? slice.indexOf('::', 2) : slice.indexOf('==', 2)
-    if (idx < 2) {
+    if (idx <= 2) { // idx must be > 2 (to ensure there's content in there)
       return -1
     }
 

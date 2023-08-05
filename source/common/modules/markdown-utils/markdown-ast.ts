@@ -32,8 +32,8 @@
  * END HEADER
  */
 
-import extractCitations, { CitePosition } from '@common/util/extract-citations'
-import { SyntaxNode } from '@lezer/common'
+import extractCitations, { type CitePosition } from '@common/util/extract-citations'
+import { type SyntaxNode } from '@lezer/common'
 
 /**
  * This list contains all Node names that do not themselves have any content.
@@ -62,7 +62,8 @@ const EMPTY_NODES = [
  */
 interface MDNode {
   /**
-   * The node.name property (may differ; significant mainly for generics)
+   * The node.name property (may differ from the type; significant mainly for
+   * generics)
    */
   name: string
   /**
@@ -86,6 +87,11 @@ interface MDNode {
  */
 export interface Footnote extends MDNode {
   type: 'Footnote'
+  /**
+   * If this is true, this means that the label is actually the footnote's
+   * context, whereas label will be the footnote ref number if its false.
+   */
+  inline: boolean
   /**
    * The label of the footnote (sans the formatting, i.e. [^1] -> 1)
    */
@@ -116,7 +122,7 @@ export interface LinkOrImage extends MDNode {
   /**
    * The URL of the link or image
    */
-  url: TextNode
+  url: string
   /**
    * ALT text of the link or image (i.e. what's written in square brackets)
    */
@@ -150,7 +156,7 @@ export interface Citation extends MDNode {
   /**
    * The unparsed, raw citation code
    */
-  value: TextNode
+  value: string
   /**
    * The parsed citation code that can be used to render the citation
    */
@@ -174,24 +180,26 @@ export interface Highlight extends MDNode {
 export interface ListItem extends MDNode {
   type: 'ListItem'
   /**
-   * An optional property. If it exists, it is a task item, and then the
-   * property dictates whether it was checked or not.
+   * An optional property. If it exists, it is a task item, and the property
+   * indicates whether it is checked or not.
    */
   checked?: boolean
+  /**
+   * An optional property. It is set on ordered list items and indicates the
+   * number that was used for this item in the Markdown source. Should be
+   * ignored by converters that transform the list into HTML.
+   */
+  number?: number
   /**
    * A property that includes information about the list item marker.
    */
   marker: {
     /**
-     * The symbol used for the list item. Only present for unordered lists.
-     */
-    symbol?: '*'|'-'|'+'
-    /**
-     * The start of the symbol.
+     * The start of the list marker.
      */
     from: number
     /**
-     * The end of the symbol.
+     * The end of the list marker.
      */
     to: number
   }
@@ -199,18 +207,44 @@ export interface ListItem extends MDNode {
    * A list item can contain an arbitrary amount of child nodes. Adding "List"
    * as an explicit child to signify that nested lists are children of an item.
    */
-  children: Array<List|ASTNode>
+  children: Array<OrderedList|BulletList|ASTNode>
 }
 
 /**
- * Represents a list.
+ * Represents an ordered list.
  */
-export interface List extends MDNode {
-  type: 'List'
+export interface OrderedList extends MDNode {
+  type: 'OrderedList'
   /**
-   * Whether the list is ordered (enumerated) or bulleted (itemized)
+   * At what number the list starts (default: 1)
    */
-  ordered: boolean
+  startsAt: number
+  /**
+   * The delimiter used by this list, can be either ) or .
+   */
+  delimiter: ')'|'.'
+  /**
+   * Whether this list is loose (in that case, HTML output should wrap the list
+   * item's contents in paragraphs)
+   */
+  loose: boolean
+  /**
+   * A set of list items
+   */
+  items: ListItem[]
+}
+
+export interface BulletList extends MDNode {
+  type: 'BulletList'
+  /**
+   * The symbol this list uses
+   */
+  symbol: '*'|'-'|'+'
+  /**
+   * Whether this list is loose (in that case, HTML output should wrap the list
+   * item's contents in paragraphs)
+   */
+  loose: boolean
   /**
    * A set of list items
    */
@@ -228,7 +262,7 @@ export interface FencedCode extends MDNode {
   info: string
   /**
    * The verbatim source code. (Not represented as a TextNode since whitespace
-   * is significant)
+   * is significant and it shouldn't count towards word counts, etc.)
    */
   source: string
 }
@@ -240,7 +274,7 @@ export interface InlineCode extends MDNode {
   type: 'InlineCode'
   /**
    * The verbatim source code. (Not represented as a TextNode since whitespace
-   * is significant)
+   * is significant and it shouldn't count towards word counts, etc.)
    */
   source: string
 }
@@ -321,7 +355,7 @@ export interface ZettelkastenLink extends MDNode {
   /**
    * Contains the raw contents of the link
    */
-  value: TextNode
+  value: string
 }
 
 /**
@@ -332,7 +366,15 @@ export interface ZettelkastenTag extends MDNode {
   /**
    * Contains the raw contents of the tag
    */
-  value: TextNode
+  value: string
+}
+
+export interface Comment extends MDNode {
+  type: 'Comment'
+  /**
+   * Contains the raw contents of the comment
+   */
+  value: string
 }
 
 /**
@@ -363,7 +405,11 @@ export interface GenericNode extends MDNode {
 /**
  * Any node that can be part of the AST is an ASTNode.
  */
-export type ASTNode = Footnote | FootnoteRef | LinkOrImage | TextNode | Heading | Citation | Highlight | List | ListItem | GenericNode | FencedCode | InlineCode | YAMLFrontmatter | Emphasis | Table | TableCell | TableRow | ZettelkastenLink | ZettelkastenTag
+export type ASTNode = Comment | Footnote | FootnoteRef | LinkOrImage | TextNode | Heading | Citation | Highlight | OrderedList | BulletList | ListItem | GenericNode | FencedCode | InlineCode | YAMLFrontmatter | Emphasis | Table | TableCell | TableRow | ZettelkastenLink | ZettelkastenTag
+/**
+ * Extract the "type" properties from the ASTNodes that can differentiate these.
+ */
+export type ASTNodeType = ASTNode['type']
 
 /**
  * Creates a generic text node; this is used to represent textual contents of
@@ -492,7 +538,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
     case 'Link': {
       const alt = node.getChild('LinkLabel')
       const url = node.getChild('URL')
-      if (alt === null || url === null) {
+      if (url === null) {
         return {
           type: 'Generic',
           name: node.name,
@@ -508,9 +554,21 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         from: node.from,
         to: node.to,
         // title: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to)), TODO
-        url: genericTextNode(url.from, url.to, markdown.substring(url.from, url.to)),
-        alt: genericTextNode(alt.from, alt.to, markdown.substring(alt.from, alt.to))
+        url: markdown.substring(url.from, url.to),
+        alt: alt !== null
+          ? genericTextNode(alt.from, alt.to, markdown.substring(alt.from, alt.to))
+          : genericTextNode(url.from, url.to, markdown.substring(url.from, url.to))
       }
+
+      const marks = node.getChildren('LinkMark')
+
+      if (alt === null && marks.length >= 2) {
+        // The default Markdown parser doesn't apply "LinkLabel" unfortunately.
+        // So instead we have to get whatever is in between the first and second
+        // linkMark.
+        astNode.alt = genericTextNode(marks[0].to, marks[1].from, markdown.substring(marks[0].to, marks[1].from))
+      } // Else: Somewhat malformed link.
+
       return astNode
     }
     case 'URL': {
@@ -520,7 +578,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         from: node.from,
         to: node.to,
         // title: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to)), TODO
-        url: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to)),
+        url: markdown.substring(node.from, node.to),
         alt: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to))
       }
       return astNode
@@ -561,7 +619,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
       const astNode: Citation = {
         name: 'Citation',
         type: 'Citation',
-        value: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to)),
+        value: markdown.substring(node.from, node.to),
         parsedCitation: extractCitations(markdown.substring(node.from, node.to))[0],
         from: node.from,
         to: node.to
@@ -569,12 +627,14 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
       return astNode
     }
     case 'Footnote': {
+      const contents = markdown.substring(node.from + 2, node.to - 1) // [^1] --> 1
       const astNode: Footnote = {
         type: 'Footnote',
         name: 'Footnote',
         from: node.from,
+        inline: contents.endsWith('^'),
         to: node.to,
-        label: markdown.substring(node.from + 2, node.to - 1) // [^1] --> 1
+        label: contents.endsWith('^') ? contents.substring(0, contents.length - 1) : contents
       }
       return astNode
     }
@@ -607,12 +667,13 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
       }
       return parseChildren(astNode, content ?? node, markdown)
     }
-    case 'OrderedList':
-    case 'BulletList': {
-      const astNode: List = {
-        type: 'List',
+    case 'OrderedList': {
+      const astNode: OrderedList = {
+        type: 'OrderedList',
+        startsAt: 0,
+        delimiter: '.',
+        loose: false, // TODO
         name: node.name,
-        ordered: node.name === 'OrderedList',
         from: node.from,
         to: node.to,
         items: []
@@ -625,21 +686,67 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
           from: item.from,
           to: item.to,
           children: [],
-          marker: {
-            symbol: undefined,
-            from: item.from,
-            to: item.from
-          }
+          marker: { from: item.from, to: item.from }
         }
 
-        // Identify list marker properties
         const listMark = item.getChild('ListMark')
         if (listMark !== null) {
           listItem.marker.from = listMark.from
           listItem.marker.to = listMark.to
 
-          if (!astNode.ordered && listMark.to - listMark.from === 1) {
-            listItem.marker.symbol = markdown.substring(listMark.from, listMark.to) as '+'|'-'|'*'
+          const number = parseInt(markdown.substring(listMark.from, listMark.to - 1), 10)
+          const delim = markdown.substring(listMark.to - 1, listMark.to)
+          listItem.number = number
+          if (astNode.startsAt < 1) {
+            astNode.startsAt = number
+            if (delim === ')' || delim === '.') {
+              astNode.delimiter = delim
+            }
+          }
+        }
+
+        // Identify potential task item
+        const task = item.getChild('Task')
+        const taskMarker = task !== null ? task.getChild('TaskMarker') : null
+        if (taskMarker !== null) {
+          const text = markdown.substring(taskMarker.from, taskMarker.to)
+          listItem.checked = text === '[x]'
+        }
+
+        astNode.items.push(parseChildren(listItem, item, markdown))
+      }
+
+      return astNode
+    }
+    case 'BulletList': {
+      const astNode: BulletList = {
+        type: 'BulletList',
+        symbol: '-',
+        loose: false, // TODO
+        name: node.name,
+        from: node.from,
+        to: node.to,
+        items: []
+      }
+
+      for (const item of node.getChildren('ListItem')) {
+        const listItem: ListItem = {
+          type: 'ListItem',
+          name: 'ListItem',
+          from: item.from,
+          to: item.to,
+          children: [],
+          marker: { from: item.from, to: item.from }
+        }
+
+        const listMark = item.getChild('ListMark')
+        if (listMark !== null) {
+          listItem.marker.from = listMark.from
+          listItem.marker.to = listMark.to
+
+          const symbol = markdown.substring(listMark.from, listMark.to)
+          if (symbol === '-' || symbol === '+' || symbol === '*') {
+            astNode.symbol = symbol
           }
         }
 
@@ -688,6 +795,17 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         from: node.from,
         to: node.to,
         source: markdown.substring(start.to, end.from)
+      }
+      return astNode
+    }
+    case 'Comment':
+    case 'CommentBlock': {
+      const astNode: Comment = {
+        type: 'Comment',
+        name: node.name,
+        from: node.from,
+        to: node.to,
+        value: markdown.slice(node.from + 4, node.to - 3).trim() // <!-- and -->
       }
       return astNode
     }
@@ -748,7 +866,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: 'ZknLink',
         from: node.from,
         to: node.to,
-        value: genericTextNode(content.from, content.to, markdown.substring(content.from, content.to))
+        value: markdown.substring(content.from, content.to)
       }
       return astNode
     }
@@ -758,7 +876,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: 'ZknTag',
         from: node.from,
         to: node.to,
-        value: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to))
+        value: markdown.substring(node.from + 1, node.to)
       }
       return astNode
     }

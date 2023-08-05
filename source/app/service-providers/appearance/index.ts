@@ -13,13 +13,13 @@
  * END HEADER
  */
 
-import ConfigProvider from '@providers/config'
+import type ConfigProvider from '@providers/config'
 import {
   ipcMain,
   nativeTheme,
   systemPreferences
 } from 'electron'
-import LogProvider from '../log'
+import type LogProvider from '../log'
 import ProviderContract from '../provider-contract'
 
 /**
@@ -85,14 +85,13 @@ export default class AppearanceProvider extends ProviderContract {
         this._recalculateSchedule()
       } else if (option === 'darkMode' && process.platform === 'darwin') {
         const shouldBeDark = nativeTheme.shouldUseDarkColors
-        const isDark = Boolean(this._config.get('darkMode'))
+        const isDark = this._config.get().darkMode
         if (shouldBeDark !== isDark) {
           // Explicitly set the appLevelAppearance in case the internal theme
           // differs from the operating system.
           systemPreferences.appLevelAppearance = (isDark) ? 'dark' : 'light'
         } else {
-          // DEBUG: See issue https://github.com/electron/electron/issues/30413
-          // @ts-expect-error
+          // @ts-expect-error: See issue https://github.com/electron/electron/issues/30413
           systemPreferences.appLevelAppearance = null
         }
       }

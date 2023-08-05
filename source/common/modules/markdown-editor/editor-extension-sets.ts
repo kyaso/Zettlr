@@ -17,14 +17,22 @@
  */
 
 import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete'
-import { Update } from '@codemirror/collab'
+import { type Update } from '@codemirror/collab'
 import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
 import { bracketMatching, codeFolding, foldGutter, indentOnInput, indentUnit, StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { yaml } from '@codemirror/legacy-modes/mode/yaml'
 import { search, searchKeymap } from '@codemirror/search'
-import { Compartment, EditorState, Extension, Prec } from '@codemirror/state'
-import { keymap, drawSelection, EditorView, lineNumbers, ViewUpdate, DOMEventHandlers, dropCursor } from '@codemirror/view'
+import { Compartment, EditorState, Prec, type Extension } from '@codemirror/state'
+import {
+  keymap,
+  drawSelection,
+  EditorView,
+  lineNumbers,
+  dropCursor,
+  type ViewUpdate,
+  type DOMEventHandlers
+} from '@codemirror/view'
 import { autocomplete } from './autocomplete'
 import { customKeymap } from './commands/keymap'
 import { codeSyntaxHighlighter, markdownSyntaxHighlighter } from './theme/syntax'
@@ -36,11 +44,11 @@ import { hookDocumentAuthority } from './plugins/remote-doc'
 import { lintGutter, linter } from '@codemirror/lint'
 import { spellcheck } from './linters/spellcheck'
 import { mdLint } from './linters/md-lint'
-import { mdStatistics } from './plugins/statistics-fields'
+import { countField } from './plugins/statistics-fields'
 import { tocField } from './plugins/toc-field'
 import { typewriter } from './plugins/typewriter'
 import { formattingToolbar, footnoteHover, filePreview, urlHover, tagTooltipExt } from './tooltips'
-import { EditorConfiguration, configField } from './util/configuration'
+import { type EditorConfiguration, configField } from './util/configuration'
 import { highlightRanges } from './plugins/highlight-ranges'
 import { jsonFolding } from './code-folding/json'
 import { markdownFolding } from './code-folding/markdown'
@@ -54,6 +62,7 @@ import { languageTool } from './linters/language-tool'
 import { statusbar } from './statusbar'
 import { themeManager } from './theme'
 import { renderers } from './renderers'
+import { mdPasteDropHandlers } from './plugins/md-paste-drop-handlers'
 
 /**
  * This interface describes the required properties which the extension sets
@@ -65,17 +74,11 @@ export interface CoreExtensionOptions {
   remoteConfig: {
     filePath: string
     startVersion: number
-    editorId: string
     pullUpdates: (filePath: string, version: number) => Promise<Update[]|false>
     pushUpdates: (filePath: string, version: number, updates: Update[]) => Promise<boolean>
   }
   updateListener: (update: ViewUpdate) => void
   domEventsListeners: DOMEventHandlers<any>
-  // Linter configuration
-  lint: {
-    // Should Markdown documents be linted?
-    markdown: boolean
-  }
 }
 
 /**
@@ -109,11 +112,16 @@ export const inputModeCompartment = new Compartment()
  * @return  {Extension[]}                    An array of core extensions
  */
 function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
-  let inputMode: Extension = []
+  const inputMode: Extension[] = []
   if (options.initialConfig.inputMode === 'vim') {
-    inputMode = vim()
+    inputMode.push(vim())
   } else if (options.initialConfig.inputMode === 'emacs') {
-    inputMode = emacs()
+    inputMode.push(emacs())
+  }
+
+  const autoCloseBracketsConfig: Extension[] = []
+  if (options.initialConfig.autoCloseBrackets) {
+    autoCloseBracketsConfig.push(closeBrackets())
   }
 
   return [
@@ -146,7 +154,7 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     EditorState.tabSize.from(configField, (val) => val.indentUnit),
     indentUnit.from(configField, (val) => val.indentWithTabs ? '\t' : ' '.repeat(val.indentUnit)),
     EditorView.lineWrapping, // Enable line wrapping,
-    closeBrackets(),
+    autoCloseBracketsConfig,
 
     // Add the statusbar
     statusbar,
@@ -161,7 +169,6 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
 
     // Enables the editor to fetch updates to the document from main
     hookDocumentAuthority(
-      options.remoteConfig.editorId,
       options.remoteConfig.filePath,
       options.remoteConfig.startVersion,
       options.remoteConfig.pullUpdates,
@@ -226,7 +233,7 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
 
   let hasLinters = false
 
-  if (options.lint.markdown) {
+  if (options.initialConfig.lintMarkdown) {
     hasLinters = true
     mdLinterExtensions.push(mdLint)
   }
@@ -250,9 +257,15 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
 
   return [
     ...getCoreExtensions(options),
+    // These handlers deal with Markdown specific stuff, for example, pasting
+    // HTML should not add the verbatim HTML code, but rather convert it to
+    // Markdown prior. Additionally, images should get preferential treatment.
+    EditorView.domEventHandlers(mdPasteDropHandlers),
     // We need our custom keymaps first
-    keymap.of(completionKeymap),
-    Prec.highest(keymap.of(customKeymap)),
+    Prec.high(keymap.of([
+      ...completionKeymap,
+      ...customKeymap
+    ])),
     // The parser generates the AST for the document ...
     markdownParser(),
     // ... which can then be styled with a highlighter
@@ -262,7 +275,7 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     mdLinterExtensions,
     languageTool,
     // Some statistics we need for Markdown documents
-    mdStatistics,
+    countField,
     typewriter,
     distractionFree,
     tocField,

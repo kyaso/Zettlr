@@ -24,10 +24,10 @@ import extractBibTexAttachments from './extract-bibtex-attachments'
 import { parse as parseBibTex } from 'astrocite-bibtex'
 import YAML from 'yaml'
 import ProviderContract from '../provider-contract'
-import NotificationProvider from '../notifications'
-import WindowProvider from '../windows'
-import LogProvider from '../log'
-import ConfigProvider from '@providers/config'
+import type NotificationProvider from '../notifications'
+import type WindowProvider from '../windows'
+import type LogProvider from '../log'
+import type ConfigProvider from '@providers/config'
 import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 import broadcastIpcMessage from '@common/util/broadcast-ipc-message'
 
@@ -128,6 +128,7 @@ export default class CiteprocProvider extends ProviderContract {
       const db = this.databases.get(affectedPath)
 
       if (db === undefined && eventName === 'change') {
+        this._logger.info(`[Citeproc] Retrying to load ${affectedPath} ...`)
         // This indicates that the library had been loaded, but threw an error
         // on reload (happens frequently, e.g., with Zotero). In that case,
         // simply load it.
@@ -136,6 +137,7 @@ export default class CiteprocProvider extends ProviderContract {
       } else if (db === undefined) {
         this._logger.warning(`[Citeproc] Received an event ${eventName} for path ${affectedPath}: Could not handle.`)
       } else if (eventName === 'change') {
+        this._logger.info(`[Citeproc] Changes detected for ${affectedPath}. Reloading ...`)
         // NOTE: We have to ask the engine to not unwatch the database.
         // Sometimes, errors may be, and if we unwatch the database on change
         // events, this would lead any error to no more changes being detected.
@@ -181,23 +183,31 @@ export default class CiteprocProvider extends ProviderContract {
     /**
      * Listen to renderer requests
      */
-    ipcMain.handle('citeproc-provider', (event, { command, payload }) => {
+    ipcMain.handle('citeproc-provider', async (event, { command, payload }) => {
+      const { database } = payload
+      // Ensure the database is loaded in any case (will throw a visible error
+      // if the database cannot be loaded)
+      try {
+        await this.loadDatabase(database)
+      } catch (err: any) {
+        this._logger.error(`[Citeproc Provider] Could not load database ${String(database)}: ${err.message as string}`, err)
+        // Proper early return based on the command
+        return command === 'get-items' ? [] : undefined
+      }
+
       if (command === 'get-items') {
-        let { database } = payload
-        if (database === CITEPROC_MAIN_DB) {
-          database = this.mainLibrary
-        }
-        const db = this.databases.get(database)
+        const dbPath = database === CITEPROC_MAIN_DB ? this.mainLibrary : database
+        const db = this.databases.get(dbPath)
         if (db === undefined) {
           return []
         } else {
           return Object.values(db.cslData)
         }
       } else if (command === 'get-citation') {
-        const { database, citations, composite } = payload
+        const { citations, composite } = payload
         return this.getCitation(database, citations, composite)
       } else if (command === 'get-bibliography') {
-        const { database, citations } = payload
+        const { citations } = payload
         // The Payload contains the items the renderer wants to have
         return this.makeBibliography(database, citations)
       }
@@ -295,6 +305,13 @@ export default class CiteprocProvider extends ProviderContract {
    * @return  {Promise<DatabaseRecord>}                Resolves with the DatabaseRecord
    */
   private async loadDatabase (databasePath: string, watch = true): Promise<void> {
+    if (databasePath === CITEPROC_MAIN_DB && !this.hasMainLibrary()) {
+      this._logger.verbose('[Citeproc Provider] Could not load main database: No main database available.')
+      return
+    } else if (databasePath === CITEPROC_MAIN_DB) {
+      databasePath = this.mainLibrary
+    }
+
     if (this.databases.has(databasePath)) {
       return // No need to load the database again
     }
@@ -354,6 +371,7 @@ export default class CiteprocProvider extends ProviderContract {
     if (watch) {
       this._watcher.add(databasePath)
     }
+    broadcastIpcMessage('citeproc-database-updated', databasePath)
   }
 
   /**
@@ -370,6 +388,7 @@ export default class CiteprocProvider extends ProviderContract {
       }
 
       this.databases.delete(dbPath)
+      broadcastIpcMessage('citeproc-database-updated', dbPath)
     }
   }
 
@@ -389,7 +408,7 @@ export default class CiteprocProvider extends ProviderContract {
       throw new Error(`Could not select database ${dbPath}: Not loaded.`)
     }
 
-    this._logger.info(`[Citeproc Provider] Selecting database ${dbPath}...`)
+    this._logger.verbose(`[Citeproc Provider] Selecting database ${dbPath}...`)
 
     this._items = database.cslData
 
@@ -447,7 +466,7 @@ export default class CiteprocProvider extends ProviderContract {
    * @param   {string}          lang  The language to be loaded.
    * @return  {string|boolean}        Either the contents of the XML file, or false.
    */
-  private getLocale (lang: string): string|boolean {
+  private getLocale (lang: string): string|false {
     // Takes a lang in the format xx-XX and has to return the corresponding XML
     // file. Let's do just that!
 
@@ -540,12 +559,8 @@ export default class CiteprocProvider extends ProviderContract {
 
     try {
       this.selectDatabase(database)
-      if (!this.ensureCitekeysExist(citekeys)) {
-        this._logger.verbose(`[CiteprocProvider] Cannot render bibliography with citekeys ${citekeys.join(', ')}: At least one key does not exist in database ${database}`)
-        return undefined
-      }
-
-      this.engine.updateItems(citekeys)
+      const sanitizedCitekeys = this.filterNonExistingCitekeys(citekeys)
+      this.engine.updateItems(sanitizedCitekeys)
       return this.engine.makeBibliography()
     } catch (err: any) {
       this._logger.error(`[citeproc] makeBibliography: Could not create bibliography: ${String(err)}`, err)
@@ -581,5 +596,18 @@ export default class CiteprocProvider extends ProviderContract {
     }
 
     return true
+  }
+
+  /**
+   * In instances where a few undefined citekeys are allowed, such as generating
+   * the bibliography, this function simply removes those that don't exist
+   * instead of requiring all of them to exist.
+   *
+   * @param   {string[][]}  citekeys  The unfiltered citekeys
+   *
+   * @return  {string[]}              The list of keys that exist in the database
+   */
+  private filterNonExistingCitekeys (citekeys: string[]): string[] {
+    return citekeys.filter(key => key in this._items)
   }
 }

@@ -13,9 +13,15 @@
  * END HEADER
  */
 
-import { EditorView, hoverTooltip, Tooltip } from '@codemirror/view'
-import { MDFileDescriptor } from '@dts/common/fsal'
+import { syntaxTree } from '@codemirror/language'
+import { hoverTooltip, type EditorView, type Tooltip } from '@codemirror/view'
+// import { trans } from '@common/i18n-renderer'
+// import { md2html } from '@common/modules/markdown-utils/markdown-to-html'
+// import formatDate from '@common/util/format-date'
+// import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
+// import sanitizeHtml from 'sanitize-html'
 import { getSearchButton, getCopyButton } from './common'
+import { MDFileDescriptor } from '@dts/common/fsal'
 
 const ipcRenderer = window.ipc
 
@@ -24,28 +30,13 @@ const ipcRenderer = window.ipc
 
 // Previews files with tooltips
 async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1): Promise<Tooltip|null> {
-  const { from, text } = view.state.doc.lineAt(pos)
+  const nodeAt = syntaxTree(view.state).resolve(pos, side)
 
-  // Ensure there is an internal link opening before pos, but not closing, and
-  // that there is an internal link closing after pos, but not opening.
-  const sliceBefore = text.substring(0, pos - from)
-  const sliceAfter = text.substring(pos - from)
-  const openLinkBeforePos = sliceBefore.includes('[[') && sliceBefore.lastIndexOf('[[') > sliceBefore.lastIndexOf(']]')
-  const closeLinkAfterPos = sliceAfter.includes(']]') && sliceAfter.indexOf(']]') < sliceAfter.indexOf('[[')
-
-  if (!openLinkBeforePos && !closeLinkAfterPos) {
+  if (nodeAt.type.name !== 'ZknLinkContent') {
     return null
   }
 
-  // Extract the relative start and end positions, and do a sanity test
-  const start = sliceBefore.lastIndexOf('[[') + 2
-  const end = text.indexOf(']]', pos - from)
-
-  if (pos > from + end || pos < from + start) {
-    return null
-  }
-
-  const fileToDisplay = text.substring(start, end)
+  const fileToDisplay = view.state.sliceDoc(nodeAt.from, nodeAt.to)
 
   const desc: MDFileDescriptor = await ipcRenderer.invoke(
     'application',
@@ -55,8 +46,8 @@ async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1):
   // By annotating a range (providing `end`) the hover tooltip will stay as long
   // as the user is somewhere over the links
   return {
-    pos: from + start,
-    end: pos + end + 2,
+    pos: nodeAt.from,
+    end: nodeAt.to,
     above: true,
     create (view) {
       return { dom: getPreviewElement(desc, fileToDisplay) }
@@ -73,6 +64,7 @@ async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1):
  *
  * @return  {Element}                 The wrapper element
  */
+// TODO: desc has different type now
 function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: string): HTMLDivElement {
   const wrapper = document.createElement('div')
   wrapper.classList.add('editor-note-preview')
@@ -81,6 +73,24 @@ function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: stri
   const title: HTMLHeadingElement = getTitle(linkIsFile ? desc.name : linkContents)
 
   wrapper.appendChild(title)
+  // const title = document.createElement('p')
+  // title.classList.add('filename')
+  // title.textContent = metadata[0]
+
+  // const content = document.createElement('div')
+  // content.classList.add('note-content')
+  // const html = md2html(metadata[1], window.getCitationCallback(CITEPROC_MAIN_DB))
+  // content.innerHTML = sanitizeHtml(html, {
+  //   // These options basically translate into: Allow nothing but bare metal tags
+  //   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+  //   disallowedTagsMode: 'escape',
+  //   allowedIframeDomains: [],
+  //   allowedIframeHostnames: [],
+  //   allowedScriptDomains: [],
+  //   allowedSchemes: [],
+  //   allowedScriptHostnames: [],
+  //   allowVulnerableTags: false
+  // })
 
   // When the link is an actual file, show also the directory.
   if (linkIsFile) {
@@ -147,6 +157,11 @@ function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: stri
     actions.appendChild(openButtonNT)
   }
 
+  // wrapper.appendChild(title)
+  // wrapper.appendChild(document.createElement('hr'))
+  // wrapper.appendChild(content)
+  // wrapper.appendChild(document.createElement('hr'))
+  // wrapper.appendChild(meta)
   wrapper.appendChild(actions)
 
   return wrapper

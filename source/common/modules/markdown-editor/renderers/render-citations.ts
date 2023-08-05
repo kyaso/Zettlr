@@ -13,11 +13,11 @@
  */
 
 import { renderInlineWidgets } from './base-renderer'
-import { SyntaxNodeRef, SyntaxNode } from '@lezer/common'
-import { EditorView, WidgetType } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
+import { type SyntaxNodeRef, type SyntaxNode } from '@lezer/common'
+import { WidgetType, type EditorView } from '@codemirror/view'
+import { type EditorState } from '@codemirror/state'
 import clickAndSelect from './click-and-select'
-import extractCitations, { CitePosition } from '@common/util/extract-citations'
+import extractCitations, { type CitePosition } from '@common/util/extract-citations'
 import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 import { citationMenu } from '../context-menu/citation-menu'
 import { configField } from '../util/configuration'
@@ -40,12 +40,12 @@ class CitationWidget extends WidgetType {
     const elem = document.createElement('span')
     elem.classList.add('citeproc-citation')
     if (renderedCitation !== undefined) {
-      elem.innerText = renderedCitation
+      elem.innerHTML = renderedCitation
     } else {
       elem.innerText = this.rawCitation
       elem.classList.add('error')
     }
-    elem.addEventListener('click', clickAndSelect(view, this.node))
+    elem.addEventListener('click', clickAndSelect(view))
 
     elem.addEventListener('contextmenu', (event) => {
       const keys = this.citation.citations.map(x => x.id)
@@ -57,7 +57,7 @@ class CitationWidget extends WidgetType {
   }
 
   ignoreEvent (event: Event): boolean {
-    return false // By default ignore all events
+    return event instanceof MouseEvent
   }
 }
 

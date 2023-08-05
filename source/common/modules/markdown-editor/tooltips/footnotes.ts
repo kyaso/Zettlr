@@ -12,9 +12,9 @@
  * END HEADER
  */
 
-import { EditorView, hoverTooltip, Tooltip } from '@codemirror/view'
+import { type EditorView, hoverTooltip, type Tooltip } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
-import { EditorState } from '@codemirror/state'
+import { type EditorState } from '@codemirror/state'
 import { configField } from '../util/configuration'
 import { trans } from '@common/i18n-renderer'
 import { md2html } from '@common/modules/markdown-utils'
@@ -71,24 +71,12 @@ function findRefForFootnote (state: EditorState, fn: string): { from: number, to
  * to create a tooltip with the footnote ref's contents, else null.
  */
 function footnotesTooltip (view: EditorView, pos: number, side: 1 | -1): Tooltip|null {
-  let { from, text } = view.state.doc.lineAt(pos)
-  const fnRE = /\[\^.+?\](?!:)/g
-  const relativePos = pos - from
-
-  let footnoteMatch: RegExpMatchArray|null = null
-  for (const match of text.matchAll(fnRE)) {
-    if (match.index as number > relativePos || match.index as number + match[0].length < relativePos) {
-      continue
-    }
-    footnoteMatch = match
-    break
-  }
-
-  if (footnoteMatch === null) {
+  const nodeAt = syntaxTree(view.state).resolve(pos, side)
+  if (nodeAt.type.name !== 'Footnote') {
     return null
   }
 
-  const fn = footnoteMatch[0]
+  const fn = view.state.sliceDoc(nodeAt.from, nodeAt.to)
 
   if (fn.endsWith('^]')) {
     return null // It's an inline footnote
@@ -97,26 +85,64 @@ function footnotesTooltip (view: EditorView, pos: number, side: 1 | -1): Tooltip
   const fnBody = findRefForFootnote(view.state, fn)
 
   const { library } = view.state.field(configField).metadata
-  const tooltipContent = md2html(fnBody?.text ?? trans('No footnote text found.'), library)
+  const tooltipContent = md2html(
+    (fnBody === undefined || fnBody.text === '')
+      ? trans('No footnote text found.')
+      : fnBody.text,
+    window.getCitationCallback(library)
+  )
 
   return {
-    pos: from + (footnoteMatch.index as number),
-    end: from + (footnoteMatch.index as number) + footnoteMatch[0].length,
+    pos: nodeAt.from,
+    end: nodeAt.to,
     above: true,
     create (view) {
       const dom = document.createElement('div')
       dom.innerHTML = tooltipContent
-      if (fnBody !== undefined) {
-        const editButton = document.createElement('button')
-        editButton.textContent = trans('Edit')
-        dom.appendChild(editButton)
-        editButton.addEventListener('click', e => {
-          view.dispatch({
-            selection: { anchor: fnBody.from, head: fnBody.to },
-            scrollIntoView: true
-          })
-        })
+      if (fnBody === undefined) {
+        return { dom }
       }
+
+      const editButton = document.createElement('button')
+      editButton.textContent = trans('Edit')
+      dom.appendChild(editButton)
+
+      editButton.addEventListener('click', e => {
+        // Replace the contents with the footnote's contents to allow editing
+        dom.innerHTML = ''
+        const p = document.createElement('p')
+        const textarea = document.createElement('textarea')
+        textarea.value = fnBody.text
+        textarea.style.minWidth = '250px'
+        textarea.style.minHeight = '150px'
+        p.appendChild(textarea)
+        dom.appendChild(p)
+
+        const acceptButton = document.createElement('button')
+        acceptButton.textContent = trans('Save')
+        dom.appendChild(acceptButton)
+
+        acceptButton.addEventListener('click', e => {
+          // Exchange footnote content & restore
+          view.dispatch({
+            changes: {
+              from: fnBody.from, to: fnBody.to, insert: textarea.value
+            }
+          })
+          dom.innerHTML = md2html(textarea.value, window.getCitationCallback(library))
+          dom.appendChild(editButton)
+        })
+
+        const cancelButton = document.createElement('button')
+        cancelButton.textContent = trans('Cancel')
+        dom.appendChild(cancelButton)
+
+        cancelButton.addEventListener('click', e => {
+          // Restore tooltip
+          dom.innerHTML = tooltipContent
+          dom.appendChild(editButton)
+        })
+      })
       return { dom }
     }
   }

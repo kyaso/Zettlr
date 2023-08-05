@@ -29,25 +29,17 @@ import EventEmitter from 'events'
 // CodeMirror imports
 import { EditorView } from '@codemirror/view'
 import {
-  EditorSelection,
   EditorState,
-  Extension,
-  SelectionRange
+  type Extension,
+  type SelectionRange
 } from '@codemirror/state'
-import { Update } from '@codemirror/collab'
 import { syntaxTree } from '@codemirror/language'
 
 // Keymaps/Input modes
 import { vim } from '@replit/codemirror-vim'
 import { emacs } from '@replit/codemirror-emacs'
 
-import {
-  charCountField,
-  charCountNoSpacesField,
-  wordCountField
-} from './plugins/statistics-fields'
-
-import { ToCEntry, tocField } from './plugins/toc-field'
+import { type ToCEntry, tocField } from './plugins/toc-field'
 import {
   citekeyUpdate,
   filesUpdate,
@@ -57,7 +49,7 @@ import {
 
 // Main configuration
 import {
-  CoreExtensionOptions,
+  type CoreExtensionOptions,
   getJSONExtensions,
   getMarkdownExtensions,
   getTexExtensions,
@@ -68,9 +60,9 @@ import {
 import {
   configField,
   configUpdateEffect,
-  EditorConfigOptions,
-  EditorConfiguration,
-  getDefaultConfig
+  getDefaultConfig,
+  type EditorConfigOptions,
+  type EditorConfiguration
 } from './util/configuration'
 
 // Custom commands
@@ -88,12 +80,16 @@ import openMarkdownLink from './util/open-markdown-link'
 import { highlightRangesEffect } from './plugins/highlight-ranges'
 
 import safeAssign from '@common/util/safe-assign'
-import countWords from '@common/util/count-words'
-import { DocumentType, DP_EVENTS } from '@dts/common/documents'
-import { TagRecord } from '@providers/tags'
-
-const path = window.path
-const ipcRenderer = window.ipc
+import { countAll } from '@common/util/counter'
+import { DocumentType } from '@dts/common/documents'
+import { type TagRecord } from '@providers/tags'
+import {
+  reloadStateEffect,
+  type PullUpdateCallback,
+  type PushUpdateCallback
+} from './plugins/remote-doc'
+import { markdownToAST } from '../markdown-utils'
+import { countField } from './plugins/statistics-fields'
 
 export interface DocumentWrapper {
   path: string
@@ -116,7 +112,6 @@ const config = window.config
 export interface DocumentInfo {
   words: number
   chars: number
-  chars_wo_spaces: number
   cursor: UserReadablePosition
   selections: Array<{
     anchor: UserReadablePosition
@@ -126,14 +121,59 @@ export interface DocumentInfo {
   }>
 }
 
+export type FetchDoc = (filePath: string) => Promise<{ content: string, type: DocumentType, startVersion: number }>
+
+/**
+ * This interface is used to provide the editor with an API of where to fetch
+ * the documents from. The remote could be, e.g., either behind a websocket or
+ * an IPC bridge.
+ */
+export interface DocumentAuthorityAPI {
+  /**
+   * Used to fetch the document from the document authority
+   */
+  fetchDoc: FetchDoc
+  /**
+   * Used to pull new updates from the document authority
+   */
+  pullUpdates: PullUpdateCallback
+  /**
+   * Used to push updates to the document authority
+   */
+  pushUpdates: PushUpdateCallback
+}
+
 export default class MarkdownEditor extends EventEmitter {
+  /**
+   * The underlying CodeMirror view
+   *
+   * @var {EditorView}
+   */
   private readonly _instance: EditorView
-  private readonly editorId: string
-  private readonly fetchDoc: (filePath: string) => Promise<{ content: string, type: DocumentType, startVersion: number }>
-  private readonly pullUpdates: (filePath: string, version: number) => Promise<Update[]|false>
-  private readonly pushUpdates: (filePath: string, version: number, updates: Update[]) => Promise<boolean>
+  /**
+   * The absolute path to the document represented by this MainEditor instance.
+   *
+   * @var {string}
+   */
+  private readonly representedDocument: string
+  /**
+   * The API method used to synchronize the document with an authority.
+   *
+   * @var {DocumentAuthorityAPI}
+   */
+  private readonly authority: DocumentAuthorityAPI
+  /**
+   * The full editor configuration
+   *
+   * @var {EditorConfiguration}
+   */
   private config: EditorConfiguration
 
+  /**
+   * The database cache for the various autocompletes.
+   *
+   * @var {any}
+   */
   private readonly databaseCache: {
     tags: TagRecord[]
     citations: Array<{ citekey: string, displayText: string }>
@@ -142,113 +182,83 @@ export default class MarkdownEditor extends EventEmitter {
   }
 
   /**
-   * Holds all documents that are still open as a cache so the sometimes quite
-   * large initial configuration doesn't always have to be re-added
+   * Creates a new MarkdownEditor instance associated with the given leafId and
+   * the representedDocument. Immediately after instantiation the editor will
+   * pull the document from the given authorityAPI and set it up.
    *
-   * @var {Map<string, EditorState>}
-   */
-  private readonly stateCache: Map<string, EditorState>
-
-  // "What is this?", you may ask. This is a cache to remember anything important
-  // that has to be set for a document that is open but that is not saved inside
-  // the state in the main process. The scroll position is obvious (has nothing
-  // to do with the state), but the selection will also not be stored in the main
-  // process. This might look cool because you could literally remote-control
-  // other editor panes, but we don't really need this.
-  // Still TODO: Need to map the selection everytime through updates!
-  private readonly documentViewCache: Map<string, {
-    scrollPosition: number
-    selection: any
-  }>
-
-  /**
-   * Creates a new MarkdownEditor instance attached to the anchorElement
+   * NOTE that you will have to append the resulting editor DOM element onto the
+   * DOM tree yourself in order for the editor to actually show up. Example:
    *
-   * @param   {Element|DocumentFragment|undefined}  anchorElement   The anchor element (either a DOM node or an ID to be used with document.getElementById)
-   * @param  {Function} getDocument Used to fetch initial document states from the document authority
-   * @param  {Function} pullUpdates Used to pull new updates from the document authority
-   * @param  {Function} pushUpdates Used to push new updates to the document authority
+   * ```ts
+   * const editor = new MarkdownEditor(leafId, filePath, api)
+   * const container = document.getElementById('container')
+   * container.appendChild(editor.dom)
+   * ```
+   *
+   * @param  {string}                leafId               The ID of the leaf
+   *                                                      this editor is part of
+   * @param  {string}                representedDocument  The absolute path to
+   *                                                      the file that will be
+   *                                                      loaded in this editor
+   * @param  {DocumentAuthorityAPI}  authorityAPI         The authority API this
+   *                                                      editor should use.
+   *                                                      Should normally be the
+   *                                                      IPC authority.
    */
   constructor (
-    anchorElement: Element|DocumentFragment|undefined,
-    editorId: string,
-    getDocument: (path: string) => Promise<{ content: string, type: DocumentType, startVersion: number }>,
-    pullUpdates: (filePath: string, version: number) => Promise<Update[]|false>,
-    pushUpdates: (filePath: string, version: number, updates: Update[]) => Promise<boolean>
+    leafId: string,
+    representedDocument: string,
+    authorityAPI: DocumentAuthorityAPI,
+    configOverride?: Partial<EditorConfiguration>
   ) {
     super() // Set up the event emitter
 
-    this.fetchDoc = getDocument
-    this.pullUpdates = pullUpdates
-    this.pushUpdates = pushUpdates
+    this.authority = authorityAPI
+    this.representedDocument = representedDocument
 
-    this.editorId = editorId
-    // Since the editor state needs to be rebuilt whenever the document changes,
-    // we have to persist the databases (and feed them to the state) everytime
-    // we have to rebuild it (during swapDoc).
+    // Since the editor state needs to be rebuilt from scratch sometimes, we
+    // cache the autocomplete databases so that we don't have to re-fetch them
+    // everytime.
     this.databaseCache = { tags: [], citations: [], snippets: [], files: [] }
-    this.stateCache = new Map()
 
-    // This remembers the last seen scroll positions per document and restores them
-    // if possible.
-    this.documentViewCache = new Map()
-
-    // The following fields are used to cache certain values, especially since
-    // they aren't retained during document swaps
+    // Same goes for the config
     this.config = getDefaultConfig()
+    // TODO: This is bad style imho
+    this.config.metadata.path = representedDocument
+    if (configOverride !== undefined) {
+      this.setOptions(configOverride)
+    }
 
-    // Every CM6 editor consists of two parts: First, a view that can display the
-    // content (the equivalent of the former editor), and second a state, which
-    // basically binds a set of extensions to a document (something that Marijn
-    // has extracted from the main editor).
-    // Thus, we can basically immediately start the editor, but leave the state
-    // undefined. swapDoc() can then be achieved by calling setState.
+    // Create the editor ...
     this._instance = new EditorView({
       state: undefined,
-      parent: anchorElement
+      parent: undefined
     })
 
-    // Keep the scroll position for the current document always updated.
-    this._instance.scrollDOM.addEventListener('scroll', (event) => {
-      const documentPath = this._instance.state.field(configField, false)?.metadata.path
-      if (documentPath !== undefined) {
-        const cache = this.documentViewCache.get(documentPath)
-        if (cache !== undefined) {
-          const pos = this._instance.scrollDOM.scrollTop
-          cache.scrollPosition = pos
-          this.documentViewCache.set(documentPath, cache)
-        }
-      }
-    }, true)
+    // ... and immediately begin loading the document
+    this.loadDocument().catch(err => console.error(err))
+  }
 
-    // Listen to file close events so that we can keep the document cache clean
-    ipcRenderer.on('documents-update', (e, payload: { event: DP_EVENTS, context?: any }) => {
-      const { event, context } = payload
-      if (
-        event === DP_EVENTS.CLOSE_FILE &&
-        context !== undefined &&
-        context.filePath !== undefined &&
-        this.stateCache.has(context.filePath)
-      ) {
-        this.stateCache.delete(context.filePath)
-      }
-    })
-  } // END CONSTRUCTOR
-
+  /**
+   * Returns the correct set of extensions for the given document
+   *
+   * @param   {string}        filePath      The file path
+   * @param   {DocumentType}  type          The type of file we're dealing with
+   * @param   {number}        startVersion  The initial synchronization number
+   *
+   * @return  {Extension[]}                 The extension set
+   */
   private _getExtensions (filePath: string, type: DocumentType, startVersion: number): Extension[] {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const editorInstance = this
-
-    const mdLint = window.config.get('editor.lint.markdown') as boolean
 
     const options: CoreExtensionOptions = {
       initialConfig: JSON.parse(JSON.stringify(this.config)),
       remoteConfig: {
         filePath,
         startVersion,
-        editorId: this.editorId,
-        pullUpdates: this.pullUpdates,
-        pushUpdates: this.pushUpdates
+        pullUpdates: this.authority.pullUpdates,
+        pushUpdates: this.authority.pushUpdates
       },
       updateListener: (update) => {
         // Listen for changes and emit events appropriately
@@ -271,17 +281,13 @@ export default class MarkdownEditor extends EventEmitter {
           for (const effect of transaction.effects) {
             if (effect.is(configUpdateEffect)) {
               this.onConfigUpdate(effect.value)
+            } else if (effect.is(reloadStateEffect)) {
+              // ATTENTION: The document state is out of sync with the document
+              // authority, so we must reload it.
+              this.reload().catch(err => console.error('Could not reload document state', err))
+              return
             }
           }
-        }
-
-        // Update the selection in our cache
-        const cache = this.documentViewCache.get(filePath)
-        if (cache !== undefined) {
-          this.documentViewCache.set(filePath, {
-            scrollPosition: cache.scrollPosition,
-            selection: update.state.selection.toJSON()
-          })
         }
       },
       domEventsListeners: {
@@ -319,85 +325,7 @@ export default class MarkdownEditor extends EventEmitter {
             editorInstance.emit('zettelkasten-tag', tagContents)
             event.preventDefault()
           }
-        },
-        drop (event, view) {
-          const dataTransfer = event.dataTransfer
-
-          if (dataTransfer === null) {
-            return false
-          }
-
-          const zettlrFile = dataTransfer.getData('text/x-zettlr-file')
-          const docTab = dataTransfer.getData('zettlr/document-tab')
-
-          if (docTab !== '') {
-            return false // There's a document being dragged, let the MainEditor capture the event
-          }
-
-          const pos = view.posAtCoords({ x: event.clientX, y: event.clientY })
-          if (pos === null) {
-            return false
-          }
-
-          event.preventDefault()
-          event.stopPropagation()
-
-          const cwd = path.dirname(view.state.field(configField).metadata.path)
-
-          // First: Do we have a fileList of files to drop here?
-          if (dataTransfer.files.length > 0) {
-            const files: string[] = []
-            // We have a list of files being dropped onto the editor --> link them
-            for (let i = 0; i < dataTransfer.files.length; i++) {
-              const file = dataTransfer.files.item(i)
-              if (file !== null) {
-                files.push(file.path)
-              }
-            }
-
-            const toInsert = files.map(f => {
-              let pathToInsert = path.posix.relative(cwd, f)
-              if (!pathToInsert.startsWith('./') && !pathToInsert.startsWith('../')) {
-                pathToInsert = './' + pathToInsert
-              }
-
-              if (/\.(?:png|jpe?g|gif|bmp|svg|tiff?)$/i.test(f)) {
-                return `![${path.basename(f)}](${pathToInsert})`
-              } else {
-                return `[${path.basename(f)}](${pathToInsert})`
-              }
-            })
-
-            view.dispatch({ changes: { from: pos, insert: toInsert.join('\n') } })
-          } else if (zettlrFile !== '') {
-            // We have a Markdown/Code file to insert
-            const data = JSON.parse(zettlrFile) as { type: 'code'|'file'|'directory'|'other', path: string, id?: string }
-            const name = path.basename(data.path, path.extname(data.path))
-            let pathToInsert = path.posix.relative(cwd, data.path)
-            if (!pathToInsert.startsWith('./') && !pathToInsert.startsWith('../')) {
-              pathToInsert = './' + pathToInsert
-            }
-
-            if (data.type === 'file') {
-              // Insert as Zkn link
-              view.dispatch({ changes: { from: pos, insert: `[[${name}]]` } })
-            } else if (data.type === 'code') {
-              // Insert as Md link
-              view.dispatch({ changes: { from: pos, insert: `[${name}](${pathToInsert})` } })
-            } else if (data.type === 'other') {
-              const isImage = /\.(?:png|jpe?g|gif|bmp|svg|tiff?)$/i.test(data.path)
-              if (isImage) {
-                view.dispatch({ changes: { from: pos, insert: `![${name}](${pathToInsert})` } })
-              } else {
-                view.dispatch({ changes: { from: pos, insert: `[${name}](${pathToInsert})` } })
-              }
-            }
-          }
-          return false
         }
-      },
-      lint: {
-        markdown: mdLint
       }
     }
 
@@ -414,45 +342,19 @@ export default class MarkdownEditor extends EventEmitter {
   }
 
   /**
-   * Swaps the current CodeMirror Document with a new one.
-   *
-   * @param  {string}   documentPath  The document to switch to
-   * @param  {boolean}  force         Optional. If not given or not true, prevents
-   *                                  reloading the same document again.
+   * Loads the document from main and sets up everything required to display and
+   * edit it.
    */
-  async swapDoc (documentPath: string, force: boolean = false): Promise<void> {
-    // Do not reload the document unless explicitly specified. The reason is
-    // that sometimes we do need to programmatically reload the document, but in
-    // 99% of the cases, this only leads to unnecessary flickering.
-    if (this.config.metadata.path === documentPath && !force) {
-      return
-    }
+  async loadDocument (): Promise<void> {
+    const { content, type, startVersion } = await this.authority.fetchDoc(this.representedDocument)
 
-    // Before exchanging anything, cache the current state
-    this.stateCache.set(this.config.metadata.path, this._instance.state)
+    // The documents contents have changed, so we must recreate the state
+    const state = EditorState.create({
+      doc: content,
+      extensions: this._getExtensions(this.representedDocument, type, startVersion)
+    })
 
-    // Get the scroll position cache before so it is not overridden by the
-    // initial state update
-    const cache = this.documentViewCache.get(documentPath)
-
-    const { content, type, startVersion } = await this.fetchDoc(documentPath)
-
-    // Now set the correct state, either from cache or create anew
-    const stateToBeRestored = this.stateCache.get(documentPath)
-    if (stateToBeRestored !== undefined) {
-      this._instance.setState(stateToBeRestored)
-    } else {
-      // We need to set the file's path already here so that it's available on
-      // the initial rendering round for any extensions that need it
-      this.config.metadata.path = documentPath
-
-      const state = EditorState.create({
-        doc: content,
-        extensions: this._getExtensions(documentPath, type, startVersion)
-      })
-
-      this._instance.setState(state)
-    }
+    this._instance.setState(state)
 
     // Provide the cached databases to the state (can be overridden by the
     // caller afterwards by calling setCompletionDatabase)
@@ -463,26 +365,11 @@ export default class MarkdownEditor extends EventEmitter {
 
     // Determine if this is a code doc and add the corresponding class to the
     // outer content DOM so that we can style it.
-    if (type === DocumentType.Markdown) {
-      this._instance.contentDOM.classList.remove('code')
-    } else {
+    if (type !== DocumentType.Markdown) {
       this._instance.contentDOM.classList.add('code')
     }
 
     this._instance.focus()
-
-    // Restore the old cached positions if applicable
-    if (cache !== undefined) {
-      this._instance.scrollDOM.scrollTop = cache.scrollPosition
-      this._instance.dispatch({ selection: EditorSelection.fromJSON(cache.selection) })
-    } else {
-      this._instance.scrollDOM.scrollTop = 0 // Scroll to top
-      // Selection will already be default
-      this.documentViewCache.set(documentPath, {
-        scrollPosition: 0,
-        selection: this._instance.state.selection.toJSON()
-      })
-    }
   }
 
   /**
@@ -490,14 +377,7 @@ export default class MarkdownEditor extends EventEmitter {
    * a setting has changed that requires extensions to be fully reloaded.
    */
   async reload (): Promise<void> {
-    await this.swapDoc(this.config.metadata.path, true)
-  }
-
-  /**
-   * Empties out the editor and replaces it with an empty state.
-   */
-  public emptyEditor (): void {
-    this._instance.setState(EditorState.create())
+    await this.loadDocument()
   }
 
   /**
@@ -746,10 +626,10 @@ export default class MarkdownEditor extends EventEmitter {
     // a cursor position.
     const mainOffset = this._instance.state.selection.main.head
     const line = this._instance.state.doc.lineAt(mainOffset)
+    const ast = markdownToAST(this._instance.state.sliceDoc(), syntaxTree(this._instance.state))
     return {
       words: this.wordCount ?? 0,
       chars: this.charCount ?? 0,
-      chars_wo_spaces: this.charCountWithoutSpaces ?? 0,
       cursor: { line: line.number, ch: mainOffset - line.from + 1 }, // Chars are still zero-based
       selections: this._instance.state.selection.ranges
       // Remove cursor-only positions
@@ -760,32 +640,15 @@ export default class MarkdownEditor extends EventEmitter {
           // each selection present.
           const anchorLine = this._instance.state.doc.lineAt(sel.anchor)
           const headLine = this._instance.state.doc.lineAt(sel.head)
-          const selContent = this._instance.state.sliceDoc(sel.from, sel.to)
+          const { words, chars } = countAll(ast, sel.from, sel.to)
           return {
             anchor: { line: anchorLine.number, ch: sel.from - anchorLine.from + 1 },
             head: { line: headLine.number, ch: sel.to - headLine.from + 1 },
-            words: countWords(selContent, false),
-            chars: countWords(selContent, true)
+            words,
+            chars
           }
         })
     }
-  }
-
-  /**
-   * Whether the editor is in fullscreen mode
-   *
-   * @return  {Boolean}  True if the editor option for fullScreen is set
-   */
-  get isFullscreen (): boolean {
-    return false // TODO
-  }
-
-  /**
-   * Enters or exits the editor fullscreen mode
-   *
-   * @param   {Boolean}  shouldBeFullscreen  Whether the editor should be in fullscreen
-   */
-  set isFullscreen (shouldBeFullscreen: boolean) {
   }
 
   /**
@@ -809,21 +672,13 @@ export default class MarkdownEditor extends EventEmitter {
     })
   }
 
-  get darkMode (): boolean {
-    return this.config.darkMode
-  }
-
-  set darkMode (newValue: boolean) {
-    this.setOptions({ darkMode: newValue })
-  }
-
   /**
    * Determines whether the editor is in distraction free mode
    *
    * @return  {boolean}  True or false
    */
   get distractionFree (): boolean {
-    return false // TODO
+    return this._instance.state.field(configField, false)?.distractionFree ?? false
   }
 
   /**
@@ -877,7 +732,7 @@ export default class MarkdownEditor extends EventEmitter {
    * @return  {Number}  The word count
    */
   get wordCount (): number|undefined {
-    return this._instance.state.field(wordCountField, false)
+    return this._instance.state.field(countField, false)?.words
   }
 
   /**
@@ -886,16 +741,7 @@ export default class MarkdownEditor extends EventEmitter {
    * @return  {Number}  The number of characters
    */
   get charCount (): number|undefined {
-    return this._instance.state.field(charCountField, false)
-  }
-
-  /**
-   * Return the amount of characters without spaces
-   *
-   * @return  {Number}  The number of chars without spaces
-   */
-  get charCountWithoutSpaces (): number|undefined {
-    return this._instance.state.field(charCountNoSpacesField, false)
+    return this._instance.state.field(countField, false)?.chars
   }
 
   /**
@@ -905,5 +751,14 @@ export default class MarkdownEditor extends EventEmitter {
    */
   get instance (): EditorView {
     return this._instance
+  }
+
+  /**
+   * Retrieves the document represented by this editor instance.
+   *
+   * @return  {string}  the absolute path to the document.
+   */
+  get documentPath (): string {
+    return this.representedDocument
   }
 }

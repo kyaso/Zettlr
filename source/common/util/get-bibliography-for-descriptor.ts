@@ -14,7 +14,7 @@
  */
 
 import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
-import { MDFileDescriptor } from '@dts/common/fsal'
+import type { MDFileDescriptor } from '@dts/common/fsal'
 
 /**
  * Takes a descriptor and returns the appropriate citation library for it. NOTE:
@@ -25,11 +25,18 @@ import { MDFileDescriptor } from '@dts/common/fsal'
  *
  * @return  {string}                        The appropriate library
  */
-export default function getBibliographyForDescriptor (descriptor: MDFileDescriptor): string {
+export function getBibliographyForDescriptor (descriptor: MDFileDescriptor): string {
   let library = CITEPROC_MAIN_DB
 
   if (descriptor.frontmatter != null && 'bibliography' in descriptor.frontmatter) {
     library = descriptor.frontmatter.bibliography
+
+    if (Array.isArray(library)) {
+      // While multiple bibliography libraries are supported by Pandoc, Zettlr
+      // cannot properly merge multiple libraries together, so we'll simply use
+      // the first found.
+      library = library[0]
+    }
   }
 
   if (typeof library === 'string') {

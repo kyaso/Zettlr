@@ -13,8 +13,8 @@
  * END HEADER
  */
 
-import { ChangeSpec } from '@codemirror/state'
-import { EditorView } from '@codemirror/view'
+import { type ChangeSpec } from '@codemirror/state'
+import { type EditorView } from '@codemirror/view'
 import { md2html } from '@common/modules/markdown-utils'
 import html2md from '@common/util/html-to-md'
 import { configField } from './configuration'
@@ -55,8 +55,7 @@ export function pasteImage (view: EditorView): boolean {
         const sanitizedPath = relative.replace(/\\/g, '/')
         // We need to replace spaces, since the Markdown parser is strict here
         const tag = `![${path.basename(sanitizedPath)}](${sanitizedPath.replace(/ /g, '%20')})`
-        const { from, to } = view.state.selection.main
-        view.dispatch({ changes: { from, to, insert: tag } })
+        view.dispatch(view.state.replaceSelection(tag))
       }
     })
     .catch(err => console.error(err))
@@ -79,7 +78,7 @@ export function copyAsHTML (view: EditorView): void {
 
   clipboard.write({
     text: selections.join('\n'),
-    html: md2html(selections.join('\n'), library)
+    html: md2html(selections.join('\n'), window.getCitationCallback(library))
   })
 }
 

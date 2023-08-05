@@ -17,7 +17,7 @@
  * END HEADER
  */
 
-import { AnyDescriptor } from '@dts/common/fsal'
+import type { AnyDescriptor } from '@dts/common/fsal'
 import fuzzysort from 'fuzzysort'
 
 /**
