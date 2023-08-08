@@ -18,7 +18,6 @@ import { createStore as baseCreateStore, type StoreOptions, type Store } from 'v
 import { type InjectionKey } from 'vue'
 import { type ColoredTag } from '@providers/tags'
 import type { SearchResultWrapper } from '@dts/common/search'
-import { OutboundLink, RelatedFile } from '@dts/renderer/misc'
 import locateByPath from '@providers/fsal/util/locate-by-path'
 import configToArrayMapper from './config-to-array'
 import type { BranchNodeJSON, LeafNodeJSON, OpenDocument } from '@dts/common/documents'
@@ -33,9 +32,6 @@ import documentTreeMutation from './mutations/document-tree'
 // Import Actions
 import filetreeUpdateAction from './actions/filetree-update'
 import updateOpenDirectoryAction from './actions/update-open-directory'
-import updateRelatedFilesAction from './actions/update-related-files'
-import updateMentionsAction from './actions/update-mentions'
-import updateOutboundLinksAction from './actions/update-outbound-links'
 import updateBibliographyAction from './actions/update-bibliography'
 import documentTreeUpdateAction from './actions/document-tree-update'
 import type { AnyDescriptor, DirDescriptor, MaybeRootDescriptor } from '@dts/common/fsal'
@@ -141,15 +137,6 @@ export interface ZettlrState {
    * leafId. Otherwise, it's undefined.
    */
   distractionFreeMode: string|undefined
-  /**
-   * This arrray stores backlinks to the current file.
-   */
-  backlinks: SearchResultWrapper[]
-  /**
-   * This array stores unlinked mentions to the current file.
-   */
-  unlinkedMentions: SearchResultWrapper[]
-  outboundLinks: OutboundLink[]
 }
 
 /**
@@ -181,10 +168,7 @@ function getConfig (): StoreOptions<ZettlrState> {
         snippets: [],
         cslItems: [],
         searchResults: [],
-        searchTerm: '',
-        backlinks: [],
-        unlinkedMentions: [],
-        outboundLinks: []
+        searchTerm: ''
       }
     },
     getters: {
@@ -248,25 +232,6 @@ function getConfig (): StoreOptions<ZettlrState> {
       lastFiletreeUpdate: function (state, payload) {
         state.lastFiletreeUpdate = payload
       },
-      updateBacklinks: function (state, backlinks: SearchResultWrapper[]) {
-        // Make sure we're only updating if something has changed.
-        if (JSON.stringify(backlinks) !== JSON.stringify(state.backlinks)) {
-          state.backlinks = backlinks
-        }
-      },
-      updateUnlinkedMentions: function (state, unlinkedMentions: SearchResultWrapper[]) {
-        // Make sure we're only updating if something has changed.
-        if (JSON.stringify(unlinkedMentions) !== JSON.stringify(state.unlinkedMentions)) {
-          state.unlinkedMentions = unlinkedMentions
-        }
-      },
-      clearMentions: function (state) {
-        state.backlinks = []
-        state.unlinkedMentions = []
-      },
-      updateOutboundLinks: function (state, outboundLinks: OutboundLink[]) {
-        state.outboundLinks = outboundLinks
-      },
       updateModifiedFiles: function (state, modifiedDocuments: string[]) {
         state.modifiedDocuments = modifiedDocuments
       },
@@ -314,14 +279,7 @@ function getConfig (): StoreOptions<ZettlrState> {
       updateOpenDirectory: updateOpenDirectoryAction,
       lastLeafId: async function (ctx, lastLeafId: string) {
         ctx.commit('lastLeafId', lastLeafId)
-        // Update the related files
-        await ctx.dispatch('updateRelatedFiles')
-        await ctx.dispatch('updateMentions')
-        await ctx.dispatch('updateOutboundLinks')
       },
-      updateRelatedFiles: updateRelatedFilesAction,
-      updateMentions: updateMentionsAction,
-      updateOutboundLinks: updateOutboundLinksAction,
       updateBibliography: updateBibliographyAction,
       documentTree: documentTreeUpdateAction,
       updateSnippets: updateSnippetsAction,

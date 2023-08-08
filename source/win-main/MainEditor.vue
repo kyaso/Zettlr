@@ -415,13 +415,6 @@ async function loadDocument () {
   store.commit('updateTableOfContents', currentEditor.tableOfContents)
   store.commit('activeDocumentInfo', currentEditor.documentInfo)
 
-  store.dispatch('updateRelatedFiles')
-    .catch(e => console.error('Could not update related files', e))
-  store.dispatch('updateMentions')
-    .catch(e => console.error('Could not update mentions', e))
-  store.dispatch('updateOutboundLinks')
-    .catch(e => console.error('Could not update outbound links', e))
-
   const tags = await ipcRenderer.invoke('tag-provider', { command: 'get-all-tags' }) as TagRecord[]
   currentEditor.setCompletionDatabase('tags', tags)
   currentEditor.setCompletionDatabase('snippets', snippets.value)

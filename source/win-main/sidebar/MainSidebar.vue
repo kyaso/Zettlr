@@ -134,15 +134,6 @@ export default defineComponent({
   methods: {
     setCurrentTab: function (which: string) {
       (global as any).config.set('window.currentSidebarTab', which)
-    },
-    refreshSidebar: function () {
-      // Update related files and backlinks
-      this.$store.dispatch('updateRelatedFiles')
-        .catch(e => console.error('Could not update related files', e))
-      this.$store.dispatch('updateMentions')
-        .catch(e => console.error('Could not update mentions', e))
-      this.$store.dispatch('updateOutboundLinks')
-        .catch(e => console.error('Could not update outbound links', e))
     }
   }
 })

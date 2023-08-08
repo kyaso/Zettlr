@@ -271,12 +271,15 @@
  */
 
 import ButtonControl from '@common/vue/form/elements/Button.vue'
-import { SearchResult, SearchResultWrapper } from '@dts/common/search'
+import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
 import { OutboundLink } from '@dts/renderer/misc'
 import { defineComponent } from '@vue/runtime-core'
 import { markText } from '../shared'
 import { copyZknLink } from '@common/util/clipboard'
 import { DP_EVENTS, OpenDocument } from '@dts/common/documents'
+import objectToArray from '@common/util/object-to-array'
+import compileSearchTerms from '@common/util/compile-search-terms'
+import { MDFileDescriptor } from '@dts/common/fsal'
 
 const path = window.path
 const ipcRenderer = window.ipc
@@ -307,15 +310,6 @@ export default defineComponent({
     }
   },
   computed: {
-    // backlinks: function (): SearchResultWrapper[] {
-    //   return this.$store.state.backlinks
-    // },
-    // unlinkedMentions: function (): SearchResultWrapper[] {
-    //   return this.$store.state.unlinkedMentions
-    // },
-    // outboundLinks: function (): OutboundLink[] {
-    //   return this.$store.state.outboundLinks
-    // },
     sep: function (): string {
       return path.sep
     },
@@ -369,17 +363,17 @@ export default defineComponent({
     })
   },
   methods: {
-    search: async function (): Promise<SearchResultWrapper[]> {
+    search: async function (query: string): Promise<SearchResultWrapper[]> {
       let filesToSearch: any[] = []
       const results: SearchResultWrapper[] = []
 
       const useH1: boolean =
-        context.state.config.fileNameDisplay.includes('heading')
+        this.$store.state.config.fileNameDisplay.includes('heading')
       const useTitle: boolean =
-        context.state.config.fileNameDisplay.includes('title')
+        this.$store.state.config.fileNameDisplay.includes('title')
 
       // Get files we need to search
-      for (const treeItem of context.state.fileTree) {
+      for (const treeItem of this.$store.state.fileTree) {
         if (treeItem.type !== 'directory') {
           let displayName = treeItem.name
           if (treeItem.type === 'file') {
@@ -466,9 +460,9 @@ export default defineComponent({
           }
           results.push(newResult)
 
-          if (newResult.weight > maxWeight) {
-            maxWeight = newResult.weight
-          }
+          // if (newResult.weight > maxWeight) {
+          //   maxWeight = newResult.weight
+          // }
 
           // sort
           results.sort((a, b) => b.weight - a.weight)
@@ -477,11 +471,10 @@ export default defineComponent({
       return results
     },
     recomputeBacklinksAndMentions: async function (): Promise<void> {
-      console.log('updateMetions')
-      const activeFile: OpenDocument | null = context.getters.lastLeafActiveFile()
-      const activeFile: OpenDocument | null = context.getters.lastLeafActiveFile()
-      if (activeFile === null || !hasMarkdownExt(activeFile.path)) {
-        context.commit('clearMentions')
+      console.log('recomputeBacklinksAndMentions')
+      if (this.lastActiveFile === null) {
+        this.backlinks = []
+        this.unlinkedMentions = []
         return
       }
 
@@ -489,7 +482,7 @@ export default defineComponent({
       let backlinks: SearchResultWrapper[] = []
 
       // Get file name
-      const fileNameMd = path.basename(activeFile.path)
+      const fileNameMd = path.basename(this.lastActiveFile.path)
       const activeFileName = fileNameMd.slice(0, -3)
       const fileNameLink = '[[' + activeFileName + ']]'
       const fileNameExact = '"' + activeFileName + '"'
@@ -497,10 +490,11 @@ export default defineComponent({
       // First, get all mentions
       // Note, we store it into unlinkedMentions, but later we extract
       // all the backlinks out of that array.
-      unlinkedMentions = await this.search(context, fileNameExact)
+      unlinkedMentions = await this.search(fileNameExact)
 
       // Separate backlinks from rest
       let skipMe = false
+      let maxWeight = 0
       for (let i = unlinkedMentions.length - 1; i >= 0; i--) {
         maxWeight = 0
 
@@ -568,12 +562,59 @@ export default defineComponent({
         }
       }
 
-      // Commit to store
-      context.commit('updateBacklinks', backlinks)
-      context.commit('updateUnlinkedMentions', unlinkedMentions)
+      this.backlinks = backlinks
+      this.unlinkedMentions = unlinkedMentions
     },
     recomputeOutboundLinks: async function (): Promise<void> {
+      console.log('recomputeOutboundLinks')
+      if (this.lastActiveFile === null) {
+        this.outboundLinks = []
+        return
+      }
 
+      const outboundLinks: OutboundLink[] = []
+
+      // Get ALL (= file + non-file) outbound links
+      const { links } = await ipcRenderer.invoke('link-provider', {
+        command: 'get-all-outbound-links',
+        payload: { filePath: this.lastActiveFile.path }
+      }) as { links: string[] }
+
+      // For each outbound link, get the list of files that also contain that link
+      for (const link of links) {
+        let { files } = await ipcRenderer.invoke('link-provider', {
+          command: 'get-files-with-link',
+          payload: { link }
+        }) as { files: string[] }
+
+        // Remove the active file from the list of files
+        files = files.filter((file) => file !== this.lastActiveFile.path)
+
+        // Get the target file path in case the link points to an actual file
+        let descriptor = await ipcRenderer.invoke('application', {
+          command: 'find-exact',
+          payload: link
+        }) as MDFileDescriptor | undefined
+
+        outboundLinks.push(
+          {
+            link,
+            targetFilePath: descriptor?.path,
+            files,
+            hideFileSet: false
+          }
+        )
+      }
+
+      // Sort so that links with more files are shown at the top
+      outboundLinks.sort((a, b) => (b.files.length - a.files.length))
+
+      // console.log('Update outbound links for file ', activeFile.path, ':')
+      // for (const link of outboundLinks) {
+      //   console.log('Link: ', link.link)
+      //   console.info('Files: ', link.files)
+      // }
+      this.outboundLinks = outboundLinks
     },
     // **** Adapted from GlobalSearch.vue ****
     toggleResults (type: string): void {
