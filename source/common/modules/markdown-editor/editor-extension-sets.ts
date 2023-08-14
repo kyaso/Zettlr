@@ -18,7 +18,7 @@
 
 import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete'
 import { type Update } from '@codemirror/collab'
-import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
+import { defaultKeymap, history, undo, redo, undoSelection, redoSelection } from '@codemirror/commands'
 import { bracketMatching, codeFolding, foldGutter, indentOnInput, indentUnit, StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { yaml } from '@codemirror/legacy-modes/mode/yaml'
@@ -63,6 +63,7 @@ import { statusbar } from './statusbar'
 import { themeManager } from './theme'
 import { renderers } from './renderers'
 import { mdPasteDropHandlers } from './plugins/md-paste-drop-handlers'
+import { footnoteGutter } from './plugins/footnote-gutter'
 
 /**
  * This interface describes the required properties which the extension sets
@@ -131,7 +132,12 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     // KEYMAPS
     keymap.of([
       ...defaultKeymap, // Minimal default keymap
-      ...historyKeymap, // , // History commands (redo/undo)
+      // NOTE: We had to add the history commands here since the default
+      // keybindings were ... unexpected.
+      { key: 'Mod-z', run: undo, preventDefault: true },
+      { key: 'Mod-Shift-z', run: redo, preventDefault: true },
+      { key: 'Mod-u', run: undoSelection, preventDefault: true },
+      { key: 'Alt-u', mac: 'Mod-Shift-u', run: redoSelection, preventDefault: true },
       ...closeBracketsKeymap, // Binds Backspace to deletion of matching brackets
       ...searchKeymap // Search commands (Ctrl+F, etc.)
     ]),
@@ -279,11 +285,12 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     typewriter,
     distractionFree,
     tocField,
-    markdownFolding,
+    markdownFolding, // Should be before footnoteGutter
     autocomplete,
     readabilityMode,
     formattingToolbar,
     footnoteHover,
+    footnoteGutter, // Should be after markdownFolding
     urlHover,
     filePreview,
     tagTooltipExt,

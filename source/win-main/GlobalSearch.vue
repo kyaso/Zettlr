@@ -112,7 +112,8 @@
             v-on:contextmenu.stop.prevent="fileContextMenu($event, result.file.path, singleRes.line)"
             v-on:mousedown.stop.prevent="onResultClick($event, idx, idx2, result.file.path, singleRes.line)"
           >
-            <span v-if="singleRes.line !== -1"><strong>{{ singleRes.line }}</strong>: </span>
+            <!-- NOTE how we have to increase the line number from zero-based to 1-based -->
+            <span v-if="singleRes.line !== -1"><strong>{{ singleRes.line + 1 }}</strong>: </span>
             <span v-html="markText(singleRes)"></span>
           </div>
         </div>
@@ -494,6 +495,7 @@ export default defineComponent({
             terms
           }
         })
+
         if (result.length > 0) {
           const newResult: SearchResultWrapper = {
             file: fileToSearch,
@@ -574,7 +576,8 @@ export default defineComponent({
       this.jumpToLine(filePath, lineNumber, isMiddleClick)
     },
     jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
-      this.$emit('jtl', filePath, lineNumber, openInNewTab)
+      // NOTE that we have to increase the line number for the JTL command
+      this.$emit('jtl', filePath, lineNumber + 1, openInNewTab)
     },
     markText: function (resultObject: SearchResult) {
       return markText(resultObject)
