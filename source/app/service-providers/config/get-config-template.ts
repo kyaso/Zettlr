@@ -30,7 +30,7 @@ export interface ConfigOptions {
     nativeAppearance: boolean
     vibrancy: boolean
     sidebarVisible: boolean
-    currentSidebarTab: 'toc'|'references'|'relatedFiles'|'attachments'
+    currentSidebarTab: 'toc'|'references'|'relatedFiles'|'attachments'|'mentions'
     recentGlobalSearches: string[]
   }
   attachmentExtensions: string[]
@@ -68,6 +68,13 @@ export interface ConfigOptions {
     autoCreateLinkedFiles: boolean
     autoSearch: boolean
     customDirectory: string
+    tooltipDelay: number
+    copyOnClick: boolean
+    copyIDWithBrackets: boolean
+    blockIds: {
+      addRootIndicator: boolean
+      rootIndicator: string
+    }
   }
   editor: {
     autocompleteAcceptSpace: boolean
@@ -156,6 +163,27 @@ export interface ConfigOptions {
     showPomodoroButton: boolean
   }
   uuid: string
+  custom: {
+    ctrlNum: {
+      file1: string
+      file2: string
+      file3: string
+      file4: string
+      file5: string
+      file6: string
+      file7: string
+      file8: string
+      file9: string
+    }
+    mousePrevBack: boolean
+    test: {
+      val1: number
+      val2: number
+      val3: number
+      val4: number
+      val5: number
+    }
+  }
 }
 
 const ZETTLR_VERSION = app.getVersion()

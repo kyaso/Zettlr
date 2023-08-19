@@ -272,7 +272,6 @@
 
 import ButtonControl from '@common/vue/form/elements/Button.vue'
 import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
-import { OutboundLink } from '@dts/renderer/misc'
 import { defineComponent } from '@vue/runtime-core'
 import { markText } from '../shared'
 import { copyZknLink } from '@common/util/clipboard'
@@ -283,6 +282,13 @@ import { MDFileDescriptor } from '@dts/common/fsal'
 
 const path = window.path
 const ipcRenderer = window.ipc
+
+export interface OutboundLink {
+  link: string // The link text
+  targetFilePath: string | undefined // The target file in case the link points to a file
+  files: string[] // List of files that have that link
+  hideFileSet: Boolean // Whether to hide in sidebar
+}
 
 export default defineComponent({
   name: 'BacklinksTab',
