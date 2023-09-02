@@ -361,8 +361,10 @@ export default defineComponent({
     }
   },
   mounted () {
+    this.recomputeBacklinksAndMentions().catch(err => console.error('Could not recompute backlinks:', err))
+    this.recomputeOutboundLinks().catch(err => console.error('Could not recompute outbound links:', err))
     ipcRenderer.on('documents-update', (e, { event, context }) => {
-      if (event === DP_EVENTS.FILE_SAVED && context.filePath === this.lastActiveFile?.path) {
+      if (event === DP_EVENTS.FILE_SAVED) {
         this.recomputeBacklinksAndMentions().catch(err => console.error('Could not recompute backlinks:', err))
         this.recomputeOutboundLinks().catch(err => console.error('Could not recompute outbound links:', err))
       }
