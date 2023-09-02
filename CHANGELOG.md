@@ -1,5 +1,18 @@
 # Upcoming
 
+## GUI and Functionality
+
+- Monospaced elements such as inline code elements are now rendered in monospace
+  font again
+- Fixed a bug preventing assigning colors and descriptions to tags in the tag
+  manager
+
+## Under the Hood
+
+(nothing here)
+
+# 3.0.0
+
 ## READ THIS FIRST!
 
 This update brings a host of changes and new features. If you're upgrading from
@@ -237,6 +250,11 @@ there.
 - **New Feature**: Add splash screen to indicate FSAL loading progress
 - Note preview tooltips now display a sanitized HTML version of the note's
   Markdown contents
+- **New Feature**: Both entire YAML documents (including both profiles and
+  regular files) as well as YAML frontmatter sections in Markdown documents are
+  now linted, providing a visual indication that a piece of YAML code contains
+  syntax errors that prevents, e.g., Zettlr from detecting the file's title or
+  Pandoc from properly reading the metadata of the document
 - Removed the "Get LaTeX" menu item since (hopefully) now the advice in the docs
   and in the tutorial are sufficient
 - Replaced the old Markdown-to-HTML and HTML-to-Markdown converter with more up-
@@ -347,13 +365,16 @@ there.
 - A new "match whole word" setting allows to control whether AutoCorrect can
   also correct partial words
 - The tutorial is now available in Dutch as well.
+- The combined file tree is now more verbose when it comes to icons: Folders
+  now always have icons to indicate that they're folders (can be overridden with
+  a project icon or a custom icon), and Markdown files have a more distinct icon
 
 ## Under the Hood
 
 - Refactored the main editor component further
 - Refactored the Sidebar panels into their own respective components
 - Upgrade Electron to `25.x.x`
-- Upgrade Pandoc to `3.1.5`
+- Upgrade Pandoc to `3.1.6.2`
 - Pandoc is now also available natively for Apple Silicon (darwin arm64)
 - Upgrade Chart.js to `4.x.x`
 - Upgrade CodeMirror to version 6

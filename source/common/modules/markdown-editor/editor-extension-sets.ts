@@ -54,7 +54,7 @@ import { jsonFolding } from './code-folding/json'
 import { markdownFolding } from './code-folding/markdown'
 import { jsonLanguage, jsonParseLinter } from '@codemirror/lang-json'
 import { softwrapVisualIndent } from './plugins/visual-indent'
-import { codeblockBackground } from './plugins/codeblock-background'
+import { backgroundLayers } from './plugins/code-background'
 import { vim } from '@replit/codemirror-vim'
 import { emacs } from '@replit/codemirror-emacs'
 import { distractionFree } from './plugins/distraction-free'
@@ -64,6 +64,7 @@ import { themeManager } from './theme'
 import { renderers } from './renderers'
 import { mdPasteDropHandlers } from './plugins/md-paste-drop-handlers'
 import { footnoteGutter } from './plugins/footnote-gutter'
+import { yamlFrontmatterLint } from './linters/yaml-frontmatter-lint'
 
 /**
  * This interface describes the required properties which the extension sets
@@ -235,7 +236,13 @@ function getGenericCodeExtensions (options: CoreExtensionOptions): Extension[] {
  * @return  {Extension[]}                    An array of Markdown extensions
  */
 export function getMarkdownExtensions (options: CoreExtensionOptions): Extension[] {
-  const mdLinterExtensions = [spellcheck]
+  // The following linters are always active: The spellcheck because that is
+  // turned on and off with the dictionary settings, and the yamlFrontmatterNode
+  // because if that thing has an error, that thing has an error.
+  const mdLinterExtensions = [
+    spellcheck,
+    yamlFrontmatterLint
+  ]
 
   let hasLinters = false
 
@@ -294,7 +301,7 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     urlHover,
     filePreview,
     tagTooltipExt,
-    codeblockBackground, // Add a background behind codeblocks
+    backgroundLayers, // Add a background behind inline code and code blocks
     defaultContextMenu, // A default context menu
     EditorView.domEventHandlers(options.domEventsListeners)
   ]
