@@ -7,12 +7,6 @@
     ></TabBar>
 
     <!-- Now the tab containers -->
-    <cds-icon
-      class="tab-refresh-button"
-      shape="refresh"
-      title="Refresh sidebar"
-      v-on:click.stop="refreshSidebar()"
-    ></cds-icon>
     <div id="sidebar-tab-container">
       <ToCTab
         v-if="currentTab === 'toc'"
