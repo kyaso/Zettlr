@@ -669,7 +669,7 @@ export default defineComponent({
     // **** Adapted from GlobalSearch.vue ****
     jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
       // TODO merge: lineToFlash
-      this.$emit('jtl', filePath, lineNumber, openInNewTab)
+      this.$emit('jtl', filePath, lineNumber + 1, openInNewTab)
     },
     // **** Copied from GlobalSearch.vue ****
     markText: function (resultObject: SearchResult) {
