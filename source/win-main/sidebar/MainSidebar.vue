@@ -19,7 +19,7 @@
         v-on:move-section="$emit('move-section', $event)"
         v-on:jump-to-line="$emit('jump-to-line', $event)"
       ></ToCTab>
-      <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab>
+      <!-- <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab> -->
       <!-- <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab> -->
       <BacklinksTab
         v-if="currentTab === 'mentions' || currentTab === 'toc'"
@@ -54,9 +54,9 @@ import TabBar from '@common/vue/TabBar.vue'
 import { defineComponent } from 'vue'
 import { TabbarControl } from '@dts/renderer/window'
 import ToCTab from './ToCTab.vue'
-import ReferencesTab from './ReferencesTab.vue'
+// import ReferencesTab from './ReferencesTab.vue'
 import RelatedFilesTab from './RelatedFilesTab.vue'
-import OtherFilesTab from './OtherFilesTab.vue'
+// import OtherFilesTab from './OtherFilesTab.vue'
 import BacklinksTab from './BacklinksTab.vue'
 import { OpenDocument } from '@dts/common/documents'
 
@@ -65,7 +65,7 @@ export default defineComponent({
   components: {
     TabBar,
     ToCTab,
-    ReferencesTab,
+    // ReferencesTab,
     RelatedFilesTab,
     // OtherFilesTab,
     BacklinksTab
@@ -103,21 +103,21 @@ export default defineComponent({
           id: 'mentions',
           target: 'sidebar-mentions',
           label: 'Mentions'
-        },
-        {
-          icon: 'book',
-          id: 'references',
-          target: 'sidebar-bibliography',
-          label: this.referencesLabel
         }
+        // {
+        //   icon: 'book',
+        //   id: 'references',
+        //   target: 'sidebar-bibliography',
+        //   label: this.referencesLabel
+        // }
       ]
     },
-    otherFilesLabel: function (): string {
-      return trans('Other files')
-    },
-    referencesLabel: function (): string {
-      return trans('References')
-    },
+    // otherFilesLabel: function (): string {
+    //   return trans('Other files')
+    // },
+    // referencesLabel: function (): string {
+    //   return trans('References')
+    // },
     tocLabel: function (): string {
       return trans('Table of Contents')
     },
