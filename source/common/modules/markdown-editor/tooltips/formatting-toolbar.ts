@@ -78,7 +78,7 @@ function getToolbar (state: EditorState): Tooltip[] {
       copy.setAttribute('title', trans('Copy'))
       copy.innerHTML = '<cds-icon shape="copy"></cds-icon>'
 
-      buttonWrapper.append(bold, italic, link, /* image, comment, */ code, zknlink, copy)
+      buttonWrapper.append(copy, bold, italic, link, /* image, comment, */ code, zknlink)
       dom.append(buttonWrapper)
 
       // NOTE: We need to use the onmousedown event here, since the click only
