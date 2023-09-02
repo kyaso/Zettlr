@@ -204,7 +204,6 @@ export default class LinkProvider extends ProviderContract {
    * @param link The link to look for
    * @returns A list of files
    */
-  // TODO merge: There has tobe a better name
   retrieveFilesWithLink (link: string): string[] {
     const sourceFiles: string[] = []
 
