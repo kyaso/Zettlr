@@ -568,11 +568,6 @@ export default defineComponent({
       this.activeLineIdx = idx2
 
       const isMiddleClick = (event.type === 'mousedown' && event.button === 1)
-      // The value we are subtracting is the amount of lines we want to
-      // show above the target line
-      const lineToScroll = Math.max(lineNumber - this.$store.state.config['custom.test.val1'], 0)
-      // TODO merge: what to do with lineNumber param?
-      // this.jumpToLine(filePath, lineToScroll, isMiddleClick, lineNumber)
       this.jumpToLine(filePath, lineNumber, isMiddleClick)
     },
     jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {

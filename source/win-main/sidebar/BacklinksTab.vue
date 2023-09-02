@@ -656,19 +656,10 @@ export default defineComponent({
       }
 
       const isMiddleClick = event.type === 'mousedown' && event.button === 1
-      // The value we are subtracting is the amount of lines we want to
-      // show above the target line
-      // TODO merge
-      const lineToScroll = Math.max(
-        lineNumber - this.$store.state.config['custom.test.val1'],
-        0
-      )
-      // TODO merge: lineToFlash
       this.jumpToLine(filePath, lineNumber, isMiddleClick)
     },
     // **** Adapted from GlobalSearch.vue ****
     jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
-      // TODO merge: lineToFlash
       this.$emit('jtl', filePath, lineNumber + 1, openInNewTab)
     },
     // **** Copied from GlobalSearch.vue ****
