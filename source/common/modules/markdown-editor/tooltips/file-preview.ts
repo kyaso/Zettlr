@@ -100,6 +100,7 @@ function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: stri
     // dir.style.fontSize = 'small'
     // dir.style.color = 'grey'
     dir.textContent = desc.path
+    dir.style.overflowWrap = 'break-word'
 
     wrapper.appendChild(dir)
   }
