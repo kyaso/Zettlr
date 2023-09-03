@@ -206,7 +206,7 @@ export default class CommandProvider extends ProviderContract {
 
   /**
    * Starts the global search
-   * 
+   *
    * @param {string}  terms   The search term(s)
    */
   startGlobalSearch (terms: string): void {

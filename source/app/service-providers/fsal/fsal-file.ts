@@ -129,8 +129,8 @@ export async function parse (
   const id = file.path
   if (!index.contain(id)) {
     // console.log('fsal-file: adding to file index: '+file.name)
-    index.add(id, file.name)   // The file name
-    index.append(id, content)  // The file content
+    index.add(id, file.name) // The file name
+    index.append(id, content) // The file content
   }
 
   if (!hasCache) {

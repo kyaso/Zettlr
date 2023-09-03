@@ -9,11 +9,11 @@ const config = window.config
  * @param linkContents link content
  * @returns
  */
-export function getSearchButton (linkContents: String, isLink: Boolean): HTMLButtonElement {
+export function getSearchButton (linkContents: string, isLink: boolean): HTMLButtonElement {
   const searchFunc = function (): void {
     // Copy
     if (config.get('zkn.copyOnClick') === true) {
-      copy(linkContents as string, isLink)
+      copy(linkContents, isLink)
     }
 
     ipcRenderer.invoke('application', {
@@ -36,9 +36,9 @@ export function getSearchButton (linkContents: String, isLink: Boolean): HTMLBut
  * @param linkContents link content
  * @returns
  */
-export function getCopyButton (linkContents: String, isLink: Boolean): HTMLButtonElement {
+export function getCopyButton (linkContents: string, isLink: boolean): HTMLButtonElement {
   const copyID = function (): void {
-    copy(linkContents as string, isLink)
+    copy(linkContents, isLink)
   }
 
   const copyButton = document.createElement('button')
@@ -49,7 +49,7 @@ export function getCopyButton (linkContents: String, isLink: Boolean): HTMLButto
   return copyButton
 }
 
-function copy (text: string, isLink: Boolean): void {
+function copy (text: string, isLink: boolean): void {
   if (isLink) {
     copyZknLink(text)
   } else {

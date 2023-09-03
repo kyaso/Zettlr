@@ -21,7 +21,7 @@ import { hoverTooltip, type EditorView, type Tooltip } from '@codemirror/view'
 // import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 // import sanitizeHtml from 'sanitize-html'
 import { getSearchButton, getCopyButton } from './common'
-import { MDFileDescriptor } from '@dts/common/fsal'
+import { type MDFileDescriptor } from '@dts/common/fsal'
 
 const ipcRenderer = window.ipc
 
@@ -173,7 +173,7 @@ function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: stri
  * @param linkContents link content
  * @returns
  */
-function getOpenButton (linkContents: String): HTMLButtonElement {
+function getOpenButton (linkContents: string): HTMLButtonElement {
   const openFunc = function (): void {
     ipcRenderer.invoke('application', {
       command: 'force-open',

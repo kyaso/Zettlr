@@ -11,7 +11,7 @@
  * END HEADER
  */
 
-import YAML from 'yaml'
+// import YAML from 'yaml'
 
 interface ExtractYamlFrontmatterReturn {
   frontmatter: Record<string, any>|null
@@ -47,64 +47,64 @@ export default function extractYamlFrontmatter (markdown: string): ExtractYamlFr
   // in parsing
   return ret
 
-  let linefeed = '\n'
-  if (markdown.includes('\r\n')) linefeed = '\r\n'
-  if (markdown.includes('\n\r')) linefeed = '\n\r'
+  // let linefeed = '\n'
+  // if (markdown.includes('\r\n')) linefeed = '\r\n'
+  // if (markdown.includes('\n\r')) linefeed = '\n\r'
 
-  const lines = markdown.split(linefeed)
+  // const lines = markdown.split(linefeed)
 
-  lines.unshift('') // For the start algorithm
-  let start = -1
-  let end = -1
+  // lines.unshift('') // For the start algorithm
+  // let start = -1
+  // let end = -1
 
-  for (let i = 1; i < lines.length; i++) {
-    // Either first line or in between, in both cases
-    // this condition holds true due to the unshift above
-    if (lines[i] === '---' && lines[i - 1] === '') {
-      start = i
-      break
-    }
-  }
+  // for (let i = 1; i < lines.length; i++) {
+  //   // Either first line or in between, in both cases
+  //   // this condition holds true due to the unshift above
+  //   if (lines[i] === '---' && lines[i - 1] === '') {
+  //     start = i
+  //     break
+  //   }
+  // }
 
-  if (start < 0) {
-    return ret // No frontmatter
-  }
+  // if (start < 0) {
+  //   return ret // No frontmatter
+  // }
 
-  for (let i = start + 1; i < lines.length; i++) {
-    if ([ '---', '...' ].includes(lines[i])) {
-      end = i - 1
-      break
-    }
-  }
+  // for (let i = start + 1; i < lines.length; i++) {
+  //   if ([ '---', '...' ].includes(lines[i])) {
+  //     end = i - 1
+  //     break
+  //   }
+  // }
 
-  if (end < 0) {
-    return ret // The frontmatter did not end
-  }
+  // if (end < 0) {
+  //   return ret // The frontmatter did not end
+  // }
 
-  // Now we have a frontmatter (if there was any) -> extract!
-  let frontmatter = ''
-  for (let i = start; i <= end; i++) {
-    frontmatter += '\n' + lines[i]
-  }
+  // // Now we have a frontmatter (if there was any) -> extract!
+  // let frontmatter = ''
+  // for (let i = start; i <= end; i++) {
+  //   frontmatter += '\n' + lines[i]
+  // }
 
-  // Parse and return
-  try {
-    const parsedFrontmatter = YAML.parse(frontmatter)
-    const isPrimitive = [ 'string', 'number', 'boolean' ].includes(typeof parsedFrontmatter)
+  // // Parse and return
+  // try {
+  //   const parsedFrontmatter = YAML.parse(frontmatter)
+  //   const isPrimitive = [ 'string', 'number', 'boolean' ].includes(typeof parsedFrontmatter)
 
-    if (!isPrimitive && !Array.isArray(parsedFrontmatter)) {
-      ret.frontmatter = parsedFrontmatter
-    } else {
-      // We have a frontmatter but it only consists of either a primitive or an
-      // array. Since this function is assumed to return a Pandoc-parseable
-      // frontmatter, we need to overwrite it here.
-      ret.frontmatter = {}
-    }
+  //   if (!isPrimitive && !Array.isArray(parsedFrontmatter)) {
+  //     ret.frontmatter = parsedFrontmatter
+  //   } else {
+  //     // We have a frontmatter but it only consists of either a primitive or an
+  //     // array. Since this function is assumed to return a Pandoc-parseable
+  //     // frontmatter, we need to overwrite it here.
+  //     ret.frontmatter = {}
+  //   }
 
-    // Remove frontmatter from content.
-    ret.content = lines.slice(end + 2).join(linefeed)
-    return ret
-  } catch (err) {
-    return ret
-  }
+  //   // Remove frontmatter from content.
+  //   ret.content = lines.slice(end + 2).join(linefeed)
+  //   return ret
+  // } catch (err) {
+  //   return ret
+  // }
 }

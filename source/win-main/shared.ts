@@ -1,4 +1,4 @@
-import { SearchResult } from '@dts/common/search'
+import { type SearchResult } from '@dts/common/search'
 
 // Extracted from GlobalSearch.vue
 export function markText (resultObject: SearchResult): string {

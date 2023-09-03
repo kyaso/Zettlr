@@ -124,9 +124,6 @@ export default class DocumentManager extends ProviderContract {
    */
   private readonly _emitter: EventEmitter
 
-  // Previous file pointer
-  private _prevFile: any
-
   /**
    * The config file container persists the document tree data to disk so that
    * open editor panes & windows can be restored
@@ -170,7 +167,6 @@ export default class DocumentManager extends ProviderContract {
   constructor (private readonly _app: AppServiceContainer) {
     super()
 
-    this._prevFile = null
     const containerPath = path.join(app.getPath('userData'), 'documents.yaml')
 
     this._windows = {}
@@ -864,7 +860,6 @@ export default class DocumentManager extends ProviderContract {
 
     this.syncWatchedFilePaths()
   }
-
 
   /**
    * Opens, reads, and parses a file to be loaded.

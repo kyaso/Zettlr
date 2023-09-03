@@ -108,7 +108,6 @@ export interface UserReadablePosition {
   ch: number
 }
 
-const config = window.config
 export interface DocumentInfo {
   words: number
   chars: number

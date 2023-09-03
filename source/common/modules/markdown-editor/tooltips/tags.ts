@@ -14,7 +14,7 @@
  */
 
 import { syntaxTree } from '@codemirror/language'
-import { EditorView, hoverTooltip, Tooltip } from '@codemirror/view'
+import { type EditorView, hoverTooltip, type Tooltip } from '@codemirror/view'
 import { getSearchButton, getCopyButton } from './common'
 
 async function tagTooltip (view: EditorView, pos: number, side: 1 | -1): Promise<Tooltip|null> {

@@ -14,7 +14,7 @@
 
 import { showTooltip, type Tooltip } from '@codemirror/view'
 import { type EditorState, StateField } from '@codemirror/state'
-import { applyBold, applyCode, applyComment, applyItalic, applyZknLink, insertImage, insertLink } from '../commands/markdown'
+import { applyBold, applyCode, applyItalic, applyZknLink, insertLink } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
 import { copyAsPlain } from '../util/copy-paste-cut'
 

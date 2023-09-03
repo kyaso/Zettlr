@@ -149,7 +149,7 @@ import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/searc
 import { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
 import { AnyMenuItem } from '@dts/renderer/context'
-import { markText, jumpToLine } from './shared'
+import { markText } from './shared'
 import { hasMdOrCodeExt } from '@providers/fsal/util/is-md-or-code-file'
 
 const path = window.path
