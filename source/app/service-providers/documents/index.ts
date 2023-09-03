@@ -865,13 +865,6 @@ export default class DocumentManager extends ProviderContract {
     this.syncWatchedFilePaths()
   }
 
-  /**
-   * Opens the previous file.
-   */
-  public async switch (): Promise<void> {
-    // TODO merge: fix args
-    // await this.openFile(this._prevFile?.path as string, true)
-  }
 
   /**
    * Opens, reads, and parses a file to be loaded.
