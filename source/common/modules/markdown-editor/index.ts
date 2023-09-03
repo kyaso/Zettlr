@@ -36,7 +36,7 @@ import {
 import { syntaxTree } from '@codemirror/language'
 
 // Keymaps/Input modes
-import { vim } from '@replit/codemirror-vim'
+import { vim, Vim } from '@replit/codemirror-vim'
 import { emacs } from '@replit/codemirror-emacs'
 
 import { type ToCEntry, tocField } from './plugins/toc-field'
@@ -234,6 +234,15 @@ export default class MarkdownEditor extends EventEmitter {
       state: undefined,
       parent: undefined
     })
+
+    // Vim custom keymaps
+    Vim.map('jk', '<Esc>', 'insert')
+    Vim.map('j', 'gj')
+    Vim.map('k', 'gk')
+    Vim.unmap('<C-f>')
+    Vim.unmap('<C-t>', 'insert')
+    Vim.unmap('<C-c>', 'insert')
+    // TODO KY: Pressing Ctrl-C while something is selected, deselects it
 
     // ... and immediately begin loading the document
     this.loadDocument().catch(err => console.error(err))
