@@ -2,11 +2,7 @@ name: Build Custom
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
-#                    ZETTLR MAIN BUILD GITHUB ACTIONS FILE                    #
-#                                                                             #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                                             #
-#      !!! Modified by @kyaso to only build Linux AppImages !!!               #
+#                    ZETTLR CUSTOM BUILD GITHUB ACTIONS FILE                  #
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
@@ -60,13 +56,7 @@ on:
   push:
     branches:
       - custom
-  workflow_dispatch: # Used to manually trigger a nightly build.
-    inputs:
-      target:
-        # Access using github.event.inputs.target
-        description: 'Target ("nightly"/"stable")'     
-        required: false
-        default: 'stable'
+  workflow_dispatch: {} # Used to manually trigger a nightly build.
 
 # Defaults for every job and step in this workflow
 defaults:
@@ -75,112 +65,329 @@ defaults:
 
 # Global environment variables
 env:
-  # Easy way to set the node version
-  NODE_VERSION: '16'
-  # Whenever we either trigger a build manually *or* a scheduled run starts,
-  # this indicates a nightly build, and NOT a regular, stable release. We are
-  # writing it here into the environment variable to keep the code DRY and for
-  # easier reference.
-  # BUG: Disabled due to a bug in Github Actions that will not resolve this
-  # environment variable, thus rendering this approach unusable. We have to
-  # manually copy this into the appropriate places.
-  # BUILD_NIGHTLY: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-  BRANCH: 'custom'
+  NODE_VERSION: '18'
+
+# Ensure only a single build workflow runs at any one time
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
 
 # This workflow file contains four jobs, three to build the corresponding
 # releases on all three supported platforms, and a last one, which will
 # create the release draft.
 jobs:
+  # First, ensure that nothing breaks before attempting to build
+  preflight:
+    name: 'Preflight: Lint/Unit tests'
+    uses: ./.github/workflows/check.yml
+  # If we're building a full release, we have to make sure that nobody (that is:
+  # Hendrik) forgot to increment the tag version. If we already have a tag with
+  # this version, we should not proceed, because that will then lead to an
+  # overwriting of the files in the previous release. That doesn't wreak any
+  # havoc because we don't push unstable code to master, BUT it looks bad.
+  verify_version:
+    name: 'Preflight: Verify version tag'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Clone repository (custom branch)
+        uses: actions/checkout@v3
+        with:
+          ref: 'custom'
+          fetch-depth: 0 # Required for the tag verification step.
+      - name: Setup NodeJS ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+      - name: Retrieve tag version
+        id: ref
+        run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
+      - name: Verify the corresponding tag does not yet exist
+        if: github.ref_name == 'custom'
+        # NOTE: the ! will return 0 if the command fails, and 1 otherwise
+        run: '! git rev-parse "v${{env.version}}"'
+
+
+
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #                                                                           #
+  #                              WINDOWS BUILDS                               #
+  #                                                                           #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  build_win_x64:
+    name: Windows (x86_64)
+    env:
+      npm_config_arch: x64
+    needs: [preflight, verify_version]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout branch ${{ github.ref_name }}
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Setup NodeJS ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+      - name: Set up build environment
+        run: yarn install --immutable
+      - name: Retrieve tag version
+        id: ref
+        run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
+      - name: Package & Release
+        run: yarn package:win-x64 && yarn release:win-x64
+        env:
+          CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
+      - name: Cache installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: win32_x64
+          path: |
+            ./release/Zettlr-${{env.version}}-x64.exe
+
+  # build_win_arm64:
+  #   name: Windows (arm64)
+  #   env:
+  #     npm_config_arch: arm64
+  #     TARGET_ARCH: arm64 # Seen at https://github.com/hydraulic-software/github-desktop/blob/conveyorize/.github/workflows/ci.yml
+  #   needs: [preflight, verify_version]
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout branch ${{ github.ref_name }}
+  #       uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.ref_name }}
+  #     - name: Setup NodeJS ${{ env.NODE_VERSION }}
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'yarn'
+  #     # NOTE: While the GitHub Actions hosters have already all required
+  #     # software installed for building native ARM64 modules, we have to do one
+  #     # step more of preparation, unfortunately. Specifically, we have to
+  #     # manually download the correct ARM64 headers as Node.js does not (yet)
+  #     # ship those officially. This involves two steps.
+  #     # (see https://www.electronjs.org/docs/latest/tutorial/windows-arm/, but
+  #     # the tutorial is not completely correct. Shoutout to
+  #     # https://github.com/hydraulic-software/github-desktop for the hopefully
+  #     # last piece of info we need.)
+  #     - name: Retrieve path to AppData/Local
+  #       run: |
+  #         "appdata=$($env:LOCALAPPDATA)" >> $env:GITHUB_ENV
+  #       shell: pwsh # NOTE: Runs explicitly on PowerShell
+  #     # Now, we can download the correct headers. NOTE that unlike described in
+  #     # the docs, we need to version the cache with the used NODE version, not
+  #     # Electron version! Also NOTE that we have to specify node.exe, just node
+  #     # WILL NOT WORK, because Windows.
+  #     - name: Download Windows arm64 headers
+  #       run: |
+  #         NODEVER=$(node.exe --version)
+  #         mkdir -p "${{ env.appdata }}\\node-gyp\\Cache\\${NODEVER#v}\\arm64"
+  #         curl -sL \
+  #           "https://unofficial-builds.nodejs.org/download/release/$NODEVER/win-arm64/node.lib" \
+  #           -o "${{ env.appdata }}\\node-gyp\\Cache\\${NODEVER#v}\\arm64\\node.lib"
+  #     # At this point, the Windows ARM64 build should succeed.
+  #     - name: Set up build environment
+  #       run: yarn install --immutable
+  #       env:
+  #         npm_config_ensure: "true"
+  #         npm_config_dist_url: https://unofficial-builds.nodejs.org/download/release
+  #     - name: Set tag version to nightly
+  #       if: github.ref_name == 'develop'
+  #       run: echo "$(cat package.json | jq '.version = .version + ".nightly"')" > package.json
+  #     - name: Retrieve tag version
+  #       id: ref
+  #       run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
+  #     - name: Package & Release
+  #       run: yarn package:win-arm && yarn release:win-arm
+  #       env:
+  #         CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
+  #         CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
+  #     # The ARM64 artifact is being output simply as .exe w/o arch, since we
+  #     # have to include --ia32 in the build flags for ARM builds (thus,
+  #     # strictly speaking it has two architectures).
+  #     - name: Rename artifact
+  #       run: mv ./release/Zettlr-${{env.version}}.exe ./release/Zettlr-${{env.version}}-arm64.exe
+  #     - name: Cache installer
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: win32_arm64
+  #         path: |
+  #           ./release/Zettlr-${{env.version}}-arm64.exe
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #                                                                           #
+  #                               MACOS BUILDS                                #
+  #                                                                           #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # build_macos_x64:
+  #   name: macOS (x86_64)
+  #   env:
+  #     npm_config_arch: x64
+  #   needs: [preflight, verify_version]
+  #   runs-on: macos-latest
+  #   steps:
+  #     # Check out master for a regular release, or develop branch for a nightly
+  #     - name: Checkout branch ${{ github.ref_name }}
+  #       uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.ref_name }}
+  #     - name: Setup NodeJS ${{ env.NODE_VERSION }}
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'yarn'
+  #     - name: Set up build environment
+  #       run: yarn install --immutable
+  #     - name: Set tag version to nightly
+  #       if: github.ref_name == 'develop'
+  #       run: echo "$(cat package.json | jq '.version = .version + ".nightly"')" > package.json
+  #     - name: Retrieve tag version
+  #       id: ref
+  #       run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
+  #     # Save the macOS certificate on this runner for forge to access it in the
+  #     # next step below.
+  #     - name: Retrieve code signing certificate
+  #       run: ./scripts/add-osx-cert.sh
+  #       env:
+  #         MACOS_CERT: ${{ secrets.MACOS_CERT }}
+  #         MACOS_CERT_PASS: ${{ secrets.MACOS_CERT_PASS }}
+  #     - name: Package
+  #       run: yarn package:mac-x64
+  #       env:
+  #         APPLE_ID: ${{ secrets.APPLE_ID }}
+  #         APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+  #     - name: Release
+  #       run: yarn release:mac-x64
+  #     - name: Cache image file
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: darwin_x64
+  #         path: |
+  #           ./release/Zettlr-${{env.version}}-x64.dmg
+
+  # build_macos_arm64:
+  #   name: macOS (arm64)
+  #   env:
+  #     npm_config_arch: arm64
+  #   needs: [preflight, verify_version]
+  #   runs-on: macos-latest
+  #   steps:
+  #     - name: Checkout branch ${{ github.ref_name }}
+  #       uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.ref_name }}
+  #     - name: Setup NodeJS ${{ env.NODE_VERSION }}
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'yarn'
+  #     - name: Set up build environment
+  #       run: yarn install --immutable
+  #     - name: Set tag version to nightly
+  #       if: github.ref_name == 'develop'
+  #       run: echo "$(cat package.json | jq '.version = .version + ".nightly"')" > package.json
+  #     - name: Retrieve tag version
+  #       id: ref
+  #       run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
+  #     # Save the macOS certificate on this runner for forge to access it in the
+  #     # next step below.
+  #     - name: Retrieve code signing certificate
+  #       run: ./scripts/add-osx-cert.sh
+  #       env:
+  #         MACOS_CERT: ${{ secrets.MACOS_CERT }}
+  #         MACOS_CERT_PASS: ${{ secrets.MACOS_CERT_PASS }}
+  #     - name: Package
+  #       run: yarn package:mac-arm
+  #       env:
+  #         APPLE_ID: ${{ secrets.APPLE_ID }}
+  #         APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+  #     - name: Release
+  #       run: yarn release:mac-arm
+  #     - name: Cache image file
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: darwin_arm64
+  #         path: |
+  #           ./release/Zettlr-${{env.version}}-arm64.dmg
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #                                                                           #
   #                               LINUX BUILDS                                #
   #                                                                           #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  build_linux:
-    name: Linux build
-    runs-on: ubuntu-latest
+  build_linux_x64:
+    name: Linux (x86_64)
+    env:
+      npm_config_arch: x64
+    needs: [preflight, verify_version]
+    runs-on: ubuntu-20.04
     steps:
-      - name: Clone repo (custom branch)
+      # Check out master for a regular release, or develop branch for a nightly
+      - name: Checkout branch ${{ github.ref_name }}
         uses: actions/checkout@v3
         with:
-          ref: ${{ env.BRANCH }}
-          fetch-depth: 0
+          ref: ${{ github.ref_name }}
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
       - name: Set up build environment
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
       - name: Retrieve tag version
         id: ref
+        run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
+      - name: Package & Release
         run: |
-          pkgver=$(node ./scripts/get-pkg-version.js)
-          echo ::set-output name=version::$pkgver
-          tag=$(git describe --tags --abbrev=0)
-          echo ::set-output name=latestTag::$tag
-      - name: No new version detected
-        if: ${{ format('v{0}', steps.ref.outputs.version) == steps.ref.outputs.latestTag }}
-        run: |
-          echo "::error file=package.json::Did you forget to update the version in package.json?"
-          exit 1
-      - name: Package Linux targets (x64)
-        run: yarn package:linux-x64
-      - name: Create Linux installers (x64)
-        run: yarn release:linux-x64
-      - name: Rename executable
-        run: mv ./release/Zettlr* ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
-      # After everything has been created, now we need to cache them.
+          yarn package:linux-x64
+          yarn release:linux-x64
       - name: Cache installers
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: linux
+          name: linux_x64
           path: |
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #                                                                           #
-  #                               WINDOWS BUILDS                              #
-  #                                                                           #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  build_win:
-    name: Windows build
-    runs-on: windows-latest
-    steps:
-      - name: Clone repo (custom branch)
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ env.BRANCH }}
-          fetch-depth: 0
-      - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Set up build environment
-        run: yarn install --frozen-lockfile
-      - name: Retrieve tag version
-        id: ref
-        run: |
-          pkgver=$(node ./scripts/get-pkg-version.js)
-          echo ::set-output name=version::$pkgver
-          tag=$(git describe --tags --abbrev=0)
-          echo ::set-output name=latestTag::$tag
-      - name: No new version detected
-        if: ${{ format('v{0}', steps.ref.outputs.version) == steps.ref.outputs.latestTag }}
-        run: |
-          echo "::error file=package.json::Did you forget to update the version in package.json?"
-          exit 1
-      - name: Package Windows targets (x64)
-        run: yarn package:win-x64
-      - name: Build NSIS installer (x64)
-        run: yarn release:win-x64
-      - name: Rename executable
-        run: mv ./release/Zettlr*exe ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
-      # After everything has been created, now we need to cache them.
-      - name: Cache installers
-        uses: actions/upload-artifact@v2
-        with:
-          name: win32
-          path: |
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
+            ./release/Zettlr-${{env.version}}-x86_64.AppImage
+
+  # build_linux_arm64:
+  #   name: Linux (arm64)
+  #   env:
+  #     npm_config_arch: arm64
+  #   needs: [preflight, verify_version]
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Checkout branch ${{ github.ref_name }}
+  #       uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.ref_name }}
+  #     - name: Setup NodeJS ${{ env.NODE_VERSION }}
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'yarn'
+  #     - name: Set up build environment
+  #       run: yarn install --immutable
+  #     - name: Set tag version to nightly
+  #       if: github.ref_name == 'develop'
+  #       run: echo "$(cat package.json | jq '.version = .version + ".nightly"')" > package.json
+  #     - name: Retrieve tag version
+  #       id: ref
+  #       run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
+  #     - name: Package & Release
+  #       run: |
+  #         yarn package:linux-arm
+  #         yarn release:linux-arm
+  #     - name: Cache installers
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: linux_arm64
+  #         path: |
+  #           ./release/Zettlr-${{env.version}}-arm64.deb
+  #           ./release/Zettlr-${{env.version}}-aarch64.rpm
+  #           ./release/Zettlr-${{env.version}}-arm64.AppImage
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #                                                                           #
@@ -195,48 +402,67 @@ jobs:
   prepare_release:
     name: Prepare release draft
     # Make sure (and wait until) the builds have succeeded
-    needs: [build_linux, build_win]
-    runs-on: ubuntu-latest
+    needs:
+      - build_win_x64
+      # - build_win_arm64 # DEBUG: Disable win arm for now
+      # - build_macos_x64
+      # - build_macos_arm64
+      - build_linux_x64
+      # - build_linux_arm64
+    runs-on: ubuntu-20.04
     steps:
-      - name: Clone repository
+      - name: Checkout branch ${{ github.ref_name }}
         uses: actions/checkout@v3
-        with:
-          ref: ${{ env.BRANCH }}
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
       - name: Set up build environment
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
       - name: Retrieve tag version
         id: ref
-        run: |
-          pkgver=$(node ./scripts/get-pkg-version.js)
-          echo ::set-output name=version::$pkgver
-      - name: Add Git tag
-        uses: rickstaa/action-create-tag@v1
-        with:
-          tag: v${{steps.ref.outputs.version}}
+        run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
       - name: Make release directory
         run: mkdir ./release
-      # First, download all resulting assets from the previous steps.
-      - name: Retrieve Linux installers
-        uses: actions/download-artifact@v2
+      # Download all resulting assets from the previous steps.
+      - name: Retrieve installers (Windows x86_64)
+        uses: actions/download-artifact@v3
         with:
-          name: linux
+          name: win32_x64
           path: ./release
-      - name: Retrieve windows installers
-        uses: actions/download-artifact@v2
+      # - name: Retrieve installers (Windows arm64)
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: win32_arm64
+      #     path: ./release # DEBUG: Disable win arm for now
+      # - name: Retrieve installers (macOS x86_64)
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: darwin_x64
+      #     path: ./release
+      # - name: Retrieve installers (macOS arm64)
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: darwin_arm64
+      #     path: ./release
+      - name: Retrieve installers (Linux x86_64)
+        uses: actions/download-artifact@v3
         with:
-          name: win32
+          name: linux_x64
           path: ./release
-      # Now we are set, we have all release assets on the VM. It's time to
-      # create the SHA-checksums file and then upload everything!
+      # - name: Retrieve installers (Linux arm64)
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: linux_arm64
+      #     path: ./release
+      # Generate the checksums
       - name: Generate SHA256 checksums
+        #  sha256sum "Zettlr-${{env.version}}-arm64.exe" >> "SHA256SUMS.txt" # DEBUG: Disable win arm for now
         run: |
           cd ./release
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage" > "SHA256SUMS.txt"
-          sha256sum "Zettlr-${{steps.ref.outputs.version}}-x64.exe" >> "SHA256SUMS.txt"
+          sha256sum "Zettlr-${{env.version}}-x64.exe" > "SHA256SUMS.txt"
+          sha256sum "Zettlr-${{env.version}}-x86_64.AppImage" >> "SHA256SUMS.txt"
           cd ..
       - name: Verify checksums
         run: |
@@ -245,17 +471,18 @@ jobs:
           cd ..
       # Create a new release draft
       - name: Create release draft
+        if: github.ref_name == 'custom'
         uses: softprops/action-gh-release@v1
-        #env:
-        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # Populate the inputs of the release we already know
-          tag_name: v${{steps.ref.outputs.version}}
-          name: v${{steps.ref.outputs.version}}
+          tag_name: v${{env.version}}
+          name: Release v${{env.version}}
           body: If you can read this, we have forgotten to fill in the changelog. Sorry!
           draft: true # Always create as draft, so that we can populate the remaining values easily
           # Gosh, is that convenient as opposed to earlier!
           files: |
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x86_64.AppImage
-            ./release/Zettlr-${{steps.ref.outputs.version}}-x64.exe
+            ./release/Zettlr-${{env.version}}-x64.exe
+            ./release/Zettlr-${{env.version}}-x86_64.AppImage
             ./release/SHA256SUMS.txt
