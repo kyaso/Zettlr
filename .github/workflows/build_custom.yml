@@ -94,11 +94,11 @@ jobs:
         with:
           ref: 'custom'
           fetch-depth: 0 # Required for the tag verification step.
-      - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
+      # - name: Setup NodeJS ${{ env.NODE_VERSION }}
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: ${{ env.NODE_VERSION }}
+      #     cache: 'yarn'
       - name: Retrieve tag version
         id: ref
         run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
