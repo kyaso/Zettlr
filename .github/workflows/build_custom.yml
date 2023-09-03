@@ -138,9 +138,9 @@ jobs:
         run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
       - name: Package & Release
         run: yarn package:win-x64 && yarn release:win-x64
-        env:
-          CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
+        # env:
+          # CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
+          # CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
       - name: Cache installer
         uses: actions/upload-artifact@v3
         with:
