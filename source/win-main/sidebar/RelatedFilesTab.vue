@@ -24,6 +24,7 @@
           v-bind:item-size="43"
           v-bind:emit-update="true"
           v-bind:page-mode="true"
+          v-bind:buffer="500"
         >
           <div
             v-bind:key="index"
@@ -171,6 +172,7 @@ export default defineComponent({
   },
   methods: {
     recomputeRelatedFiles: async function (): Promise<void> {
+      console.log('recomputeRelatedFiles')
       if (this.lastActiveFile === null) {
         this.relatedFiles = []
         return
