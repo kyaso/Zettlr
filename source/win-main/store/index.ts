@@ -124,10 +124,6 @@ export interface ZettlrState {
    */
   searchResults: SearchResultWrapper[]
   /**
-   * The current search term of the global search
-   */
-  searchTerm: string
-  /**
    * This describes the editor that was most recently focused. Can be used to,
    * e.g., retrieve that state's activeFile.
    */
@@ -168,7 +164,8 @@ function getConfig (): StoreOptions<ZettlrState> {
         snippets: [],
         cslItems: [],
         searchResults: [],
-        searchTerm: ''
+        backlinks: [],
+        unlinkedMentions: []
       }
     },
     getters: {
@@ -250,10 +247,6 @@ function getConfig (): StoreOptions<ZettlrState> {
       },
       updateCSLItems: function (state, newItems: any[]) {
         state.cslItems = newItems
-      },
-      updateSearchTerm: function (state, term: string) {
-        console.log('updateSearchTerm: ', term)
-        state.searchTerm = term
       },
       clearSearchResults: function (state) {
         state.searchResults = []
