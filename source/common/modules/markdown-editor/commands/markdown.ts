@@ -193,6 +193,11 @@ export function applyZknLink (target: EditorView): boolean {
   return true
 }
 
+export function applyStrikeThrough (target: EditorView): boolean {
+  applyInlineMarkup(target, '~~', '~~')
+  return true
+}
+
 export function applyRule (target: EditorView): boolean {
   target.dispatch({
     changes: { from: target.state.selection.main.from, insert: '\n***\n' }

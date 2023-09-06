@@ -14,7 +14,7 @@
 
 import { showTooltip, type Tooltip } from '@codemirror/view'
 import { type EditorState, StateField } from '@codemirror/state'
-import { applyBold, applyCode, applyItalic, applyZknLink, insertLink } from '../commands/markdown'
+import { applyBold, applyCode, applyItalic, applyZknLink, insertLink, applyStrikeThrough } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
 import { copyAsPlain } from '../util/copy-paste-cut'
 
@@ -23,8 +23,6 @@ function getToolbar (state: EditorState): Tooltip[] {
   if (mainSel.empty) {
     return []
   }
-
-  // Bold | Italic | Link | Image | Comment | Code  ̣| Wikilink | Copy
 
   return [{
     pos: mainSel.head,
@@ -78,7 +76,22 @@ function getToolbar (state: EditorState): Tooltip[] {
       copy.setAttribute('title', trans('Copy'))
       copy.innerHTML = '<cds-icon shape="copy"></cds-icon>'
 
-      buttonWrapper.append(copy, bold, italic, link, /* image, comment, */ code, zknlink)
+      const strikeThrough = document.createElement('button')
+      strikeThrough.classList.add('formatting-toolbar-button')
+      strikeThrough.setAttribute('title', trans('Strike through'))
+      strikeThrough.innerHTML = '<cds-icon shape="strikethrough"></cds-icon>'
+
+      buttonWrapper.append(
+        copy,
+        bold,
+        italic,
+        link,
+        // image,
+        // comment,
+        code,
+        strikeThrough,
+        zknlink
+      )
       dom.append(buttonWrapper)
 
       // NOTE: We need to use the onmousedown event here, since the click only
@@ -92,6 +105,7 @@ function getToolbar (state: EditorState): Tooltip[] {
       code.onmousedown = function (event) { applyCode(view) }
       zknlink.onmousedown = function (event) { applyZknLink(view) }
       copy.onmousedown = function (event) { copyAsPlain(view) }
+      strikeThrough.onmousedown = function (event) { applyStrikeThrough(view) }
 
       return { dom }
     }
