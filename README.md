@@ -2,29 +2,24 @@ This is my **personal fork** of **Zettlr** containing some customizations that a
 
 ## Highlights
 
-Here are some of the highlighted customizations (more details on them can be found below):
+Here are some customizations I want to highlight (more details on them can be found in the next section):
 
 - Backlinks / Unlinked mentions
-- Fuzzysearch for link autocompletes and file filter
+- Outbound links
+- Fuzzysearch for file filter
 - Search index for insanely fast full-text search
-- Support any kind of Wikilink (not just files) in autocomplete
 - Favorite files keyboard shortcuts
-- Link tooltips optimized for keyboardless navigation
+- Link tooltips optimized for keyboardless navigation between notes
+  - Tooltips also shown for tags
+- Block references
+  - Poor man's style, see below
 
 ## Detailed Documentation
 
-In the following, every customization so far is listed, as well as the related versions where the feature was touched. The versioning follows this schema: `<Zettlr-base>+custom.<custom-ver>`.
+In the following, every customization so far is listed. Disclaimer: While I strive for thoroughness to create a useful reference for my future self, I cannot guarantee absolute completeness.
 
-* Switch between **current and previous tab** using `Ctrl+Tab`
-* **Mouse forward/backwards** buttons for next/previous files
-    - _relevant versions: custom.25, custom.32, custom.35_
-* Patches for the **Vim mode** of CodeMirror:
-    - Override `Ctrl+C` to perform regular copy (works in both Normal and Insert mode)
-    - `jk` for ESC
-    - Mapped `j` and `k` to `gj` and `gk`, respectively
-        - Useful when the line is wrapped
-    - Disabled some bindings: `Ctrl+P`, `Ctrl+N`
-    - _relevant versions: custom.3, custom.35_
+* Custom **Vim** bindings
+  * E.g. `jk` to exit Insert mode
 * Zettelkasten link **tooltip** customizations:
     - Tooltip does not show content anymore, just title
     * Tooltip does not show any metadata (words, modified date)
@@ -33,53 +28,52 @@ In the following, every customization so far is listed, as well as the related v
     * Tooltips are also shown for tags
     * Clicking the open/search button will now also trigger a global search (same as with `Ctrl+click`)
     * Tooltips contain a "Copy" button to copy the content of the link
-    * Tooltip follows cursor and buttons are placed centered for even faster access
-    * Added settings:
-        * Enable/disable tooltips
-        * Tooltip delay
-    - _relevant versions: custom.4, custom.5, custom.6, custom.7, custom.8, custom.9, custom.12, custom.13, custom.16, custom.17, custom.27, custom.31, custom.33_
-* **Recent documents** buffer (Linux) increased to 20
-    - _added in custom.7_
-* The **formatting bar** now also contains an option to turn the selection into a ZKN link (`[[ ]]`)
-    - _added in custom.7_
+* Changes to the **formatting toolbar**:
+    * Apply ZKN link (`[[ ]]`)
+    * Apply Strike Through (`~~ ~~`)
+    * Added Copy button
 * **Sidebar** customizations:
-    * ToC and Related files tabs are shown stacked
-        * I wanted to see both at once glance
-        * _added in custom.14_
-    * Related files: show file path on hover
-        * _added in custom.17_
+    * Related files:
+      * Show file path on hover
+      * Show number of related files
     - Added **Backlinks/Unlinked Mentions** tab (similar to Obsidian's)
         - Basically, I recycled part from the GlobalSearch module
-        - _relevant versions: custom.30, custom.32_
+    - Added **Outbound Links**
+      - This essentially lists all Zkn-/Wikilinks in the file and, for each of them, it show which other files also have that link
+      - It doesn't matter whether that link points to an actual file or not
+    * ToC, Backlinks, Outbound links and Related files are shown in a vertial stack in the first sidebar tab (aka ToC tab)
+      * Sections can be collapsed
+    * Disabled References and Other files tabs
+      * I don't use them at all in my workflow
 * **Global search** (full-text search) customizations
     - Display number of search results
-        - _added in custom.15_
     - Massive search speed improvement by using **search index**
         - I used the [flexsearch](https://github.com/nextapps-de/flexsearch) library
         - The search is now basically _instant_, however, some additional memory is required
-        - I need the fast search speed, as my workflow is heavily reliant on internal links which I also use as a kind of _block reference_
-        - _relevant versions: custom.18, custom.26_
-    - Don't scroll the clicked result line to the top, instead show a couple of lines above that for context (_custom.23_)
-    - The clicked line will be briefly highlighted with a "flash" to make it easier to spot (_custom.23_)
+        - I need the fast search speed, as my workflow is heavily reliant on internal links which I also use as a kind of _block reference_ (see below)
 * Added **file quick switch** shortcuts
     - One can assign `Ctrl+<num>`, where `<num>` is 1..9, to different files
-    - _added in custom.19_
-* Show any kind of **Wikilink** (aka ZKN, internal link) in the link **autocomplete**
-    -  **Update 2023-02-16**: This feature was recently added in upstream, and will be part of 3.0!
-       -  _custom.37_
-    - Also, added **fuzzy search** for that (using the [fuzzysort](https://github.com/farzher/fuzzysort) library)
-        - This is still experimental, as there are some parameters that need to be tweaked for a reliable operation, but so far it worked fine for me
-    - Clicking a link with multiple, space-separated words in it will force an exact search, i.e. the search terms will be surrounded by quotes
-    - _relevant versions: custom.20, custom.24, custom.28, custom.29, custom.32_
-* Disable parsing of YAML frontmatters, as I don't use those
-    - _added in custom.27_
+* Disabled parsing of YAML frontmatters, as I don't use those
 * **File filter** customizations
     - Filter can now be focussed using `Ctrl+P`
         - I'm used to that keybinding from VSCode
     - **Fuzzy search** (using the fuzzysort lib)
     - Auto-select the first element so pressing Enter will immediately open it
-    - _relevant versions: custom.28, custom.29_
-
+      - Note: this does not work in _combined_ file manager view
+* Added **block references**
+    * Heads-up: This is not (yet) a fully automated way, like in Obsidian, for example
+    * Pressing `Ctrl+L` will insert a Wikilink containing a random 6-digit alpha-numerial string (e.g. `[[gdf34s]]`).
+      This can be used as a _block reference_. When clicking on it, a global search will find all other locations where
+      this link is used.
+    * Additionally, a color emoji (default: 🟨) will be appended after the inserted ID
+      * This is to indicate the "root block", i.e. the block we are assigning the ID
+      * A reference to this block will simply have the ID link (without the emoji symbol)
+      * Due to the color symbol, the root block can be easily spotted in the global search results
+      * In combination with the indexed search mentioned above, this facilitates are pretty decent block reference workflow
+      * Plus: by automatically searching for the ID (thanks to Zettlr's default behavior) we get to see all files that have a link with that ID
+        * Kind of like _backlinks for block references_ ➜ Not even Obsidian can do that!
+      * Yes, this shares some similarities with _tags_
+        * But I'd like to distinguish block IDs from tags, which — at least in my workflow — categorize an entire note
 ---
 
 <h1 align="center">
