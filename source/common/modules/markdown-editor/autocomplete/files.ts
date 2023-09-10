@@ -17,7 +17,6 @@ import { StateEffect, StateField } from '@codemirror/state'
 import { type EditorView } from '@codemirror/view'
 import { type AutocompletePlugin } from '.'
 import { configField } from '../util/configuration'
-import fuzzysort from 'fuzzysort'
 
 /**
  * Use this effect to provide the editor state with a set of new citekeys
@@ -84,31 +83,19 @@ export const files: AutocompletePlugin = {
     // File autocompletion triggers as soon as we detect the start of a link
     const { text, from } = ctx.state.doc.lineAt(ctx.pos)
     const lineTextUntilPos = text.slice(0, ctx.pos - from)
-    const linkStartBefore = lineTextUntilPos.indexOf('[[') > lineTextUntilPos.indexOf(']]')
+    const linkStartBefore = lineTextUntilPos.lastIndexOf('[[') > lineTextUntilPos.lastIndexOf(']]')
     const linkStartRange = ctx.state.sliceDoc(ctx.pos - 2, ctx.pos)
 
     if (linkStartRange === '[[') {
       return ctx.pos
     } else if (linkStartBefore) {
-      return from + text.indexOf('[[') + 2
+      return from + text.lastIndexOf('[[') + 2
     } else {
       return false
     }
   },
   entries (ctx, query) {
-    query = query.toLowerCase()
-    const entries = ctx.state.field(filesUpdateField)
-
-    const results = fuzzysort.go(query, entries, { threshold: -window.config.get('custom.test.val3'), keys: ['label'] })
-    return results.map(r => r.obj)
-
-    // @Future me: Notice below it also matches against entry.info.
-    // Maybe we could show the file path in the info, and then we would also
-    // match against that.
-    //
-    // return entries.filter(entry => {
-    //   return entry.label.toLowerCase().includes(query) || (entry.info as string|undefined)?.toLowerCase().includes(query)
-    // })
+    return ctx.state.field(filesUpdateField)
   },
   fields: [filesUpdateField]
 }
