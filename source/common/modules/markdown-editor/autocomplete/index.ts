@@ -97,7 +97,11 @@ const autocompleteSource: CompletionSource = function (ctx): CompletionResult|nu
     return {
       from: startpos,
       options: plugin.entries(ctx, ''),
-      filter: true
+      filter: true,
+      update: (current, from, to, ctx) => {
+        current.options = (plugin as AutocompletePlugin).entries(ctx, '')
+        return current
+      }
     }
   }
 

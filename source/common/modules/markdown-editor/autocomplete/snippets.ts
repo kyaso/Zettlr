@@ -324,11 +324,7 @@ export const snippets: AutocompletePlugin = {
     return false
   },
   entries (ctx, query) {
-    query = query.toLowerCase()
-    const entries = ctx.state.field(snippetsUpdateField).availableSnippets
-    return entries.filter(entry => {
-      return entry.label.toLowerCase().includes(query)
-    })
+    return ctx.state.field(snippetsUpdateField).availableSnippets
   },
   fields: [snippetsUpdateField]
 }

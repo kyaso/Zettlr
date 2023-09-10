@@ -108,9 +108,6 @@ export const codeBlocks: AutocompletePlugin = {
     }
   },
   entries (ctx, query) {
-    query = query.toLowerCase()
-    return getEntries().filter(entry => {
-      return entry.label.toLowerCase().includes(query)
-    })
+    return getEntries()
   }
 }

@@ -73,11 +73,7 @@ export const tags: AutocompletePlugin = {
     return false
   },
   entries (ctx, query) {
-    query = query.toLowerCase()
-    const entries = ctx.state.field(tagsUpdateField)
-    return entries.filter(entry => {
-      return entry.label.toLowerCase().includes(query)
-    })
+    return ctx.state.field(tagsUpdateField)
   },
   fields: [tagsUpdateField]
 }
