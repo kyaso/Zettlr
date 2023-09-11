@@ -240,8 +240,8 @@ export default class MarkdownEditor extends EventEmitter {
     Vim.map('k', 'gk')
     Vim.unmap('<C-f>')
     Vim.unmap('<C-t>', 'insert')
-    Vim.unmap('<C-c>', 'insert')
-    // TODO KY: Pressing Ctrl-C while something is selected, deselects it
+    Vim.unmap('<C-c>', 'insert') // TODO KY: Pressing Ctrl-C while something is selected, deselects it
+    Vim.unmap('<C-p>')
 
     // ... and immediately begin loading the document
     this.loadDocument().catch(err => console.error(err))
