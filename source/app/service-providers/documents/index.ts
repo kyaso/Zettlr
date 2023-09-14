@@ -39,7 +39,7 @@ import isFile from '@common/util/is-file'
 type DocumentWindows = Record<string, DocumentTree>
 
 const MAX_VERSION_HISTORY = 100 // Keep no more than this many updates.
-const DELAYED_SAVE_TIMEOUT = 5000 // Delayed timeout means: Save after 5 seconds
+const DELAYED_SAVE_TIMEOUT = 1500 // Delayed timeout means: Save after 5 seconds
 const IMMEDIATE_SAVE_TIMEOUT = 250 // Even "immediate" should not save immediate to save disk space
 
 export interface DocumentsUpdateContext {
