@@ -89,7 +89,7 @@ export const files: AutocompletePlugin = {
     if (linkStartRange === '[[') {
       return ctx.pos
     } else if (linkStartBefore) {
-      return from + text.lastIndexOf('[[') + 2
+      return from + lineTextUntilPos.lastIndexOf('[[') + 2
     } else {
       return false
     }
