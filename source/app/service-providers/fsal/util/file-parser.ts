@@ -28,6 +28,7 @@ import type {
   ZettelkastenLink,
   ZettelkastenTag
 } from '@common/modules/markdown-utils/markdown-ast'
+import extractZknLinksInHeadings from './extract-heading-zkn-links'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Index = require('flexsearch').default
@@ -88,6 +89,9 @@ export default function getMarkdownFileParser (
     if (content.includes('\n\r')) file.linefeed = '\n\r'
     file.id = extractFileId(file.name, content, idREPattern)
 
+    // Extract any Zkn links in headings
+    const zknLinksInHeadings = extractZknLinksInHeadings(content)
+
     // Parse the file into our AST
     const ast = md2ast(content)
 
@@ -96,6 +100,11 @@ export default function getMarkdownFileParser (
 
     const links = extractASTNodes(ast, 'ZettelkastenLink') as ZettelkastenLink[]
     file.links = links.map(link => link.value)
+    for (const link of zknLinksInHeadings) {
+      if (!file.links.includes(link)) {
+        file.links.push(link)
+      }
+    }
 
     const headings = extractASTNodes(ast, 'Heading') as Heading[]
     const firstH1 = headings.find(h => h.level === 1)
