@@ -14,7 +14,7 @@
 
 import { showTooltip, type Tooltip } from '@codemirror/view'
 import { type EditorState, StateField } from '@codemirror/state'
-import { applyBold, applyCode, applyItalic, applyZknLink, insertLink, applyStrikeThrough } from '../commands/markdown'
+import { applyBold, applyCode, applyItalic, applyZknLink, insertLink, applyStrikeThrough, applyHighlight } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
 import { copyAsPlain } from '../util/copy-paste-cut'
 
@@ -81,6 +81,11 @@ function getToolbar (state: EditorState): Tooltip[] {
       strikeThrough.setAttribute('title', trans('Strike through'))
       strikeThrough.innerHTML = '<cds-icon shape="strikethrough"></cds-icon>'
 
+      const highlight = document.createElement('button')
+      highlight.classList.add('formatting-toolbar-button')
+      highlight.setAttribute('title', trans('Highlight'))
+      highlight.innerHTML = '<cds-icon shape="highlighter"></cds-icon>'
+
       buttonWrapper.append(
         copy,
         bold,
@@ -90,6 +95,7 @@ function getToolbar (state: EditorState): Tooltip[] {
         // comment,
         code,
         strikeThrough,
+        highlight,
         zknlink
       )
       dom.append(buttonWrapper)
@@ -106,6 +112,7 @@ function getToolbar (state: EditorState): Tooltip[] {
       zknlink.onmousedown = function (event) { applyZknLink(view) }
       copy.onmousedown = function (event) { copyAsPlain(view) }
       strikeThrough.onmousedown = function (event) { applyStrikeThrough(view) }
+      highlight.onmousedown = function (event) { applyHighlight(view) }
 
       return { dom }
     }
