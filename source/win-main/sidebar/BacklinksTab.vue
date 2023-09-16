@@ -190,6 +190,7 @@
           v-on:click="link.hideFileSet = !link.hideFileSet"
         >
           <div
+            v-bind:class="{ 'highlight-outbound': recentSearchQueryMatches(link.link) }"
             class="overflow-hidden"
             v-bind:title="link.link"
           >
@@ -351,6 +352,9 @@ export default defineComponent({
     },
     lastActiveFile: function (): OpenDocument|null {
       return this.$store.getters.lastLeafActiveFile()
+    },
+    recentSearchQuery: function (): string {
+      return this.$store.state.config['window.recentGlobalSearches'][0]
     }
   },
   watch: {
@@ -371,6 +375,9 @@ export default defineComponent({
     })
   },
   methods: {
+    recentSearchQueryMatches: function (text: string): boolean {
+      return (text.includes(this.recentSearchQuery) || this.recentSearchQuery.includes(text))
+    },
     search: async function (query: string): Promise<SearchResultWrapper[]> {
       let filesToSearch: any[] = []
       const results: SearchResultWrapper[] = []
@@ -765,5 +772,9 @@ div.backlinks-container {
 
 .backlink-arrow-icon {
   margin-left: 5px;
+}
+
+.highlight-outbound {
+  background: rgb(99, 255, 221);
 }
 </style>
