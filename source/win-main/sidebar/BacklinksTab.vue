@@ -458,7 +458,7 @@ export default defineComponent({
           const newResult: SearchResultWrapper = {
             file: fileToSearch,
             result,
-            hideResultSet: false, // If true, the individual results won't be displayed
+            hideResultSet: true, // If true, the individual results won't be displayed
             weight: result.reduce(
               (accumulator: number, currentValue: SearchResult) => {
                 return accumulator + currentValue.weight
@@ -550,7 +550,7 @@ export default defineComponent({
           const newResult: SearchResultWrapper = {
             file: x.file,
             result: tmpBacklinks,
-            hideResultSet: false,
+            hideResultSet: true,
             weight: tmpBacklinks.reduce(
               (accumulator: number, currentValue: SearchResult) => {
                 return accumulator + currentValue.weight
@@ -609,7 +609,7 @@ export default defineComponent({
             link,
             targetFilePath: descriptor?.path,
             files,
-            hideFileSet: false
+            hideFileSet: true
           }
         )
       }
