@@ -32,6 +32,7 @@ In the following, every customization so far is listed. Disclaimer: While I stri
     * Apply ZKN link (`[[ ]]`)
     * Apply Strike Through (`~~ ~~`)
     * Added Copy button
+    * Apply Highlight (`== ==`)
 * **Sidebar** customizations:
     * Related files:
       * Show file path on hover
@@ -53,7 +54,6 @@ In the following, every customization so far is listed. Disclaimer: While I stri
         - I need the fast search speed, as my workflow is heavily reliant on internal links which I also use as a kind of _block reference_ (see below)
 * Added **file quick switch** shortcuts
     - One can assign `Ctrl+<num>`, where `<num>` is 1..9, to different files
-* Disabled parsing of YAML frontmatters, as I don't use those
 * **File filter** customizations
     - Filter can now be focussed using `Ctrl+P`
         - I'm used to that keybinding from VSCode
