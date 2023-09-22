@@ -677,12 +677,12 @@ export default defineComponent({
       return path.basename(absolutePath, '.md')
     },
     getLinkStr: function (link: OutboundLink): string {
-      const linkWithBrackets = '[[ ' + link.link + ' ]]'
+      const linkText = link.link
       // Add number of files if any
       if (link.files.length > 0) {
-        return linkWithBrackets + ' - (' + link.files.length + ')'
+        return linkText + ' — (' + link.files.length + ')'
       }
-      return linkWithBrackets
+      return linkText
     },
     onSearchClick: function (link: OutboundLink) {
       const linkText = link.link
