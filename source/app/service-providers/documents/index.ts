@@ -42,7 +42,7 @@ type DocumentWindows = Record<string, DocumentTree>
 // Keep no more than this many updates.
 const MAX_VERSION_HISTORY = 100
 // Delayed timeout means: Save after 5 seconds
-const DELAYED_SAVE_TIMEOUT = 2000
+const DELAYED_SAVE_TIMEOUT = 5000
 // Even "immediate" should not save immediately to prevent race conditions on slower systems
 const IMMEDIATE_SAVE_TIMEOUT = 500
 
