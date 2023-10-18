@@ -216,7 +216,7 @@ export default class DocumentManager extends ProviderContract {
     this._watcher.on('all', (event, filePath) => {
       if (this._ignoreChanges.includes(filePath) && event === 'change') {
         this._app.log.info(`[DocumentManager] Ignoring change for ${filePath}`)
-        //
+        // KY: TEST
         // this._ignoreChanges.splice(this._ignoreChanges.indexOf(filePath), 1)
         return
       } else {
@@ -1389,7 +1389,11 @@ export default class DocumentManager extends ProviderContract {
       await FSALCodeFile.save(doc.descriptor, content, null)
     }
 
-    this._ignoreChanges.splice(this._ignoreChanges.indexOf(filePath), 1)
+    // KY: TEST
+    setTimeout(() => {
+      this._app.log.info(`Removing file ${filePath} from _ignoreChanges.`)
+      this._ignoreChanges.splice(this._ignoreChanges.indexOf(filePath), 1)
+    }, this._app.config.get('custom.test.val5'))
 
     this._app.log.info(`[DocumentManager] File ${filePath} saved.`)
     this.broadcastEvent(DP_EVENTS.CHANGE_FILE_STATUS, { filePath, status: 'modification' })
