@@ -2,7 +2,22 @@
 
 ## GUI and Functionality
 
-(nothing here)
+- Fixed a visual issue that would handle overly long window titles improperly
+- Fixed `Tab` not indenting/unindenting code in the CodeEditors (snippets,
+  profiles, etc.)
+- Fixed a precedence issue that would make it impossible to use autocomplete
+  while filling in a snippet; now, accepting a potential autocomplete has a
+  higher precedence than moving to the next tabstop of a snippet, making working
+  with snippets more ergonomic
+- Images now render more appropriately in inline-contexts
+- Updated the German translation
+- Fixed the keyboard shortcut for inserting footnotes on Windows and Linux
+- Removed the accent color setting: now the accent color will always be the
+  system accent color on macOS and Windows, and Zettlr's brand green on Linux;
+  themes do not provide an accent color anymore
+- Restored syntax highlighting for inline math code
+- Fixes an issue that would frequently may make the cursor appear to jump or a
+  dialog appearing warning of external changes (#4729; #4732)
 
 ## Under the Hood
 
