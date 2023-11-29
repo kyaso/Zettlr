@@ -23,6 +23,79 @@
 
 (nothing here)
 
+# 3.0.3
+
+## A Note on Custom CSS
+
+This update includes a full refactor of the theming: The editor themes (Berlin,
+Frankfurt, Bielefeld, Karl-Marx-Stadt, and Bordeaux) have now moved to their own
+theme files and do not come with standard CSS anymore. This heavily un-clutters
+the codebase, but it may impact your Custom CSS, should you use this feature. We
+have ensured that no class names change and that the styling is mostly the same,
+but the possibility of having to adapt the Custom CSS may arise for some of you.
+
+## GUI and Functionality
+
+- Fixed a visual issue that would handle overly long window titles improperly
+- Fixed `Tab` not indenting/unindenting code in the CodeEditors (snippets,
+  profiles, etc.)
+- Fixed a precedence issue that would make it impossible to use autocomplete
+  while filling in a snippet; now, accepting a potential autocomplete has a
+  higher precedence than moving to the next tabstop of a snippet, making working
+  with snippets more ergonomic
+- Images now render more appropriately in inline-contexts
+- Updated the German translation
+- Fixed the keyboard shortcut for inserting footnotes on Windows and Linux
+- Removed the accent color setting: now the accent color will always be the
+  system accent color on macOS and Windows, and Zettlr's brand green on Linux;
+  themes do not provide an accent color anymore
+- Restored syntax highlighting for inline math code
+- Fixes an issue that would frequently may make the cursor appear to jump or a
+  dialog appearing warning of external changes (#4729; #4732)
+- Added some translations
+- Generating link previews no longer downloads the entire link target if the
+  content is not preview-able
+- Improved layout of link previews
+- Overly long summaries of link previews are now shortened
+- Project properties now adequately resolve the readers and writers of the
+  existing profiles, enabling the usage of profiles with extended
+  readers/writers (#4699)
+- GraphView's labels are now rendered filled instead of stroked, to make it
+  easier to read the labels.
+- The GraphView does now support multi-window, so clicking a link will open it
+  in the last focused window. If the file is already open in a leaf, that file
+  will be in that leaf, otherwise it will open the file in the last focused
+  leaf.
+- `Alt+Click` in GraphView will force the document to be opened in a new tab.
+- Zettelkasten links and tags will now be output by our custom Markdown-to-HTML
+  parser (i.e., in various places in the app as well as on Copy with Style)
+
+
+## Under the Hood
+
+- Moved all themes from the `*.less`-files into proper theme plugins for
+  CodeMirror v6; this means that they will not provide any global styles
+  anymore; any applicable styling has been moved to more appropriate places
+  (CodeMirror plugins as well as the WindowChrome and the various remaining
+  `*.less` files). We tested the changes out and in our settings, no changes
+  were necessary; sometimes you may need to adapt class definitions
+- Remove unused color variable definitions
+- Move gray color palette to the Window Chrome component
+- Fixed an issue where the font definitions were borked and required usage of
+  `!important` to make them work (#4719)
+- Upgraded all available CodeMirror components to the most recent version
+- Replaced `fs.unlink` with `fs.rm` in `safeDelete` to support recursive removal
+  of directories
+- `fsal-directory::removeChild` now calls `pathExists` instead of `isFile` to
+  make sure directories also are removed in removeChild
+- `pathExists` wraps `fs.promises.access`.
+- (CodeMirror) Move plugin-specific base styles from the main override as well
+  as from the themes to the respective plugin files
+- Bump Pandoc to version `3.1.9`
+- Fixed a weird layouting issue with the code block backgrounds
+- DocumentManager's `openFile` does now handle the case when windowId and leafId
+  is undefined, by keeping track on the last used editor.
+
 # 3.0.2
 
 ## GUI and Functionality
@@ -36,7 +109,7 @@
   wrapping them in `<` and `>`)
 - Fixed an issue that could lead to data loss if "Always load remote changes"
   was checked in the settings
-- Improved the Czech translation (#4688) 
+- Improved the Czech translation (#4688)
 - Fixed an issue that would import Markdown files as LaTeX instead of simply
   copying the file
 - If multiple candidate profiles to import files are found, the user can now

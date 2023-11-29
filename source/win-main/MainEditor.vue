@@ -242,7 +242,8 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
     lintLanguageTool: store.state.config['editor.lint.languageTool.active'],
     distractionFree: props.distractionFree.valueOf(),
     showStatusbar: store.state.config['editor.showStatusbar'],
-    darkMode: store.state.config.darkMode
+    darkMode: store.state.config.darkMode,
+    theme: store.state.config['display.theme']
   } as EditorConfigOptions
 })
 
@@ -366,6 +367,14 @@ async function getEditorFor (doc: string): Promise<MarkdownEditor> {
   })
 
   editor.on('focus', () => {
+    ipcRenderer.invoke('documents-provider', {
+      command: 'focus-leaf',
+      payload: {
+        leafId: props.leafId,
+        windowId: props.windowId
+      }
+    }).catch(err => console.error(err))
+
     store.dispatch('lastLeafId', props.leafId).catch(err => console.error(err))
     if (currentEditor === editor) {
       store.commit('updateTableOfContents', currentEditor.tableOfContents)
@@ -606,7 +615,7 @@ function maybeHighlightSearchResults () {
       @green:     #859900;
 
       color: @base01;
-      font-family: 'Inconsolata', Consolas, Menlo, monospace;
+      font-family: Inconsolata, monospace;
 
       .cm-string         { color: @green; }
       .cm-keyword        { color: @green; }
@@ -636,7 +645,7 @@ function maybeHighlightSearchResults () {
 
   // If a code file is loaded, we need to display the editor contents in monospace.
   &.code-file .cm-editor {
-    font-family: 'Inconsolata', Consolas, Menlo, monospace;
+    font-family: Inconsolata, monospace;
 
     // Reset the margins for code files
     .cm-scroller { padding: 0px; }

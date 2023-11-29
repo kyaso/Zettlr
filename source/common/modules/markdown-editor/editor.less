@@ -103,9 +103,6 @@
     text-decoration: line-through;
   }
 
-  .cm-tab { display: inline; }
-  .cm-url, .cm-link { text-decoration: none; }
-
   // Make the formatting characters and escape sequences nearly invisible
   .cm-formatting-code,
   .cm-formatting-code-block,
@@ -125,7 +122,7 @@
   .cm-formatting-quote,
   .cm-formatting-list-ul,
   .cm-formatting-list-ol {
-    font-family: Consolas, 'Inconsolata', Menlo, monospace;
+    font-family: Inconsolata, monospace;
   }
 
   // ZETTLR-SPECIFIC CLASSES
@@ -202,6 +199,7 @@
   // Deliver a much more fancy UX for images inserted into the editor
   .editor-image-container {
     position: relative;
+    display: inline-block;
     text-align: center;
     cursor: default;
 

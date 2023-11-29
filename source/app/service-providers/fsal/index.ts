@@ -277,7 +277,7 @@ export default class FSAL extends ProviderContract {
         if (parent === undefined) {
           this._logger.error(`[FSAL] Could not remove path ${descriptor.path}: Could not find its parent!`)
         } else {
-          await FSALDir.removeChild(parent, changedPath, true)
+          await FSALDir.removeChild(parent, changedPath, true, this._logger)
         }
       }
 
@@ -570,14 +570,16 @@ export default class FSAL extends ProviderContract {
     }
 
     // Load a path
-    const start = Date.now()
     if (isFile(absPath)) {
+      this._logger.verbose(`[FSAL] Loading root file ${absPath} ...`)
       await this._loadFile(absPath)
       this._watchdog.watch(absPath)
     } else if (isDir(absPath)) {
+      this._logger.verbose(`[FSAL] Loading workspace ${absPath} ...`)
       await this._loadDir(absPath)
       this._watchdog.watch(absPath)
     } else if (path.extname(absPath) === '') {
+      this._logger.verbose(`[FSAL] Loading placeholder for ${absPath} ...`)
       // It's not a file (-> no extension) but it
       // could not be found -> mark it as "dead"
       await this._loadPlaceholder(absPath)
@@ -586,15 +588,13 @@ export default class FSAL extends ProviderContract {
       return false
     }
 
-    if (Date.now() - start > 500) {
-      this._logger.warning(`[FSAL] Path ${absPath} took ${Date.now() - start}ms to load.`)
-    }
-
     const sorter = this.getDirectorySorter()
 
     this._state.filetree = sorter(this._state.filetree)
 
     this._consolidateRootFiles()
+
+    this._logger.verbose(`[FSAL] Root ${absPath} loaded.`)
 
     return true
   }
@@ -951,7 +951,7 @@ export default class FSAL extends ProviderContract {
       this.unloadPath(src.path)
       await fs.unlink(src.path)
     } else if (parent !== undefined) {
-      await FSALDir.removeChild(parent, src.path, deleteOnFail)
+      await FSALDir.removeChild(parent, src.path, deleteOnFail, this._logger)
       this._config.removePath(src.path)
     }
 
@@ -1203,10 +1203,10 @@ export default class FSAL extends ProviderContract {
 
     if (parent === undefined) {
       this.unloadPath(src.path)
-      await safeDelete(src.path, deleteOnFail)
+      await safeDelete(src.path, deleteOnFail, this._logger)
       this._config.removePath(src.path)
     } else {
-      await FSALDir.removeChild(parent, src.path, deleteOnFail)
+      await FSALDir.removeChild(parent, src.path, deleteOnFail, this._logger)
     }
 
     if (this.openDirectory === src) {
