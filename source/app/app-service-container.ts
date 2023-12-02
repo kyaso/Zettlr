@@ -28,6 +28,7 @@ import LogProvider from '@providers/log'
 import MenuProvider from '@providers/menu'
 import type ProviderContract from '@providers/provider-contract'
 import RecentDocumentsProvider from '@providers/recent-docs'
+import SearchIndexProvider from '@providers/search-index'
 import StatsProvider from '@providers/stats'
 import TagProvider from '@providers/tags'
 import TargetProvider from '@providers/targets'
@@ -55,6 +56,7 @@ export default class AppServiceContainer {
   private readonly _updateProvider: UpdateProvider
   private readonly _windowProvider: WindowProvider
   private readonly _fsal: FSAL
+  private readonly _searchIndexProvider: SearchIndexProvider
   private readonly _documentManager: DocumentManager
 
   constructor () {
@@ -72,7 +74,8 @@ export default class AppServiceContainer {
 
     this._targetProvider = new TargetProvider(this._logProvider)
     this._documentManager = new DocumentManager(this)
-    this._fsal = new FSAL(this._logProvider, this._configProvider, this._documentManager)
+    this._searchIndexProvider = new SearchIndexProvider(this._logProvider)
+    this._fsal = new FSAL(this._logProvider, this._configProvider, this._documentManager, this._searchIndexProvider)
     this._tagProvider = new TagProvider(this._logProvider, this._fsal)
     this._linkProvider = new LinkProvider(this._logProvider, this._fsal)
     this._windowProvider = new WindowProvider(this._logProvider, this._configProvider, this._documentManager)
@@ -106,6 +109,7 @@ export default class AppServiceContainer {
     await this._informativeBoot(this._citeprocProvider, 'CiteprocProvider')
     await this._informativeBoot(this._updateProvider, 'UpdateProvider')
 
+    await this._informativeBoot(this._searchIndexProvider, 'SearchIndexProvider')
     await this._informativeBoot(this._fsal, 'FSAL')
     await this._informativeBoot(this._windowProvider, 'WindowManager')
     await this._informativeBoot(this._documentManager, 'DocumentManager')
@@ -212,6 +216,11 @@ export default class AppServiceContainer {
   public get fsal (): FSAL { return this._fsal }
 
   /**
+   * Returns the search index provider
+   */
+  public get searchIndex (): SearchIndexProvider { return this._searchIndexProvider }
+
+  /**
    * Returns the DocumentManager
    */
   public get documents (): DocumentManager { return this._documentManager }
@@ -228,6 +237,7 @@ export default class AppServiceContainer {
     await this._safeShutdown(this._commandProvider, 'CommandProvider')
     await this._safeShutdown(this._documentManager, 'DocumentManager')
     await this._safeShutdown(this._fsal, 'FSAL')
+    await this._safeShutdown(this._searchIndexProvider, 'SearchIndexProvider')
 
     await this._safeShutdown(this._windowProvider, 'WindowManager')
     await this._safeShutdown(this._trayProvider, 'TrayProvider')

@@ -20,8 +20,8 @@ import safeAssign from '@common/util/safe-assign'
 import type { MDFileDescriptor } from '@dts/common/fsal'
 import type FSALCache from './fsal-cache'
 import type { SearchTerm } from '@dts/common/search'
-import { index } from './util/file-parser'
 import { getFilesystemMetadata } from './util/get-fs-metadata'
+import type SearchIndexProvider from '@providers/search-index'
 
 /**
  * Applies a cached file, saving time where the file is not being parsed.
@@ -72,7 +72,8 @@ export async function parse (
   filePath: string,
   cache: FSALCache|null,
   parser: (file: MDFileDescriptor, content: string) => void,
-  isRoot: boolean
+  isRoot: boolean,
+  searchIndex: SearchIndexProvider
 ): Promise<MDFileDescriptor> {
   // First of all, prepare the file descriptor
   let file: MDFileDescriptor = {
@@ -128,10 +129,9 @@ export async function parse (
 
   // Add to index
   const id = file.path
-  if (!index.contain(id)) {
-    // console.log('fsal-file: adding to file index: '+file.name)
-    index.add(id, file.name) // The file name
-    index.append(id, content) // The file content
+  if (!await searchIndex.contains(id)) {
+    // console.log(`fsal-file.ts: Inserting ${id}`)
+    await searchIndex.insert(id, file.path, content)
   }
 
   if (!hasCache) {

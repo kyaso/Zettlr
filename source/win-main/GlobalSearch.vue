@@ -449,7 +449,7 @@ export default defineComponent({
         // Loop over the words of the current term
         for (let j = 0; j < terms[i].words.length; j++) {
           // Query the search index for the word
-          const tmp: [] = await ipcRenderer.invoke('application', {
+          const queryRes: [] = await ipcRenderer.invoke('application', {
             command: 'query-index',
             payload: {
               query: terms[i].words[j]
@@ -459,31 +459,35 @@ export default defineComponent({
           if (terms[i].operator !== 'NOT') {
             // If the corresponding operator of the current terms is not NOT,
             // add the query result to the res array.
-            res = res.concat(tmp)
+            res = res.concat(queryRes)
           } else {
             // If the operator is NOT, add the result to the notRes array.
-            notRes = notRes.concat(tmp)
+            notRes = notRes.concat(queryRes)
           }
         }
       }
-
-      // I added this initially for testing, so it can be removed in the future
-      // const res: [] = await ipcRenderer.invoke('application', {
-      //   command: 'query-index',
-      //   payload: {
-      //     query: terms[0].words[0]
-      //   }
-      // })
 
       // console.log('[GlobalSearch] Query result: '+res)
       // console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
 
       // First filter out all NOT files
       this.filesToSearch = this.filesToSearch.filter(f => !notRes.includes(f.path))
-      // Then filter "in" the matched index files
-      this.filesToSearch = this.filesToSearch.filter(f => res.includes(f.path))
 
       // console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
+
+      // Next, make sure indexed files are in front
+      this.filesToSearch.sort((a, b) => {
+        const aInRes = res.includes(a.path)
+        const bInRes = res.includes(b.path)
+
+        if (aInRes && !bInRes) {
+          return -1
+        } else if (!aInRes && bInRes) {
+          return 1
+        } else {
+          return 0
+        }
+      })
 
       while (this.filesToSearch.length > 0) {
         const fileToSearch = this.filesToSearch.shift() as any
@@ -504,6 +508,20 @@ export default defineComponent({
             weight: result.reduce((accumulator: number, currentValue: SearchResult) => {
               return accumulator + currentValue.weight
             }, 0) // This is the initialValue, b/c we're summing up props
+          }
+          // If the file was found in the index, artificially blow up the weight of
+          // all its results so the file shows up near the top.
+          //
+          // Rationale: Prefix matches (which are found by default orama) should weigh
+          // higher than infix matches. E.g., if we search for "ita", and there
+          // is one file with only one occurrence of "italy", and another file
+          // with 20 times "digital", the first file should still appear above
+          // the second file (even though the latter one has more results).
+          //
+          // In general: If the search result was also found by the index, give
+          // it significantly more weight.
+          if (res.includes(fileToSearch.path)) {
+            newResult.weight += 100
           }
           this.$store.commit('addSearchResult', newResult)
           if (newResult.weight > this.maxWeight) {

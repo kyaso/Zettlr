@@ -1086,6 +1086,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@orama/orama@npm:^2.0.0-beta.7":
+  version: 2.0.0-beta.7
+  resolution: "@orama/orama@npm:2.0.0-beta.7"
+  checksum: 8589c58ad82ed0c1e5146e4d1abcb2b92d7f02116021d04d2768ce3af886a1b47aedad4fd035b6cd22e7077d88efad6897193f16bef3842abe768369f1d676cf
+  languageName: node
+  linkType: hard
+
 "@pkgjs/parseargs@npm:^0.11.0":
   version: 0.11.0
   resolution: "@pkgjs/parseargs@npm:0.11.0"
@@ -6242,13 +6249,6 @@ __metadata:
   version: 3.2.7
   resolution: "flatted@npm:3.2.7"
   checksum: 427633049d55bdb80201c68f7eb1cbd533e03eac541f97d3aecab8c5526f12a20ccecaeede08b57503e772c769e7f8680b37e8d482d1e5f8d7e2194687f9ea35
-  languageName: node
-  linkType: hard
-
-"flexsearch@npm:^0.7.21":
-  version: 0.7.31
-  resolution: "flexsearch@npm:0.7.31"
-  checksum: 9817d8909a0d07d98e2c31f8a39cbc91be7a900cc3f86d74214ee49d00b6f3b133b883a3a19154de1d2064519494002dcfb1a30fbc65c8ef44259c3655fa8f39
   languageName: node
   linkType: hard
 
@@ -13699,6 +13699,7 @@ __metadata:
     "@electron/notarize": ^1.2.4
     "@lezer/common": ^1.1.0
     "@lezer/highlight": ^1.1.6
+    "@orama/orama": ^2.0.0-beta.7
     "@replit/codemirror-emacs": ^6.0.1
     "@replit/codemirror-vim": ^6.0.14
     "@types/adm-zip": ^0.5.0
@@ -13745,7 +13746,6 @@ __metadata:
     eslint-plugin-promise: ^6.1.1
     eslint-plugin-vue: ^9.15.0
     fix-path: ^4.0.0
-    flexsearch: ^0.7.21
     fsevents: ^2.3.2
     fuzzysort: ^1.2.1
     gettext-parser: ^7.0.1

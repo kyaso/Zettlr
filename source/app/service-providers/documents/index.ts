@@ -1429,6 +1429,11 @@ export default class DocumentManager extends ProviderContract {
     this._ignoreChanges.push(filePath)
 
     if (doc.descriptor.type === 'file') {
+      await this._app.searchIndex.update(
+        doc.descriptor.path,
+        doc.descriptor.path,
+        content
+      )
       await FSALFile.save(
         doc.descriptor,
         content,

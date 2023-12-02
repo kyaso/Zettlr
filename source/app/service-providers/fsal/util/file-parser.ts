@@ -30,15 +30,6 @@ import type {
 } from '@common/modules/markdown-utils/markdown-ast'
 import extractZknLinksInHeadings from './extract-heading-zkn-links'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Index = require('flexsearch').default
-
-// Create a new search index
-export const index = new Index({
-  preset: 'performance',
-  tokenize: 'full'
-})
-
 // Here are all supported variables for Pandoc:
 // https://pandoc.org/MANUAL.html#variables
 // Below is a selection that Zettlr may use
@@ -69,18 +60,6 @@ export default function getMarkdownFileParser (
     file: MDFileDescriptor,
     content: string
   ): void {
-    // Add content to search index
-    //
-    // Note that when the file is already indexed, this will replace
-    // the current content ("update")
-    //
-    // Note: this parser is called whenever a file change happens
-    //
-    // console.log('[File parser] Adding '+file.name+' to search index.')
-    // console.log('fsal-parser: adding to file index: '+file.name)
-    index.add(file.path, file.name)
-    index.append(file.path, content)
-
     // First of all, determine all the things that have nothing to do with any
     // Markdown contents.
     file.bom = extractBOM(content)

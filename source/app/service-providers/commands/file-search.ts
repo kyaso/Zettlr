@@ -14,8 +14,6 @@
 
 import ZettlrCommand from './zettlr-command'
 
-import { index } from '../fsal/util/file-parser'
-
 export default class FileSearch extends ZettlrCommand {
   constructor (app: any) {
     super(app, [ 'file-search', 'query-index' ])
@@ -32,7 +30,7 @@ export default class FileSearch extends ZettlrCommand {
     if (evt === 'query-index') {
       // console.log('[file-search]: query-index event received. Query: '+arg.query)
       try {
-        let result = await index.search(arg.query, 100000)
+        let result = await this._app.searchIndex.search(arg.query)
         return result
       } catch (e: any) {
         this._app.log.error('[file-search] Error: Could not index.')

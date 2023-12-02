@@ -55,6 +55,7 @@ import type DocumentManager from '@providers/documents'
 import { closeSplashScreen, showSplashScreen, updateSplashScreen } from './util/splash-screen'
 import { trans } from '@common/i18n-main'
 import { type FilesystemMetadata, getFilesystemMetadata } from './util/get-fs-metadata'
+import type SearchIndexProvider from '@providers/search-index'
 
 // Re-export all interfaces necessary for other parts of the code (Document Manager)
 export {
@@ -84,7 +85,8 @@ export default class FSAL extends ProviderContract {
   constructor (
     private readonly _logger: LogProvider,
     private readonly _config: ConfigProvider,
-    private readonly _docs: DocumentManager
+    private readonly _docs: DocumentManager,
+    private readonly _searchIndex: SearchIndexProvider
   ) {
     super()
 
@@ -319,7 +321,8 @@ export default class FSAL extends ProviderContract {
           changedPath,
           this.getMarkdownFileParser(),
           this.getDirectorySorter(),
-          this._cache
+          this._cache,
+          this._searchIndex
         )
       } else {
         await FSALDir.addAttachment(parentDescriptor, changedPath)
@@ -338,7 +341,8 @@ export default class FSAL extends ProviderContract {
           this._cache,
           this.getMarkdownFileParser(),
           this.getDirectorySorter(),
-          affectedDescriptor.root
+          affectedDescriptor.root,
+          this._searchIndex
         )
 
         // Now exchange in the tree
@@ -467,7 +471,7 @@ export default class FSAL extends ProviderContract {
       this._recordFiletreeChange('add', filePath)
     } else if (hasMarkdownExt(filePath)) {
       const parser = this.getMarkdownFileParser()
-      const file = await FSALFile.parse(filePath, this._cache, parser, true)
+      const file = await FSALFile.parse(filePath, this._cache, parser, true, this._searchIndex)
       this._state.filetree.push(file)
       this._recordFiletreeChange('add', filePath)
     }
@@ -487,7 +491,8 @@ export default class FSAL extends ProviderContract {
       this._cache,
       this.getMarkdownFileParser(),
       sorter,
-      true
+      true,
+      this._searchIndex
     )
 
     const duration = performance.now() - start
@@ -881,7 +886,8 @@ export default class FSAL extends ProviderContract {
         options,
         this._cache,
         this.getMarkdownFileParser(),
-        this.getDirectorySorter()
+        this.getDirectorySorter(),
+        this._searchIndex
       )
       await this.sortDirectory(src)
       this._recordFiletreeChange('add', fullPath)
@@ -920,7 +926,7 @@ export default class FSAL extends ProviderContract {
       await this.loadPath(newPath)
       this._config.addPath(newPath)
     } else {
-      await FSALDir.renameChild(parent, src.name, newName, parser, sorter, this._cache)
+      await FSALDir.renameChild(parent, src.name, newName, parser, sorter, this._cache, this._searchIndex)
       this._recordFiletreeChange('remove', oldPath)
       this._recordFiletreeChange('add', newPath)
       this._recordFiletreeChange('change', parent.path)
@@ -1151,7 +1157,8 @@ export default class FSAL extends ProviderContract {
         newName,
         this.getMarkdownFileParser(),
         this.getDirectorySorter(),
-        this._cache
+        this._cache,
+        this._searchIndex
       )
       // NOTE: With regard to our filetree, it's just one unlink and one add because
       // consumers just need to remove the directory and then re-add it again.
@@ -1266,7 +1273,8 @@ export default class FSAL extends ProviderContract {
       target,
       this.getMarkdownFileParser(),
       this.getDirectorySorter(),
-      this._cache
+      this._cache,
+      this._searchIndex
     )
 
     this._recordFiletreeChange('remove', src.path)
@@ -1347,7 +1355,7 @@ export default class FSAL extends ProviderContract {
 
     if (hasMarkdownExt(absPath)) {
       const parser = this.getMarkdownFileParser()
-      const descriptor = await FSALFile.parse(absPath, this._cache, parser, isRoot)
+      const descriptor = await FSALFile.parse(absPath, this._cache, parser, isRoot, this._searchIndex)
       return descriptor
     } else if (hasCodeExt(absPath)) {
       const descriptor = await FSALCodeFile.parse(absPath, this._cache, isRoot)
@@ -1375,6 +1383,6 @@ export default class FSAL extends ProviderContract {
       throw new Error(`[FSAL] Cannot load directory ${absPath}: Not a directory`)
     }
 
-    return await FSALDir.parse(absPath, this._cache, this.getMarkdownFileParser(), this.getDirectorySorter(), false)
+    return await FSALDir.parse(absPath, this._cache, this.getMarkdownFileParser(), this.getDirectorySorter(), false, this._searchIndex)
   }
 }
