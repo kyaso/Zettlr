@@ -84,9 +84,7 @@ export function getZettelkastenFields (): PreferencesFieldset[] {
           model: 'zkn.customDirectory',
           placeholder: trans('Path to folder'),
           reset: ''
-        }
-      ],
-      [
+        },
         {
           type: 'number',
           label: 'Link tooltip delay (ms)',
@@ -107,7 +105,6 @@ export function getZettelkastenFields (): PreferencesFieldset[] {
           type: 'checkbox',
           label: 'Automatically append root indication symbol when inserting custom ID',
           model: 'zkn.blockIds.addRootIndicator',
-          reset: true
         },
         {
           type: 'text',
