@@ -306,9 +306,8 @@ const sidebarVisible = computed<boolean>(() => configStore.config.window.sidebar
 const activeFile = computed(() => documentTreeStore.lastLeafActiveFile)
 const shouldCountChars = computed<boolean>(() => configStore.config.editor.countChars)
 const shouldShowToolbar = computed<boolean>(() => !distractionFree.value || !configStore.config.display.hideToolbarInDistractionFree)
-// TODO kyaso
-// const shouldInsertRootIDSymbol
-// getRootIDSymbol
+const shouldInsertRootIDSymbol = computed<boolean>(() => configStore.config.zkn.blockIds.addRootIndicator)
+const rootIDSymbol = computed<string>(() => configStore.config.zkn.blockIds.rootIndicator)
 // We need to display the titlebar in case the user decides to hide the toolbar.
 // The titlebar is much less distracting, but this way the user can at least
 // drag the window around.
@@ -591,18 +590,18 @@ onMounted(() => {
     if (shortcut === 'toggle-sidebar') {
       window.config.set('window.sidebarVisible', !sidebarVisible.value)
     } else if (shortcut === 'insert-id') {
-      // TODO kyaso
-      // if (!base62) {
-      //     clipboard.writeText(generateId(window.config.get('zkn.idGen')))
-      //   } else {
-      //     let id = '[[' + generateId('%base62') + ']]'
-      //     if (this.shouldInsertRootIDSymbol) {
-      //       id += this.getRootIDSymbol
-      //     }
-      //     clipboard.writeText(id)
-      //   }
-      editorCommands.value.data = generateId(configStore.config.zkn.idGen)
+      let id = ''
+      if (!base62) {
+        id = generateId(configStore.config.zkn.idGen)
+      } else {
+        id = '[[' + generateId('%base62') + ']]'
+        if (shouldInsertRootIDSymbol) {
+          id += rootIDSymbol
+        }
+      }
+      editorCommands.value.data = id
       editorCommands.value.replaceSelection = !editorCommands.value.replaceSelection
+      navigator.clipboard.writeText(id).catch(err => console.error(err))
     } else if (shortcut === 'copy-current-id' && documentTreeStore.lastLeafActiveFile !== undefined) {
       ipcRenderer.invoke('application', {
         command: 'get-descriptor',
