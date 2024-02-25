@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <PopoverWrapper v-bind:target="target" v-on:close="$emit('close')">
     <h4>Export</h4>
     <p><strong>{{ filename }}</strong></p>
     <SelectControl
@@ -21,7 +21,7 @@
     <button v-bind:disabled="isExporting" v-on:click="doExport">
       {{ exportButtonLabel }}
     </button>
-  </div>
+  </PopoverWrapper>
 </template>
 
 <script lang="ts">
@@ -39,25 +39,31 @@
  * END HEADER
  */
 
-import RadioControl from '@common/vue/form/elements/Radio.vue'
-import SelectControl from '@common/vue/form/elements/Select.vue'
+import PopoverWrapper from './PopoverWrapper.vue'
+import RadioControl from '@common/vue/form/elements/RadioControl.vue'
+import SelectControl from '@common/vue/form/elements/SelectControl.vue'
 import { defineComponent } from 'vue'
-import { PandocProfileMetadata } from '@dts/common/assets'
+import { type PandocProfileMetadata } from '@dts/common/assets'
 import { SUPPORTED_READERS } from '@common/util/pandoc-maps'
 import getPlainPandocReaderWriter from '@common/util/plain-pandoc-reader-writer'
 import { trans } from '@common/i18n-renderer'
+import { pathBasename } from '@common/util/renderer-path-polyfill'
 
 const ipcRenderer = window.ipc
 const config = window.config
-const path = window.path
 
 export default defineComponent({
   name: 'PopoverExport',
   components: {
     SelectControl,
-    RadioControl
+    RadioControl,
+    PopoverWrapper
   },
   props: {
+    target: {
+      type: HTMLElement,
+      required: true
+    },
     filePath: {
       type: String,
       default: ''
@@ -78,7 +84,7 @@ export default defineComponent({
       return this.isExporting ? trans('Exporting…') : trans('Export')
     },
     filename (): string {
-      return path.basename(this.filePath)
+      return pathBasename(this.filePath)
     },
     popoverData: function (): any {
       return {
@@ -86,7 +92,7 @@ export default defineComponent({
       }
     },
     availableFormats: function () {
-      const selectOptions: { [key: string]: string } = {}
+      const selectOptions: Record<string, string> = {}
 
       this.profileMetadata
         // Remove files that cannot read any of Zettlr's internal formats ...
@@ -185,3 +191,4 @@ export default defineComponent({
 <style lang="less">
 //
 </style>
+@common/util/renderer-path-polyfill

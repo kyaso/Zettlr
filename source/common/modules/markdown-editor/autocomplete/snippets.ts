@@ -32,8 +32,28 @@ import { DateTime } from 'luxon'
 import { v4 as uuid } from 'uuid'
 import generateId from '@common/util/generate-id'
 import { configField } from '../util/configuration'
+import { gemoji } from 'gemoji'
+import { pathBasename, pathDirname, pathExtname } from '@common/util/renderer-path-polyfill'
 
-const path = window.path
+/**
+ * This utility function inserts an emoji
+ */
+const applyEmoji = function (view: EditorView, completion: Completion, from: number, to: number): void {
+  view.dispatch({
+    changes: [{ from: from - 1, to, insert: completion.label }],
+    selection: { anchor: from - 1 + completion.label.length }
+  })
+}
+
+const emojis: Completion[] = gemoji.map(g => {
+  return {
+    label: g.emoji,
+    detail: g.names.join(', '),
+    section: g.category,
+    info: g.tags.join(', '),
+    apply: applyEmoji
+  }
+})
 
 // Define a class to highlight active tabstops
 const tabstopDeco = Decoration.mark({ class: 'tabstop' })
@@ -64,16 +84,19 @@ class SnippetWidget extends WidgetType {
 /**
  * This utility function inserts a snippet
  */
-function apply (view: EditorView, completion: Completion, from: number, to: number): void {
-  const [ textToInsert, selections ] = template2snippet(view.state, completion.info as string, from - 1)
-  // We can immediately take the first rangeset and set it as a selection, whilst
-  // committing the rest into our StateField as an effect
-  const firstSelection = selections.shift()
-  view.dispatch({
-    changes: [{ from: from - 1, to, insert: textToInsert }],
-    selection: firstSelection,
-    effects: snippetTabsEffect.of(selections)
-  })
+function applySnippet (view: EditorView, completion: Completion, from: number, to: number): void {
+  template2snippet(view.state, completion.info as string, from - 1)
+    .then(([ textToInsert, selections ]) => {
+      // We can immediately take the first rangeset and set it as a selection, whilst
+      // committing the rest into our StateField as an effect
+      const firstSelection = selections.shift()
+      view.dispatch({
+        changes: [{ from: from - 1, to, insert: textToInsert }],
+        selection: firstSelection,
+        effects: snippetTabsEffect.of(selections)
+      })
+    })
+    .catch(err => console.error(err))
 }
 
 /**
@@ -109,8 +132,13 @@ export const snippetsUpdateField = StateField.define<SnippetStateField>({
     for (const effect of transaction.effects) {
       if (effect.is(snippetsUpdate)) {
         val.availableSnippets = effect.value.map(entry => {
-          return { label: entry.name, info: entry.content, apply }
+          return {
+            label: entry.name,
+            info: entry.content,
+            apply: applySnippet
+          }
         })
+
         return { ...val }
       } else if (effect.is(snippetTabsEffect)) {
         val.activeSelections = effect.value
@@ -182,9 +210,9 @@ export const snippetsUpdateField = StateField.define<SnippetStateField>({
  * @return  {[string, EditorSelection[]]}  The final text as well as tabstop
  *                                          ranges (if any)
  */
-function template2snippet (state: EditorState, template: string, rangeOffset: number): [string, EditorSelection[]] {
+async function template2snippet (state: EditorState, template: string, rangeOffset: number): Promise<[string, EditorSelection[]]> {
   const rawRanges: Array<{ position: number, ranges: SelectionRange[] }> = []
-  let finalText = replaceSnippetVariables(state, template)
+  let finalText = await replaceSnippetVariables(state, template)
 
   // Matches $[0-9] as well as ${[0-9]:default string}
   const tabStopRE = /(?<!\\)\$(\d+)|(?<!\\)\$\{(\d+):(.+?)\}/ // NOTE: No g flag
@@ -248,7 +276,7 @@ function template2snippet (state: EditorState, template: string, rangeOffset: nu
    *
    * @return  {string}                   The text with all variables replaced accordingly.
    */
-function replaceSnippetVariables (state: EditorState, text: string): string {
+async function replaceSnippetVariables (state: EditorState, text: string): Promise<string> {
   // First, prepare our replacement table
   const now = DateTime.now()
   const month = now.month
@@ -256,7 +284,7 @@ function replaceSnippetVariables (state: EditorState, text: string): string {
   const hour = now.hour
   const minute = now.minute
   const second = now.second
-  const clipboard = window.clipboard.readText()
+  const clipboard = await navigator.clipboard.readText()
 
   const config = state.field(configField)
   const absPath = config.metadata.path
@@ -274,11 +302,11 @@ function replaceSnippetVariables (state: EditorState, text: string): string {
     CURRENT_SECONDS_UNIX: now.toSeconds(),
     UUID: uuid(),
     CLIPBOARD: (clipboard !== '') ? clipboard : undefined,
-    ZKN_ID: generateId(window.config.get('zkn.idGen')),
+    ZKN_ID: generateId(String(window.config.get('zkn.idGen'))),
     CURRENT_ID: config.metadata.id,
-    FILENAME: path.basename(absPath),
-    DIRECTORY: path.dirname(absPath),
-    EXTENSION: path.extname(absPath)
+    FILENAME: pathBasename(absPath),
+    DIRECTORY: pathDirname(absPath),
+    EXTENSION: pathExtname(absPath)
   }
 
   // Second: Replace those variables, and return the text. NOTE we're adding a

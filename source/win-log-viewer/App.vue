@@ -36,10 +36,10 @@
  */
 
 import LogMessage from './LogMessage.vue'
-import WindowChrome from '@common/vue/window/Chrome.vue'
+import WindowChrome from '@common/vue/window/WindowChrome.vue'
 import { nextTick, defineComponent } from 'vue'
-import { ToolbarControl } from '@dts/renderer/window'
-import { LogMessage as LM } from '@providers/log'
+import { type LogMessage as LM } from '@providers/log'
+import { type ToolbarControl } from '@common/vue/window/WindowToolbar.vue'
 
 const ipcRenderer = window.ipc
 
@@ -85,7 +85,7 @@ export default defineComponent({
 
       if (filter !== '') {
         return preFiltered.filter(message => {
-          return message.message.toLowerCase().indexOf(filter) >= 0
+          return message.message.toLowerCase().includes(filter)
         })
       } else {
         return preFiltered
@@ -140,9 +140,8 @@ export default defineComponent({
     }
   },
   mounted: function () {
-    const self = this
-    setInterval(function () {
-      self.fetchData().catch(e => console.error('Could not fetch new log data', e))
+    setInterval(() => {
+      this.fetchData().catch(e => console.error('Could not fetch new log data', e))
     }, 1000)
   },
   methods: {
@@ -188,8 +187,12 @@ export default defineComponent({
       const elem = this.$refs['log-viewer'] as Element
       elem.scrollTop = elem.scrollHeight - elem.getBoundingClientRect().height
     },
-    handleToggle: function (event: { id: string, state: any }) {
+    handleToggle: function (event: { id?: string, state?: string|boolean }) {
       const { id, state } = event
+      if (typeof state !== 'boolean') {
+        console.warn('Could not toggle log level: State was not a boolean.')
+        return
+      }
       if (id === 'verboseToggle') {
         this.includeVerbose = state
       } else if (id === 'infoToggle') {

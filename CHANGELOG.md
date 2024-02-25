@@ -1,27 +1,167 @@
 # Upcoming
 
+## Changes to the link detection
+
+For a long time now, Zettlr would (sometimes aggressively so) detect plain links
+and display them in a rendered state. In some cases, this was nice as it would
+relieve you from having to surround such links with pointy or angled brackets.
+
+However, especially in the latest evolution of this parser plugin, the link
+detection was a bit too aggressive and interfered, e.g., with emphasis
+highlighting. In this version, we have entirely removed our custom link
+detection and rely upon the more straight-forward way of detecting links.
+
+Regarding your exporting experience, this should not have any impact, since the
+auto-link-detection feature wasn't supported by Pandoc anyhow, but depending on
+how you have been writing, you may notice less detected links in your documents.
+
+To add "plain" links (without using the full `[]()`-syntax) from now on, simply
+surround them with angled brackets: `<https://www.google.com>` or
+`<mail@example.com>`. Note that the protocol (`https://`) is required, so
+`<www.google.com>` will not work.
+
+This changes brings Zettlr's link functionality much more into alignment with
+other editors as well, since this is the way that many other applications handle
+links as well.
+
 ## GUI and Functionality
 
-- Fixed a visual issue that would handle overly long window titles improperly
-- Fixed `Tab` not indenting/unindenting code in the CodeEditors (snippets,
-  profiles, etc.)
-- Fixed a precedence issue that would make it impossible to use autocomplete
-  while filling in a snippet; now, accepting a potential autocomplete has a
-  higher precedence than moving to the next tabstop of a snippet, making working
-  with snippets more ergonomic
-- Images now render more appropriately in inline-contexts
-- Updated the German translation
-- Fixed the keyboard shortcut for inserting footnotes on Windows and Linux
-- Removed the accent color setting: now the accent color will always be the
-  system accent color on macOS and Windows, and Zettlr's brand green on Linux;
-  themes do not provide an accent color anymore
-- Restored syntax highlighting for inline math code
-- Fixes an issue that would frequently may make the cursor appear to jump or a
-  dialog appearing warning of external changes (#4729; #4732)
+- **Feature**: Zettlr can now suggest you emojis during autocompletion. Emojis
+  use the same trigger character as the snippets autocomplete, a colon (`:`);
+  and Emojis will always be sorted below your snippets -- you can turn this off
+  in the editor settings
+- **Feature**: We've completely redesigned the preferences dialog; now it is
+  more aligned with the system preferences on macOS and Windows, allows
+  searching and follows a more stringent structure
+- Removed the option for choosing to sort by either file creation or last
+  modification time, since that can also be inferred from whichever time you
+  choose to display
+- Removed the option for activating or disabling automatic file creation upon
+  following internal links; now this will happen automatically as long as the
+  "custom folder" option points to an existing folder; to disable this
+  functionality simply remove the folder path
+- Fixed a bug where recent documents would not turn up in the menu
+- Fixed the sidebar shortcut: It is now `Cmd/Ctrl+Shift+0` (to align with the
+  file manager shortcut, `Cmd/Ctrl+Shift+1`)
+- Custom protocols should now be opened without problems by Zettlr (#3853)
+- Added Tamil (India) translation (#4848)
+- Removed the custom plain link parser out of two reasons: (1) It was a tad too
+  aggressive, detecting links even where none were wanted; (2) Pandoc doesn't
+  support auto-links in such a way as we have implemented it, leading to
+  inconsistencies in exports
+- The YAML frontmatter is now ignored for the purposes of previewing files,
+  showing a more meaningful preview of its contents (#4598)
+- Improve pasting behavior: Now text from Microsoft Word or Excel will be pasted
+  as text, instead of offering to insert an image of the selection
+- Fix pasting behavior: Now Zettlr should properly paste most formatted text
+  without too much noise (in the form of comments, styles, and other additions)
+- Fix restart-dialog showing multiple times for the same options (#4768)
+- Fix the active typewriter line background color in dark mode
+- Fixed an issue where gutter markers were not equally offset when typewriter
+  mode was active (#4918)
+- Fixed non-working file deletion menu item (#3894)
+- Fixed a bug that would not ask users to save their changes when closing the
+  last main window on Windows or Linux (#4898)
+- Fixed a bug that would not properly restore the open directory on application
+  boot (#3797)
+- Fixed an issue that would break drag & drop behavior of editor panes when the
+  pathname contained a colon on non-Windows systems (#4822)
+- Fixed an issue where the re-ordering of list item numbers would not ensure
+  that lists start at 1
+- Fixed an issue that has removed the custom background color from the Bielefeld
+  and Bordeaux themes (#4913)
+- Fixed broken context menu options for images (#4893)
 
 ## Under the Hood
 
-(nothing here)
+- Switched from the `vue-recommended` to the `vue3-recommended` ESLint ruleset
+- Removed the config option `sortingTime` since that can be inferred from the
+  option `fileMetaTime`
+- Removed the config option `zkn.autoCreateLinkedFiles`, since that can be
+  inferred from the option `zkn.customDir`
+- Simplified tab bar tab retention logic across reloads
+- Add the ability to programmatically open the assets window with specified tab
+- Bump the bundled Pandoc to version `3.1.11`
+- Failure to fetch a link preview will now simply log a verbose message instead
+  of an error
+- Reimplement configuration guard options as Maps to allow for volatile state
+- Begin migrating application state to Pinia
+- Fully remove the renderers's dependency on Node.js's path module to prepare
+  for fully sandboxing the window code; instead polyfill the required functions,
+  testing them against the module's behavior
+- Completely sandbox renderers
+- Switched the popover logic away from deprecated plugin syntax to child
+  components with `Teleport` (#4663)
+- No more JavaScript: With this update, the entire code base (sans build
+  scripts) is written in TypeScript.
+- Migrated from Electron's deprecated clipboard API to the native Browser API
+- Migrated the entire main window store state from Vuex to Pinia
+
+# 3.0.5
+
+## Dropping Support for macOS 10.13 and 10.14
+
+Due to Zettlr's underlying Electron framework dropping support for macOS 10.13
+(High Sierra) and 10.14 (Mojave), Zettlr drops support for these operating
+systems as well. To continue to use Zettlr on a Mac, ensure to update to at
+least macOS 10.15 (Catalina).
+
+## Linux ARM builds functionally again
+
+Since Zettlr v3.0.0, Linux users on ARM-machines had the issue that they could
+not run the app, as a dependency has been compiled for the wrong architecture.
+Thanks to efforts by @LaPingvino, this has now been finally fixed and you should
+be able to run the app again just fine on ARM computers with Linux.
+
+## GUI and Functionality
+
+- Fix: Segmentation faults in Wayland environments (#4877)
+- Fix Linux ARM builds (#4910)
+
+## Under the Hood
+
+- Update Electron from v25 to the latest available release (`v28.2.1`); this
+  fixes segmentation fault issues in Wayland environments (#4877) and ensures
+  that Zettlr keeps running a supported Electron version, which is especially
+  pressing for the Arch Linux repository (see #4887; thanks to @alerque for
+  bringing this to our attention), but also means that macOS 10.13 and 10.14 are
+  no longer supported
+- Switched to Zig compiler to enable successful compilation for Linux ARM
+  targets (#4910)
+
+# 3.0.4
+
+## Security patch -- Please Update immediately
+
+Dear users,
+
+a security researcher has brought to our attention an issue that can lead to a
+potential remote code execution (RCE) attack utilizing Zettlr's binary. This
+issue has been first discovered and exploited in 2023. It is unlikely that you
+have been affected, since the effort for this exploit is comparatively high and
+it requires you to take some non-trivial actions. However, since we are
+committed to making the app as safe as humanely possible to use, and the
+corresponding fix was pretty easy to implement, we decided to offer this
+security release that includes the same functionality as Zettlr v3.0.3, but with
+the added security patch included.
+
+A CVE (Common Vulnerabilities and Exposures) number has been applied for at
+MITRE, but not yet issued. Once we know the number, we will publish a postmortem
+on our blog and include some background as well as details about what this issue
+exactly implied, how it could have been exploited, and how we have mitigated the
+issue in this patch.
+
+## GUI and Functionality
+
+Nothing changed.
+
+## Under the hood
+
+- Update Electron to the last version 25 update (`v25.9.8`)
+- Add Electron fuses support and disable those that allow certain debug commands
+  to be sent to the binary (e.g., `--inspect`). This can be abused by malicious
+  actors for remote code execution (RCE) attacks (CVE number applied for at
+  MITRE; not yet issued; please see the Zettlr blog for updates)
 
 # 3.0.3
 
@@ -215,6 +355,11 @@ quick list:
    settings. Both are now fixed to `[[` and `]]` respectively. We have figured
    that nobody needs to configure this, and it makes many parts of our code
    easier.
+
+## Correcting Ordered List Numbers on Move
+
+Moving lines that are part of an ordered list using 'Alt-UpArrow'/'Alt-DownArrow' 
+will now also correct the list numbers of any affected lists after the move.
 
 ## New Icons on Windows and Linux
 

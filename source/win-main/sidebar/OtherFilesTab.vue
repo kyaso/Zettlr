@@ -33,57 +33,52 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { trans } from '@common/i18n-renderer'
-import { DirDescriptor, OtherFileDescriptor } from '@dts/common/fsal'
+import { type OtherFileDescriptor } from '@dts/common/fsal'
 import { ClarityIcons } from '@cds/core/icon'
-import { defineComponent } from 'vue'
+import { computed } from 'vue'
+import { useConfigStore, useOpenDirectoryStore } from 'source/pinia'
 
-const path = window.path
+const openDirectoryStore = useOpenDirectoryStore()
+const configStore = useConfigStore()
 
-export default defineComponent({
-  name: 'OtherFilesTab',
-  computed: {
-    otherFilesLabel: function (): string {
-      return trans('Other files')
-    },
-    openDirLabel: function (): string {
-      return trans('Open directory')
-    },
-    noAttachmentsMessage: function (): string {
-      return trans('No other files')
-    },
-    attachments: function (): OtherFileDescriptor[] {
-      const currentDir = this.$store.state.selectedDirectory as DirDescriptor|null
-      if (currentDir === null) {
-        return []
-      } else {
-        const extensions: string[] = this.$store.state.config.attachmentExtensions
-        const attachments = currentDir.children.filter(child => child.type === 'other') as OtherFileDescriptor[]
-        return attachments.filter(attachment => extensions.includes(attachment.ext))
-      }
-    }
-  },
-  methods: {
-    /**
-     * Adds additional data to the dragevent
-     *
-     * @param   {DragEvent}  event           The drag event
-     * @param   {string}  attachmentPath  The path to add as a file
-     */
-    handleDragStart: function (event: DragEvent, attachmentPath: string) {
-      // Indicate with custom data that this is a file from the sidebar
-      const data = { type: 'other', path: attachmentPath }
-      event.dataTransfer?.setData('text/x-zettlr-file', JSON.stringify(data))
-    },
-    getIcon: function (attachmentPath: string) {
-      const fileExtIcon = ClarityIcons.registry?.['file-ext'] // ClarityIcons.get('file-ext')
-      if (typeof fileExtIcon === 'string') {
-        return fileExtIcon.replace('EXT', path.extname(attachmentPath).slice(1, 4))
-      } else {
-        return ''
-      }
-    }
+const otherFilesLabel = trans('Other files')
+const openDirLabel = trans('Open directory')
+const noAttachmentsMessage = trans('No other files')
+
+const attachments = computed(() => {
+  const currentDir = openDirectoryStore.openDirectory
+  if (currentDir === null) {
+    return []
+  } else {
+    const extensions = configStore.config.attachmentExtensions
+    return currentDir.children
+      .filter((child): child is OtherFileDescriptor => child.type === 'other')
+      .filter(attachment => extensions.includes(attachment.ext))
   }
 })
+
+/**
+ * Adds additional data to the dragevent
+ *
+ * @param   {DragEvent}  event           The drag event
+ * @param   {string}  attachmentPath  The path to add as a file
+ */
+function handleDragStart (event: DragEvent, attachmentPath: string): void {
+  // Indicate with custom data that this is a file from the sidebar
+  const data = { type: 'other', path: attachmentPath }
+  event.dataTransfer?.setData('text/x-zettlr-file', JSON.stringify(data))
+}
+
+function getIcon (attachmentPath: string): string {
+  const fileExtIcon = ClarityIcons.registry?.['file-ext']
+  if (typeof fileExtIcon === 'string') {
+    const ext = attachmentPath.substring(attachmentPath.lastIndexOf('.') + 1)
+    return fileExtIcon.replace('EXT', ext)
+  } else {
+    return ''
+  }
+}
 </script>
+../../pinia

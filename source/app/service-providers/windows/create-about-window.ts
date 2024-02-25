@@ -43,10 +43,7 @@ export default function createAboutWindow (logger: LogProvider, config: ConfigPr
     show: false,
     fullscreenable: false,
     webPreferences: {
-      // contextIsolation and sandbox mean: Preload scripts have access to
-      // Node modules, the renderers not
-      contextIsolation: true,
-      sandbox: false,
+      sandbox: true,
       preload: ABOUT_PRELOAD_WEBPACK_ENTRY
     }
   }
@@ -76,12 +73,11 @@ export default function createAboutWindow (logger: LogProvider, config: ConfigPr
   })
 
   // Emitted when the user wants to close the window.
-  window.on('close', (event) => {
+  window.on('close', (_event) => {
     let ses = window.webContents.session
     // Do not "clearCache" because that would only delete my own index files
     ses.clearStorageData({
       storages: [
-        'appcache',
         'cookies', // Nobody needs cookies except for downloading pandoc etc
         'localstorage',
         'shadercache', // Should never contain anything

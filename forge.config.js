@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { spawn } = require('child_process')
 const fs = require('fs').promises
 const path = require('path')
+const { FusesPlugin } = require('@electron-forge/plugin-fuses')
+const { FuseV1Options, FuseVersion } = require('@electron/fuses')
 
 /**
  * This function runs the get-pandoc script in order to download the requested
@@ -325,7 +329,18 @@ module.exports = {
           ]
         }
       }
-    }
+    },
+    // When building for production, turn off a few fuses that disable certain
+    // debug controls of the app.
+    ...((process.env.NODE_ENV === 'production')
+      ? [new FusesPlugin({
+          version: FuseVersion.V1,
+          [FuseV1Options.RunAsNode]: false,
+          [FuseV1Options.EnableCookieEncryption]: true,
+          [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
+          [FuseV1Options.EnableNodeCliInspectArguments]: false
+        })]
+      : [])
   ],
   makers: [
     {
@@ -339,7 +354,7 @@ module.exports = {
           // size: 500, // NOTE: Estimate, need to refine
           description: 'Your one-stop publication workbench.',
           productDescription: 'Your one-stop publication workbench.',
-          recommends: [ 'quarto', 'pandoc', 'tex-live' ],
+          recommends: [ 'quarto', 'pandoc', 'texlive | texlive-base | texlive-full' ],
           genericName: 'Markdown Editor',
           // Electron forge recommends 512px
           icon: './resources/icons/png/512x512.png',

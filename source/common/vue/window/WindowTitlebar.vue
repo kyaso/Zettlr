@@ -1,10 +1,10 @@
 <template>
   <div id="titlebar">
-    {{ titleContent }}
+    {{ props.titleContent }}
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 /**
  * @ignore
  * BEGIN HEADER
@@ -21,17 +21,9 @@
  * END HEADER
  */
 
-export default {
-  name: 'WindowTitlebar',
-  props: {
-    titleContent: {
-      type: String,
-      default: ''
-    }
-  },
-  computed: {
-  }
-}
+const props = defineProps<{
+  titleContent: string
+}>()
 </script>
 
 <style lang="less">

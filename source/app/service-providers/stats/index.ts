@@ -18,6 +18,7 @@ import { app, ipcMain } from 'electron'
 import ProviderContract from '../provider-contract'
 import type LogProvider from '../log'
 import PersistentDataContainer from '@common/modules/persistent-data-container'
+import broadcastIPCMessage from '@common/util/broadcast-ipc-message'
 
 export interface Stats {
   wordCount: Record<string, number> // All words for the graph
@@ -111,6 +112,7 @@ export default class StatsProvider extends ProviderContract {
     // Trigger a save. _recompute is being called from all the different setters
     // after anything changes. NOTE: Remember this for future stuff!
     this.container.set(this.stats)
+    broadcastIPCMessage('stats-updated', this.stats)
   }
 
   /**
@@ -159,7 +161,7 @@ export default class StatsProvider extends ProviderContract {
     }
 
     // For now we only need a word count
-    if (!this.stats.wordCount.hasOwnProperty(this.today)) {
+    if (!(this.today in this.stats.wordCount)) {
       this.stats.wordCount[this.today] = val
     } else {
       this.stats.wordCount[this.today] = this.stats.wordCount[this.today] + val
@@ -174,7 +176,7 @@ export default class StatsProvider extends ProviderContract {
    * @return {ZettlrStats} This for chainability.
    */
   increasePomodoros (): void {
-    if (!this.stats.pomodoros.hasOwnProperty(this.today)) {
+    if (!(this.today in this.stats.pomodoros)) {
       this.stats.pomodoros[this.today] = 1
     } else {
       this.stats.pomodoros[this.today] = this.stats.pomodoros[this.today] + 1

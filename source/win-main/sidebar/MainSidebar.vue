@@ -10,8 +10,8 @@
     <div id="sidebar-tab-container">
       <ToCTab
         v-if="currentTab === 'toc'"
-        v-on:move-section="$emit('move-section', $event)"
-        v-on:jump-to-line="$emit('jump-to-line', $event)"
+        v-on:move-section="emit('move-section', $event)"
+        v-on:jump-to-line="emit('jump-to-line', $event)"
       ></ToCTab>
       <!-- <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab> -->
       <!-- <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab> -->
@@ -28,7 +28,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 /**
  * @ignore
  * BEGIN HEADER
@@ -45,92 +45,59 @@
 
 import { trans } from '@common/i18n-renderer'
 import TabBar from '@common/vue/TabBar.vue'
-import { defineComponent } from 'vue'
-import { TabbarControl } from '@dts/renderer/window'
+import { computed } from 'vue'
 import ToCTab from './ToCTab.vue'
 // import ReferencesTab from './ReferencesTab.vue'
 import RelatedFilesTab from './RelatedFilesTab.vue'
 // import OtherFilesTab from './OtherFilesTab.vue'
 import BacklinksTab from './BacklinksTab.vue'
-import { OpenDocument } from '@dts/common/documents'
+import { useConfigStore } from 'source/pinia'
 
-export default defineComponent({
-  name: 'MainSidebar',
-  components: {
-    TabBar,
-    ToCTab,
-    // ReferencesTab,
-    RelatedFilesTab,
-    // OtherFilesTab,
-    BacklinksTab
+const configStore = useConfigStore()
+
+const emit = defineEmits<{
+  (e: 'move-section', data: { from: number, to: number }): void
+  (e: 'jump-to-line', line: number): void
+}>()
+
+const currentTab = computed(() => configStore.config.window.currentSidebarTab)
+
+const tabs = [
+  {
+    icon: 'indent',
+    id: 'toc',
+    target: 'sidebar-toc',
+    label: trans('Table of Contents')
   },
-  emits: [ 'move-section', 'jump-to-line', 'jtl' ],
-  data: function () {
-    return {}
+  // {
+  //   icon: 'book',
+  //   id: 'references',
+  //   target: 'sidebar-bibliography',
+  //   label: trans('References')
+  // },
+  {
+    icon: 'file-group',
+    id: 'relatedFiles',
+    target: 'sidebar-related-files',
+    label: trans('Related files')
   },
-  computed: {
-    currentTab: function (): string {
-      return this.$store.state.config['window.currentSidebarTab']
-    },
-    tabs: function (): TabbarControl[] {
-      return [
-        {
-          icon: 'indent',
-          id: 'toc',
-          target: 'sidebar-toc',
-          label: this.tocLabel
-        },
-        {
-          icon: 'file-group',
-          id: 'relatedFiles',
-          target: 'sidebar-related-files',
-          label: this.relatedFilesLabel
-        },
-        // {
-        //   icon: 'paperclip',
-        //   id: 'attachments',
-        //   target: 'sidebar-files',
-        //   label: this.otherFilesLabel
-        // },
-        {
-          icon: 'link',
-          id: 'mentions',
-          target: 'sidebar-mentions',
-          label: 'Mentions'
-        }
-        // {
-        //   icon: 'book',
-        //   id: 'references',
-        //   target: 'sidebar-bibliography',
-        //   label: this.referencesLabel
-        // }
-      ]
-    },
-    // otherFilesLabel: function (): string {
-    //   return trans('Other files')
-    // },
-    // referencesLabel: function (): string {
-    //   return trans('References')
-    // },
-    tocLabel: function (): string {
-      return trans('Table of Contents')
-    },
-    relatedFilesLabel: function (): string {
-      return trans('Related files')
-    },
-    activeFile: function (): OpenDocument|null {
-      return this.$store.getters.lastLeafActiveFile()
-    },
-    modifiedFiles: function (): string[] {
-      return this.$store.state.modifiedDocuments
-    }
-  },
-  methods: {
-    setCurrentTab: function (which: string) {
-      (global as any).config.set('window.currentSidebarTab', which)
-    }
+  {
+    icon: 'link',
+    id: 'mentions',
+    target: 'sidebar-mentions',
+    label: 'Mentions'
   }
-})
+  // {
+  //   icon: 'paperclip',
+  //   id: 'attachments',
+  //   target: 'sidebar-files',
+  //   label: trans('Other files')
+  // }
+]
+
+function setCurrentTab (which: string): void {
+  window.config.set('window.currentSidebarTab', which)
+}
 </script>
 
 <style lang="less">

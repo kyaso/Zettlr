@@ -16,8 +16,7 @@
 // NOTE: fileExists is called "isFile" everywhere else, we have just renamed
 // it because of a naming conflict in the function.
 import { getProtocolRE, getLinkRE } from '../regular-expressions'
-
-const path = window.path
+import { isAbsolutePath, resolvePath } from './renderer-path-polyfill'
 
 const protocolRE = getProtocolRE()
 const linkRE = getLinkRE()
@@ -69,6 +68,21 @@ export default function makeValidUri (uri: string, base: string = ''): string {
     return 'mailto:' + uri
   }
 
+  try {
+    const parsed = new URL(uri)
+    if (parsed.protocol === 'file:') {
+      // "file" links could be relative, and we need to tend to that possibility
+      // below, so even if this is a proper URL, we have to let the rest of the
+      // functionality take over.
+      throw new Error('Look at my smart programming lol')
+    }
+    return uri
+  } catch (err) {
+    // We can trust the URL constructor to throw an error if it is not something
+    // that a web browser can *immediately* open. So if new URL() doesn't throw,
+    // we have a proper URL and can save us these shenanigans.
+  }
+
   // Set the isFile var to undefined
   let isFile
 
@@ -86,7 +100,7 @@ export default function makeValidUri (uri: string, base: string = ''): string {
   } else if (uri.startsWith('//') || uri.startsWith('./') || uri.startsWith('../')) {
     // We know it's a file (shared drive, or relative to this directory)
     isFile = true
-  } else if (path.isAbsolute(uri)) {
+  } else if (isAbsolutePath(uri)) {
     // The link is already absolute
     isFile = true
   }
@@ -144,8 +158,8 @@ export default function makeValidUri (uri: string, base: string = ''): string {
     }
 
     // We've got a relative path
-    if (!path.isAbsolute(uri)) {
-      uri = path.resolve(base, uri)
+    if (!isAbsolutePath(uri)) {
+      uri = resolvePath(base, uri)
     }
 
     protocol = 'safe-file'

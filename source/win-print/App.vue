@@ -33,11 +33,10 @@
  */
 
 import { trans } from '@common/i18n-renderer'
-import WindowChrome from '@common/vue/window/Chrome.vue'
+import WindowChrome from '@common/vue/window/WindowChrome.vue'
 import { defineComponent } from 'vue'
-import { ToolbarControl } from '@dts/renderer/window'
-
-const path = window.path
+import { pathBasename } from '@common/util/renderer-path-polyfill'
+import { type ToolbarControl } from '@common/vue/window/WindowToolbar.vue'
 
 export default defineComponent({
   components: {
@@ -51,8 +50,8 @@ export default defineComponent({
   computed: {
     windowTitle: function (): string {
       if (this.filePath !== '') {
-        document.title = path.basename(this.filePath)
-        return path.basename(this.filePath)
+        document.title = pathBasename(this.filePath)
+        return pathBasename(this.filePath)
       } else {
         document.title = trans('Print…')
         return trans('Print…')
@@ -80,7 +79,7 @@ export default defineComponent({
     }
   },
   methods: {
-    handleClick: function (buttonID: string) {
+    handleClick: function (buttonID?: string) {
       if (buttonID === 'print') {
         // NOTE: Printing only works in production, as during development
         // contents are served from localhost:3000 (which gives a CORS error)
@@ -94,3 +93,4 @@ export default defineComponent({
 <style lang="less">
 //
 </style>
+@common/util/renderer-path-polyfill

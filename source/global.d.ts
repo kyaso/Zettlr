@@ -23,10 +23,22 @@
  * These filetypes can be "imported" but their resolved value will be a string
  * pointing to wherever the file-loader has put these files.
  */
-declare module '*.png'
-declare module '*.svg'
-declare module '*.mp3'
-declare module '*.wav'
+declare module '*.png' {
+  const filePath: string
+  export default filePath
+}
+declare module '*.svg' {
+  const filePath: string
+  export default filePath
+}
+declare module '*.mp3' {
+  const filePath: string
+  export default filePath
+}
+declare module '*.wav' {
+  const filePath: string
+  export default filePath
+}
 
 declare module 'vue-virtual-scroller'
 declare module '@joplin/turndown'
@@ -150,63 +162,5 @@ declare interface Window {
      * @return {Function}  A function to stop listening (remove the listener)
      */
     on: (channel: string, listener: (event: undefined, ...args: any) => void) => () => void
-  }
-  path: RendererPath
-  clipboard: {
-    /**
-     * Returns whatever text is currently in the clipboard
-     *
-     * @return  {string}  The clipboard's plain text contents
-     */
-    readText: () => string
-    /**
-     * Returns whatever HTML is currently in the clipboard
-     *
-     * @return  {string}  The clipboard's HTML contents
-     */
-    readHTML: () => string
-    /**
-     * Returns whatever RTF is currently in the clipboard
-     *
-     * @return  {string}  The clipboard's RTF contents
-     */
-    readRTF: () => string
-    /**
-     * Is there currently image data in the clipboard?
-     *
-     * @return  {boolean}  True if the clipboard contains a non-empty image
-     */
-    hasImage: () => boolean
-    /**
-     * Returns the image data for the clipbord content
-     *
-     * @return {{ size: Electron.Size, aspect: number, dataUrl: string }} The image data
-     */
-    getImageData: () => { size: Electron.Size, aspect: number, dataUrl: string }
-    /**
-     * Writes the data into the clipboard
-     *
-     * @param {Electron.Data} data The data to be written to the clipboard
-     */
-    write: (data: Electron.Data) => void
-    /**
-     * Writes the given text into the clipboard
-     *
-     * @param   {string}  text  The text to put into the clipboard
-     */
-    writeText: (text: string) => void
-    /**
-     * Determines whether there is currently a selection clipboard (Linux)
-     *
-     * @return  {boolean}  True if there is a selection clipboard
-     */
-    hasSelectionClipboard: () => boolean
-    /**
-     * Returns the plain text and HTML contents of the selection clipboard on
-     * linux.
-     *
-     * @return  {{text: string, html: string}}}  Returns an object containing HTML and text contents
-     */
-    getSelectionClipboard: () => { text: string, html: string }
   }
 }

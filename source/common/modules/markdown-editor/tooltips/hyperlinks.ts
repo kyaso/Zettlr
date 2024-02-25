@@ -17,8 +17,8 @@ import { syntaxTree } from '@codemirror/language'
 import { configField } from '../util/configuration'
 import makeValidUri from '@common/util/make-valid-uri'
 import { shortenUrlVisually } from '@common/util/shorten-url-visually'
+import { pathBasename } from '@common/util/renderer-path-polyfill'
 
-const path = window.path
 const ipcRenderer = window.ipc
 
 /**
@@ -40,8 +40,9 @@ export function urlTooltip (view: EditorView, pos: number, side: 1 | -1): Toolti
   }
 
   // We got an URL.
+  const absPath = view.state.field(configField).metadata.path
   const url = view.state.sliceDoc(nodeAt.from, nodeAt.to)
-  const base = path.dirname(view.state.field(configField).metadata.path)
+  const base = pathBasename(absPath)
   const validURI = makeValidUri(url, base)
 
   return {

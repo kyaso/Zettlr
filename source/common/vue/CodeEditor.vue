@@ -4,7 +4,7 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 /**
  * @ignore
  * BEGIN HEADER
@@ -29,7 +29,7 @@ import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
 import { bracketMatching, codeFolding, foldGutter, indentOnInput, StreamLanguage } from '@codemirror/language'
 import { codeSyntaxHighlighter, markdownSyntaxHighlighter } from '@common/modules/markdown-editor/theme/syntax'
 import { yaml } from '@codemirror/legacy-modes/mode/yaml'
-import { EditorState, Extension } from '@codemirror/state'
+import { EditorState, type Extension } from '@codemirror/state'
 import { cssLanguage } from '@codemirror/lang-css'
 import markdownParser from '@common/modules/markdown-editor/parser/markdown-parser'
 import { yamlLint } from '@common/modules/markdown-editor/linters/yaml-lint'
@@ -72,7 +72,7 @@ function getExtensions (mode: 'css'|'yaml'|'markdown-snippets'): Extension[] {
     statusbar,
     EditorState.allowMultipleSelections.of(true),
     // Ensure the cursor never completely sticks to the top or bottom of the editor
-    EditorView.scrollMargins.of(view => { return { top: 30, bottom: 30 } }),
+    EditorView.scrollMargins.of(_view => { return { top: 30, bottom: 30 } }),
     lintGutter(),
     lineNumbers(),
     closeBrackets(),
@@ -130,7 +130,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{(e: 'update:modelValue', newContents: string): void}>()
+const emit = defineEmits<(e: 'update:modelValue', newContents: string) => void>()
 
 watch(toRef(props, 'modelValue'), () => {
   // Assign new contents, but only if not the same as the current contents

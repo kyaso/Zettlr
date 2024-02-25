@@ -23,8 +23,8 @@ import { configField } from '../util/configuration'
 import makeValidUri from '@common/util/make-valid-uri'
 import tippy from 'tippy.js'
 import { shortenUrlVisually } from '@common/util/shorten-url-visually'
+import { pathDirname } from '@common/util/renderer-path-polyfill'
 
-const path = window.path
 const ipcRenderer = window.ipc
 
 class LinkWidget extends WidgetType {
@@ -37,7 +37,8 @@ class LinkWidget extends WidgetType {
   }
 
   toDOM (view: EditorView): HTMLElement {
-    const base = path.dirname(view.state.field(configField).metadata.path)
+    const absPath = view.state.field(configField).metadata.path
+    const base = pathDirname(absPath)
     const validURI = makeValidUri(this.linkUrl, base)
 
     const elem = document.createElement('a')
