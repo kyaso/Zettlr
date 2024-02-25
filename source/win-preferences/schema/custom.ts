@@ -12,107 +12,15 @@
  * END HEADER
  */
 
-export default function (): any {
-  return {
-    fieldsets: [
-      [
-        // Favorite files
+import { PreferencesGroups, type PreferencesFieldset } from '../App.vue'
 
-        {
-          type: 'file',
-          label: 'Ctrl + 1',
-          model: 'custom.ctrlNum.file1',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 2',
-          model: 'custom.ctrlNum.file2',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 3',
-          model: 'custom.ctrlNum.file3',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 4',
-          model: 'custom.ctrlNum.file4',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 5',
-          model: 'custom.ctrlNum.file5',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 6',
-          model: 'custom.ctrlNum.file6',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 7',
-          model: 'custom.ctrlNum.file7',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 8',
-          model: 'custom.ctrlNum.file8',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        },
-        {
-          type: 'file',
-          label: 'Ctrl + 9',
-          model: 'custom.ctrlNum.file9',
-          reset: '',
-          filter: {
-            'md': 'Markdown'
-          }
-        }
-      ],
-
-      [
-        // How the mouse forward/back buttons should behave
-        {
-          type: 'checkbox',
-          label: 'Mouse forward/back buttons should switch between current and last file',
-          model: 'custom.mousePrevBack',
-          reset: false
-        }
-      ],
-
-      // Custom values for testing
-      [
+export function getCustomFields (): PreferencesFieldset[] {
+  return [
+    {
+      title: 'Test values',
+      group: PreferencesGroups.Custom,
+      help: undefined,
+      fields: [
         {
           type: 'number',
           label: 'custom.test.val1',
@@ -144,6 +52,6 @@ export default function (): any {
           reset: 0
         }
       ]
-    ]
-  }
+    }
+  ]
 }

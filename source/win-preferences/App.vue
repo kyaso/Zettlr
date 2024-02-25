@@ -74,7 +74,6 @@ import { getZettelkastenFields } from './schema/zettelkasten'
 import { getSpellcheckingFields } from './schema/spellchecking'
 import { getAutocorrectFields } from './schema/autocorrect'
 import { getAdvancedFields } from './schema/advanced'
-// TODO kyaso
 import { getCustomFields } from './schema/custom'
 import { defineComponent } from 'vue'
 import { resolveLangCode } from '@common/util/map-lang-code'
@@ -91,6 +90,7 @@ export enum PreferencesGroups {
   Appearance,
   Autocorrect,
   Citations,
+  Custom,
   Editor,
   FileManager,
   General,
@@ -210,6 +210,7 @@ export default defineComponent({
         ...getAppearanceFields(),
         ...getAutocorrectFields(),
         ...getCitationFields(),
+        ...getCustomFields(),
         ...getEditorFields(),
         ...getFileManagerFields(),
         ...getGeneralFields(this.appLangOptions),
@@ -310,8 +311,12 @@ export default defineComponent({
           displayText: trans('Advanced'),
           icon: 'cpu',
           id: PreferencesGroups.Advanced
+        },
+        {
+          displayText: 'Custom',
+          icon: 'flask',
+          id: PreferencesGroups.Custom
         }
-        // TODO kyaso: custom tab
       ]
     },
     windowTitle: function (): string {
