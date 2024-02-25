@@ -633,7 +633,7 @@ body.darwin {
     color: rgb(53, 53, 53);
 
     // On macOS, non-standard icons are normally displayed in color
-    clr-icon.special { color: var(--system-accent-color, --c-primary); }
+    cds-icon.special { color: var(--system-accent-color, --c-primary); }
 
     .display-text {
       font-size: 13px;
