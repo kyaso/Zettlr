@@ -59,7 +59,7 @@
         </div>
         <div class="filepath">
           {{ result.file.relativeDirectoryPath
-          }}{{ result.file.relativeDirectoryPath !== '' ? sep : ''
+          }}{{ result.file.relativeDirectoryPath !== '' ? '/' : ''
           }}{{ result.file.filename }}
         </div>
         <div v-if="!result.hideResultSet" class="results-container">
@@ -141,7 +141,7 @@
         </div>
         <div class="filepath">
           {{ result.file.relativeDirectoryPath
-          }}{{ result.file.relativeDirectoryPath !== '' ? sep : ''
+          }}{{ result.file.relativeDirectoryPath !== '' ? '/' : ''
           }}{{ result.file.filename }}
         </div>
         <div v-if="!result.hideResultSet" class="results-container">
@@ -272,18 +272,18 @@
  */
 
 import ButtonControl from '@common/vue/form/elements/ButtonControl.vue'
-import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
-import { defineComponent } from '@vue/runtime-core'
-import { markText } from '../shared'
+import { type SearchResult, type SearchResultWrapper, type SearchTerm } from '@dts/common/search'
+// import { defineComponent } from '@vue/runtime-core'
+import { markText as markTextShared } from '../shared'
 import { copyZknLink } from '@common/util/clipboard'
 import { DP_EVENTS, OpenDocument } from '@dts/common/documents'
 import objectToArray from '@common/util/object-to-array'
 import compileSearchTerms from '@common/util/compile-search-terms'
-import { MDFileDescriptor } from '@dts/common/fsal'
+import { type MDFileDescriptor } from '@dts/common/fsal'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useConfigStore, useDocumentTreeStore, useWorkspacesStore } from 'source/pinia'
+import { pathBasename } from '@common/util/renderer-path-polyfill'
 
-const path = window.path
 const ipcRenderer = window.ipc
 
 const documentTreeStore = useDocumentTreeStore()
@@ -294,7 +294,7 @@ export interface OutboundLink {
   link: string // The link text
   targetFilePath: string | undefined // The target file in case the link points to a file
   files: string[] // List of files that have that link
-  hideFileSet: Boolean // Whether to hide in sidebar
+  hideFileSet: boolean // Whether to hide in sidebar
 }
 
 defineProps({
@@ -320,17 +320,16 @@ const backlinks = ref<SearchResultWrapper>([])
 const unlinkedMentions = ref<SearchResultWrapper>([])
 const outboundLinks = ref<OutboundLink>([])
 
-const sep = computed(() => path.sep)
 const numBacklinks = computed(() => {
   let sum = 0
-  backlinks.forEach((x) => {
+  backlinks.value.forEach((x) => {
     sum += x.result.length
   })
   return sum
 })
 const numUnlinkedMentions = computed(() => {
   let sum = 0
-  unlinkedMentions.forEach((x) => {
+  unlinkedMentions.value.forEach((x) => {
     sum += x.result.length
   })
   return sum
@@ -339,14 +338,14 @@ const numUnlinkedMentions = computed(() => {
 function getTitle(name: string, num: number): string {
   return name + ' (' + num + ')'
 }
-const numOutboundLinks = computed(() => outboundLinks.length)
-const backlinksTitle = computed(() => getTitle('Backlinks', numBacklinks))
-const unlinkedMentionsTitle = computed(() => getTitle('Unlinked Mentions', numUnlinkedMentions))
-const outboundLinksTitle = computed(() => getTitle('Outbound links', numOutboundLinks))
+const numOutboundLinks = computed(() => outboundLinks.value.length)
+const backlinksTitle = computed(() => getTitle('Backlinks', numBacklinks.value))
+const unlinkedMentionsTitle = computed(() => getTitle('Unlinked Mentions', numUnlinkedMentions.value))
+const outboundLinksTitle = computed(() => getTitle('Outbound links', numOutboundLinks.value))
 
 const lastLeafId = computed(() => documentTreeStore.lastLeafId)
 const lastActiveFile = computed(() => documentTreeStore.lastLeafActiveFile)
-const recentSearchQuery = computed (() => configStore.config.window.recentGlobalSearches)
+const recentSearchQuery = computed(() => configStore.config.window.recentGlobalSearches)
 const fileTree = computed(() => workspacesStore.rootDescriptors)
 
 watch(lastActiveFile, () => {
@@ -365,10 +364,9 @@ onMounted(() => {
   })
 })
 
-
 async function recomputeBacklinksAndMentions (): Promise<void> {
   console.log('recomputeBacklinksAndMentions')
-  if (lastActiveFile === null) {
+  if (lastActiveFile.value === null) {
     backlinks.value = []
     unlinkedMentions.value = []
     return
@@ -378,7 +376,7 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
   let backlinks_local: SearchResultWrapper[] = []
 
   // Get file name
-  const fileNameMd = path.basename(lastActiveFile.path)
+  const fileNameMd = pathBasename(lastActiveFile.value.path)
   const activeFileName = fileNameMd.slice(0, -3)
   const fileNameLink = '[[' + activeFileName + ']]'
   const fileNameExact = '"' + activeFileName + '"'
@@ -464,7 +462,7 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
 
 async function recomputeOutboundLinks (): Promise<void> {
   console.log('recomputeOutboundLinks')
-  if (lastActiveFile === null) {
+  if (lastActiveFile.value === null) {
     outboundLinks.value = []
     return
   }
@@ -474,7 +472,7 @@ async function recomputeOutboundLinks (): Promise<void> {
   // Get ALL (= file + non-file) outbound links
   const { links } = await ipcRenderer.invoke('link-provider', {
     command: 'get-all-outbound-links',
-    payload: { filePath: lastActiveFile.path }
+    payload: { filePath: lastActiveFile.value.path }
   }) as { links: string[] }
 
   // For each outbound link, get the list of files that also contain that link
@@ -485,7 +483,7 @@ async function recomputeOutboundLinks (): Promise<void> {
     }) as { files: string[] }
 
     // Remove the active file from the list of files
-    files = files.filter((file) => file !== lastActiveFile.path)
+    files = files.filter((file) => file !== lastActiveFile.value.path)
 
     // Get the target file path in case the link points to an actual file
     let descriptor = await ipcRenderer.invoke('application', {
@@ -515,9 +513,8 @@ async function recomputeOutboundLinks (): Promise<void> {
 }
 
 function recentSearchQueryMatches (text: string): boolean {
-  return (text.includes(recentSearchQuery) || recentSearchQuery.includes(text))
+  return (recentSearchQuery.value.includes(text))
 }
-
 
 async function search (query: string): Promise<SearchResultWrapper[]> {
   let filesToSearch: any[] = []
@@ -529,7 +526,7 @@ async function search (query: string): Promise<SearchResultWrapper[]> {
     configStore.config.fileNameDisplay.includes('title')
 
   // Get files we need to search
-  for (const treeItem of fileTree) {
+  for (const treeItem of fileTree.value) {
     if (treeItem.type !== 'directory') {
       let displayName = treeItem.name
       if (treeItem.type === 'file') {
@@ -591,7 +588,7 @@ async function search (query: string): Promise<SearchResultWrapper[]> {
 
   // For each file to search, run the 'file-search' command
   while (filesToSearch.length > 0) {
-    const fileToSearch = filesToSearch.shift() as any
+    const fileToSearch = filesToSearch.shift()
 
     // Do search
     const result: SearchResult[] = await ipcRenderer.invoke('application', {
@@ -627,21 +624,20 @@ async function search (query: string): Promise<SearchResultWrapper[]> {
   return results
 }
 
-
 function toggleResults (type: string): void {
   if (type === 'backlinks') {
     toggleStateBacklinks.value = !toggleStateBacklinks.value
-    for (const b of backlinks) {
+    for (const b of backlinks.value) {
       b.hideResultSet = toggleStateBacklinks.value
     }
   } else if (type === 'unlinked') {
     toggleStateUnlinked.value = !toggleStateUnlinked.value
-    for (const u of unlinkedMentions) {
+    for (const u of unlinkedMentions.value) {
       u.hideResultSet = toggleStateUnlinked.value
     }
   } else if (type === 'outbound') {
     toggleStateOutbound.value = !toggleStateOutbound.value
-    for (const n of outboundLinks) {
+    for (const n of outboundLinks.value) {
       n.hideFileSet = toggleStateOutbound.value
     }
   }
@@ -652,7 +648,7 @@ function onResultClick (
   event: MouseEvent,
   filePath: string,
   lineNumber: number
-) {
+): void {
   // This intermediary function is needed to make sure that jumpToLine can
   // also be called from within the context menu (see above).
   if (event.button === 2) {
@@ -664,17 +660,17 @@ function onResultClick (
 }
 
 // **** Adapted from GlobalSearch.vue ****
-function jumpToLine (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
+function jumpToLine (filePath: string, lineNumber: number, openInNewTab: boolean = false): void {
   emit('jtl', filePath, lineNumber + 1, openInNewTab)
 }
 
 // **** Copied from GlobalSearch.vue ****
-function markText (resultObject: SearchResult) {
-  return markText(resultObject)
+function markText (resultObject: SearchResult): string {
+  return markTextShared(resultObject)
 }
 
 function getFileName (absolutePath: string): string {
-  return path.basename(absolutePath, '.md')
+  return pathBasename(absolutePath, '.md')
 }
 
 function getLinkStr (link: OutboundLink): string {
@@ -686,7 +682,7 @@ function getLinkStr (link: OutboundLink): string {
   return linkText
 }
 
-function onSearchClick (link: OutboundLink) {
+function onSearchClick (link: OutboundLink): void {
   const linkText = link.link
   ipcRenderer.invoke('application', {
     command: 'start-global-search',
@@ -699,7 +695,7 @@ function onSearchClick (link: OutboundLink) {
 }
 
 // **** Copied from RelatedFilesTab.vue ****
-function requestFile (event: MouseEvent, filePath: string) {
+function requestFile (event: MouseEvent, filePath: string): void {
   ipcRenderer.invoke('documents-provider', {
     command: 'open-file',
     payload: {
@@ -712,13 +708,13 @@ function requestFile (event: MouseEvent, filePath: string) {
     .catch(e => console.error(e))
 }
 
-function linkIsFile (link: OutboundLink) {
+function linkIsFile (link: OutboundLink): boolean {
   return (link.targetFilePath !== undefined)
 }
 
 // Returns true if the outbound link also links back to the active file
-function hasBacklink (link: OutboundLink): Boolean {
-  return backlinks.some((b) => b.file.path === link.targetFilePath)
+function hasBacklink (link: OutboundLink): boolean {
+  return backlinks.value.some((b) => b.file.path === link.targetFilePath)
 }
 </script>
 
@@ -781,3 +777,4 @@ div.backlinks-container {
   background: rgb(99, 255, 221);
 }
 </style>
+@common/util/renderer-path-polyfill

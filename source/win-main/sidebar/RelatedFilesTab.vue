@@ -109,7 +109,7 @@ if (windowId === null) {
 
 const relatedFiles = ref<RelatedFile[]>([])
 
-const hide = ref<Boolean>(false)
+const hide = ref<boolean>(false)
 
 // const relatedFilesLabel = trans('Related files')
 const noRelatedFilesMessage = trans('No related files')
@@ -133,7 +133,7 @@ const scrollerRelatedFiles = computed(() => {
 })
 
 const lastActiveFile = computed(() => documentTreeStore.lastLeafActiveFile)
-const numRelatedFiles = computed(() => relatedFiles.length)
+const numRelatedFiles = computed(() => relatedFiles.value.length)
 const roots = computed(() => workspacesStore.roots)
 const useH1 = computed(() => configStore.config.fileNameDisplay.includes('heading'))
 const useTitle = computed(() => configStore.config.fileNameDisplay.includes('title'))
@@ -141,7 +141,7 @@ const displayMdExtensions = computed(() => configStore.config.display.markdownFi
 const lastLeafId = computed(() => documentTreeStore.lastLeafId)
 const relatedFilesLabel = computed(() => {
   const relLabel = trans('Related files')
-  return (relLabel + ' (' + numRelatedFiles + ')')
+  return (relLabel + ' (' + numRelatedFiles.value + ')')
 })
 
 watch(lastActiveFile, () => {
