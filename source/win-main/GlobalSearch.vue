@@ -209,8 +209,8 @@ const maxWeight = ref<number>(0)
 const activeFileIdx = ref<undefined|number>(undefined)
 // The result line index of the most recently clicked search result.
 const activeLineIdx = ref<undefined|number>(undefined)
-// TODO kyaso:
-// individualResults
+// Actual number of search results (not just number of files)
+const individualResults = ref<number>(0)
 
 const workspacesStore = useWorkspacesStore()
 const openDirectoryStory = useOpenDirectoryStore()
@@ -470,9 +470,33 @@ async function singleSearchRun (): Promise<void> {
           return accumulator + currentValue.weight
         }, 0) // This is the initialValue, b/c we're summing up props
       }
+
+      // If the file was found in the index, artificially blow up the weight of
+      // all its results so the file shows up near the top.
+      //
+      // Rationale: Prefix matches (which are found by default orama) should weigh
+      // higher than infix matches. E.g., if we search for "ita", and there
+      // is one file with only one occurrence of "italy", and another file
+      // with 20 times "digital", the first file should still appear above
+      // the second file (even though the latter one has more results).
+      //
+      // In general: If the search result was also found by the index, give
+      // it significantly more weight.
+      if (res.includes(fileToSearch.path)) {
+        newResult.weight += 100
+      }
+
       windowStateStore.searchResults.push(newResult)
       if (newResult.weight > maxWeight.value) {
         maxWeight.value = newResult.weight
+      }
+
+      // Accumulate individual results
+      individualResults.value += result.length
+      // If title/tag matched there will be a "-1" result line -> don't
+      // count that.
+      if (result[0].line === -1) {
+        individualResults.value--
       }
     }
   }
@@ -486,6 +510,7 @@ function finaliseSearch (): void {
 
 function emptySearchResults (): void {
   windowStateStore.searchResults = []
+  individualResults.value = 0
 
   // Clear indices of active search result
   activeFileIdx.value = -1
