@@ -9,7 +9,6 @@
     v-bind:disable-vibrancy="!vibrancyEnabled"
     v-on:toolbar-toggle="handleToggle($event)"
     v-on:toolbar-click="handleClick($event)"
-    v-on:mousedown="handleMousedown($event)"
   >
     <SplitView
       ref="fileManagerSplitComponent"
