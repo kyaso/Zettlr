@@ -431,13 +431,12 @@ async function singleSearchRun (): Promise<void> {
   // console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
 
   // First filter out all NOT files
-  // TODO kyaso
-  filesToSearch = filesToSearch.filter(f => !notRes.includes(f.path))
+  filesToSearch.value = filesToSearch.value.filter(f => !notRes.includes(f.path))
 
   // console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
 
   // Next, make sure indexed files are in front
-  filesToSearch.sort((a, b) => {
+  filesToSearch.value.sort((a, b) => {
     const aInRes = res.includes(a.path)
     const bInRes = res.includes(b.path)
 
