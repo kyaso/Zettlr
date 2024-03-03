@@ -179,7 +179,12 @@ onMounted(() => {
       // the file manager is hidden, or the global search is visible. In both
       // cases we need to wait for the app to display the file manager.
       nextTick()
-        .then(() => { quickFilter.value?.focus() })
+      // When switching from the global search, the focus might not work properly.
+      // Using a timeout indeed helps.
+      // Thanks Stackoverflow (https://stackoverflow.com/a/1096938)
+      //
+      // Original commit: 7745b96e22c57589596cd25f25585165f2fc4fdb
+        .then(() => { setTimeout(() => quickFilter.value?.focus(), 0) })
         .catch(err => console.error(err))
     }
   })
