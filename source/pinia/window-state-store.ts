@@ -51,7 +51,6 @@ export const useWindowStateStore = defineStore('window-state', () => {
   const tableOfContents = ref<ToCEntry[]|undefined>(undefined)
   const snippets = ref<Array<{ name: string, content: string }>>([])
   const writingTargets = ref<WritingTarget[]>([])
-  // TODO kyaso: backlinks, unlinkedMentions
 
   /**
    * This variable stores search results from the global search
@@ -87,8 +86,6 @@ export const useWindowStateStore = defineStore('window-state', () => {
     tableOfContents,
     searchResults,
     snippets,
-    writingTargets,
-    backlinks,
-    unlinkedMentions
+    writingTargets
   }
 })
