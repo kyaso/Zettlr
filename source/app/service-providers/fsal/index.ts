@@ -58,8 +58,8 @@ export default class FSAL extends ProviderContract {
 
   constructor (
     private readonly _logger: LogProvider,
-    private readonly _config: ConfigProvider
-    // TODO kyaso: SearchIndex
+    private readonly _config: ConfigProvider,
+    private readonly _searchIndex: SearchIndexProvider
   ) {
     super()
 

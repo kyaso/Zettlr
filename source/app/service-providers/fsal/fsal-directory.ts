@@ -156,7 +156,7 @@ export async function parse (
   currentPath: string,
   cache: FSALCache,
   parser: (file: MDFileDescriptor, content: string) => void,
-  // TODO kyaso: SearchIndexProvider 
+  searchIndex: SearchIndexProvider,
   sorter: (arr: AnyDescriptor[], sortingType?: SortMethod) => AnyDescriptor[],
   isRoot: boolean,
   shallow: boolean = false
@@ -212,7 +212,7 @@ export async function parse (
     }
 
     if (isDir(absolutePath) && !ignoreDir(absolutePath)) {
-      const cDir = await parse(absolutePath, cache, parser, sorter, false, searchIndex)
+      const cDir = await parse(absolutePath, cache, parser, searchIndex, sorter, false)
       dir.children.push(cDir)
     } else if (isMdOrCodeFile(absolutePath)) {
       const isCode = ALLOWED_CODE_FILES.includes(path.extname(absolutePath).toLowerCase())
@@ -383,7 +383,8 @@ export async function createDirectory (
  * @param   {any}            options    Options, containing a name and content property
  * @param   {FSALCache}      cache      The FSAL cache to cache the resulting file
  */
-// TODO kyaso: SearchIndexProvider
+// TODO searchindex: SearchIndexProvider
+// Will it get called automatically?
 export async function createFile (filePath: string, content: string): Promise<void> {
   await fs.writeFile(filePath, content)
 }
@@ -443,7 +444,7 @@ export async function renameChild (
   // Add the new descriptor
   if (isDir(newPath)) {
     // Rescan the new dir to get all new file information
-    const descriptor = await parse(newPath, cache, parser, sorter, false, searchIndex)
+    const descriptor = await parse(newPath, cache, parser, searchIndex, sorter, false)
     dirObject.children.push(descriptor)
   } else if (hasMarkdownExt(newPath)) {
     const descriptor = await FSALFile.parse(newPath, cache, parser, false, searchIndex)
@@ -489,7 +490,7 @@ export async function move (
   // Re-read the source
   let newSource
   if (sourceObject.type === 'directory') {
-    newSource = await parse(targetPath, cache, parser, sorter, false, searchIndex)
+    newSource = await parse(targetPath, cache, parser, searchIndex, sorter, false)
   } else if (sourceObject.type === 'file') {
     newSource = await FSALFile.parse(targetPath, cache, parser, false, searchIndex)
   } else if (sourceObject.type === 'code') {
@@ -525,7 +526,7 @@ export async function addChild (
   searchIndex: SearchIndexProvider
 ): Promise<void> {
   if (isDir(childPath)) {
-    dirObject.children.push(await parse(childPath, cache, parser, sorter, false, searchIndex))
+    dirObject.children.push(await parse(childPath, cache, parser, searchIndex, sorter, false))
   } else if (ALLOWED_CODE_FILES.includes(path.extname(childPath))) {
     dirObject.children.push(await FSALCodeFile.parse(childPath, cache, false))
   } else if (MARKDOWN_FILES.includes(path.extname(childPath))) {
