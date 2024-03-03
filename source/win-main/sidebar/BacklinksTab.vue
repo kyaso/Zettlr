@@ -271,7 +271,7 @@
  * END HEADER
  */
 
-import ButtonControl from '@common/vue/form/elements/Button.vue'
+import ButtonControl from '@common/vue/form/elements/ButtonControl.vue'
 import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
 import { defineComponent } from '@vue/runtime-core'
 import { markText } from '../shared'
