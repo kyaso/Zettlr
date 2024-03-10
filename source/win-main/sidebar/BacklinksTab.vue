@@ -366,7 +366,7 @@ onMounted(() => {
 
 async function recomputeBacklinksAndMentions (): Promise<void> {
   console.log('recomputeBacklinksAndMentions')
-  if (lastActiveFile.value === null) {
+  if (lastActiveFile.value === undefined) {
     backlinks.value = []
     unlinkedMentions.value = []
     return
@@ -462,7 +462,7 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
 
 async function recomputeOutboundLinks (): Promise<void> {
   console.log('recomputeOutboundLinks')
-  if (lastActiveFile.value === null) {
+  if (lastActiveFile.value === undefined) {
     outboundLinks.value = []
     return
   }
