@@ -66,6 +66,7 @@ export default class AppServiceContainer {
     // rest can be instantiated afterwards.
     this._logProvider = new LogProvider()
     this._configProvider = new ConfigProvider(this._logProvider)
+    this._searchIndexProvider = new SearchIndexProvider(this._logProvider)
     this._fsal = new FSAL(this._logProvider, this._configProvider, this._searchIndexProvider)
     this._commandProvider = new CommandProvider(this)
     this._assetsProvider = new AssetsProvider(this._logProvider)
@@ -77,7 +78,6 @@ export default class AppServiceContainer {
 
     this._targetProvider = new TargetProvider(this._logProvider, this._fsal)
     this._documentManager = new DocumentManager(this)
-    this._searchIndexProvider = new SearchIndexProvider(this._logProvider)
     this._workspaces = new WorkspaceProvider(this._logProvider, this._configProvider, this._fsal)
     this._tagProvider = new TagProvider(this._logProvider, this._workspaces)
     this._linkProvider = new LinkProvider(this._logProvider, this._workspaces)
