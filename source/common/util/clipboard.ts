@@ -13,5 +13,5 @@ export function copyZknLink (text: string): void {
     copyText = '[[' + text + ']]'
   }
 
-  clipboard.writeText(copyText)
+  navigator.clipboard.writeText(text).catch(err => console.error(err))
 }
