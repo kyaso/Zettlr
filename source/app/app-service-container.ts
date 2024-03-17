@@ -95,6 +95,7 @@ export default class AppServiceContainer {
   async boot (): Promise<void> {
     await this._informativeBoot(this._logProvider, 'LogProvider')
     await this._informativeBoot(this._configProvider, 'ConfigProvider')
+    await this._informativeBoot(this._searchIndexProvider, 'SearchIndexProvider')
     await this._informativeBoot(this._workspaces, 'WorkspaceProvider')
     await this._informativeBoot(this._assetsProvider, 'AssetsProvider')
     await this._informativeBoot(this._linkProvider, 'LinkProvider')
@@ -113,7 +114,6 @@ export default class AppServiceContainer {
     await this._informativeBoot(this._citeprocProvider, 'CiteprocProvider')
     await this._informativeBoot(this._updateProvider, 'UpdateProvider')
 
-    await this._informativeBoot(this._searchIndexProvider, 'SearchIndexProvider')
     await this._informativeBoot(this._fsal, 'FSAL')
     await this._informativeBoot(this._windowProvider, 'WindowManager')
     await this._informativeBoot(this._documentManager, 'DocumentManager')
@@ -246,8 +246,6 @@ export default class AppServiceContainer {
     await this._safeShutdown(this._commandProvider, 'CommandProvider')
     await this._safeShutdown(this._documentManager, 'DocumentManager')
     await this._safeShutdown(this._fsal, 'FSAL')
-    await this._safeShutdown(this._searchIndexProvider, 'SearchIndexProvider')
-
     await this._safeShutdown(this._windowProvider, 'WindowManager')
     await this._safeShutdown(this._trayProvider, 'TrayProvider')
     await this._safeShutdown(this._statsProvider, 'StatsProvider')
@@ -263,6 +261,7 @@ export default class AppServiceContainer {
     await this._safeShutdown(this._assetsProvider, 'AssetsProvider')
     await this._safeShutdown(this._appearanceProvider, 'AppearanceProvider')
     await this._safeShutdown(this._workspaces, 'WorkspaceProvider')
+    await this._safeShutdown(this._searchIndexProvider, 'SearchIndexProvider')
     await this._safeShutdown(this._configProvider, 'ConfigProvider')
     await this._safeShutdown(this._logProvider, 'LogProvider')
   }
