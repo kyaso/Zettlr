@@ -309,13 +309,13 @@ if (windowId === null) {
   throw new Error('windowID was null')
 }
 
-const hideBacklinks = ref<Boolean>(true)
-const hideUnlinkedMentions = ref<Boolean>(true)
-const hideOutboundLinks = ref<Boolean>(true)
+const hideBacklinks = ref<boolean>(true)
+const hideUnlinkedMentions = ref<boolean>(true)
+const hideOutboundLinks = ref<boolean>(true)
 const maxWeight = ref<Number>(0)
-const toggleStateBacklinks = ref<Boolean>(false)
-const toggleStateUnlinked = ref<Boolean>(false)
-const toggleStateOutbound = ref<Boolean>(false)
+const toggleStateBacklinks = ref<boolean>(false)
+const toggleStateUnlinked = ref<boolean>(false)
+const toggleStateOutbound = ref<boolean>(false)
 const backlinks = ref<SearchResultWrapper>([])
 const unlinkedMentions = ref<SearchResultWrapper>([])
 const outboundLinks = ref<OutboundLink>([])
@@ -372,8 +372,8 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
     return
   }
 
-  let unlinkedMentions_local: SearchResultWrapper[] = []
-  let backlinks_local: SearchResultWrapper[] = []
+  let unlinkedMentionsLocal: SearchResultWrapper[] = []
+  let backlinksLocal: SearchResultWrapper[] = []
 
   // Get file name
   const fileNameMd = pathBasename(lastActiveFile.value.path)
@@ -382,22 +382,22 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
   const fileNameExact = '"' + activeFileName + '"'
 
   // First, get all mentions
-  // Note, we store it into unlinkedMentions_local, but later we extract
-  // all the backlinks_local out of that array.
-  unlinkedMentions_local = await search(fileNameExact)
+  // Note, we store it into unlinkedMentionsLocal, but later we extract
+  // all the backlinksLocal out of that array.
+  unlinkedMentionsLocal = await search(fileNameExact)
 
-  // Separate backlinks_local from rest
+  // Separate backlinksLocal from rest
   let skipMe = false
   let maxWeight = 0
-  for (let i = unlinkedMentions_local.length - 1; i >= 0; i--) {
+  for (let i = unlinkedMentionsLocal.length - 1; i >= 0; i--) {
     maxWeight = 0
 
     // Current result set
-    const x = unlinkedMentions_local[i]
+    const x = unlinkedMentionsLocal[i]
 
     // Remove if the result set is from the current file itself
     if (!skipMe && x.file.filename === fileNameMd) {
-      unlinkedMentions_local.splice(i, 1)
+      unlinkedMentionsLocal.splice(i, 1)
 
       // This is an optimization since this if statement can only evaluate
       // to true at most once.
@@ -425,13 +425,13 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
         // If there are no more result lines left, we can
         // remove the entire result set
         if (x.result.length === 0) {
-          unlinkedMentions_local.splice(i, 1)
+          unlinkedMentionsLocal.splice(i, 1)
           break
         }
       }
     }
 
-    // There were backlinks_local in the current result set
+    // There were backlinksLocal in the current result set
     if (tmpBacklinks.length > 0) {
       const newResult: SearchResultWrapper = {
         file: x.file,
@@ -445,19 +445,19 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
         )
       }
 
-      backlinks_local.unshift(newResult)
+      backlinksLocal.unshift(newResult)
 
       if (newResult.weight > maxWeight) {
         maxWeight = newResult.weight
       }
 
       // sort
-      backlinks_local.sort((a, b) => b.weight - a.weight)
+      backlinksLocal.sort((a, b) => b.weight - a.weight)
     }
   }
 
-  backlinks.value = backlinks_local
-  unlinkedMentions.value = unlinkedMentions_local
+  backlinks.value = backlinksLocal
+  unlinkedMentions.value = unlinkedMentionsLocal
 }
 
 async function recomputeOutboundLinks (): Promise<void> {
@@ -467,7 +467,7 @@ async function recomputeOutboundLinks (): Promise<void> {
     return
   }
 
-  const outboundLinks_local: OutboundLink[] = []
+  const outboundLinksLocal: OutboundLink[] = []
 
   // Get ALL (= file + non-file) outbound links
   const { links } = await ipcRenderer.invoke('link-provider', {
@@ -491,7 +491,7 @@ async function recomputeOutboundLinks (): Promise<void> {
       payload: link
     }) as MDFileDescriptor | undefined
 
-    outboundLinks_local.push(
+    outboundLinksLocal.push(
       {
         link,
         targetFilePath: descriptor?.path,
@@ -502,14 +502,14 @@ async function recomputeOutboundLinks (): Promise<void> {
   }
 
   // Sort so that links with more files are shown at the top
-  outboundLinks_local.sort((a, b) => (b.files.length - a.files.length))
+  outboundLinksLocal.sort((a, b) => (b.files.length - a.files.length))
 
   // console.log('Update outbound links for file ', activeFile.path, ':')
-  // for (const link of outboundLinks_local) {
+  // for (const link of outboundLinksLocal) {
   //   console.log('Link: ', link.link)
   //   console.info('Files: ', link.files)
   // }
-  outboundLinks.value = outboundLinks_local
+  outboundLinks.value = outboundLinksLocal
 }
 
 function recentSearchQueryMatches (text: string): boolean {
