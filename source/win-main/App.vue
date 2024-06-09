@@ -594,8 +594,8 @@ onMounted(() => {
         id = generateId(configStore.config.zkn.idGen)
       } else {
         id = '[[' + generateId('%base62') + ']]'
-        if (shouldInsertRootIDSymbol) {
-          id += rootIDSymbol
+        if (shouldInsertRootIDSymbol.value) {
+          id += rootIDSymbol.value
         }
       }
       editorCommands.value.data = id
