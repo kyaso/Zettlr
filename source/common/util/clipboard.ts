@@ -1,5 +1,4 @@
 const config = window.config
-const clipboard = window.clipboard
 
 /**
  * Copies the text as a ZKN link (if enabled in options).
@@ -13,5 +12,5 @@ export function copyZknLink (text: string): void {
     copyText = '[[' + text + ']]'
   }
 
-  navigator.clipboard.writeText(text).catch(err => console.error(err))
+  navigator.clipboard.writeText(copyText).catch(err => console.error(err))
 }
