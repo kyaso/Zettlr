@@ -65,7 +65,7 @@ defaults:
 
 # Global environment variables
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 # Ensure only a single build workflow runs at any one time
 concurrency:
@@ -87,15 +87,15 @@ jobs:
   # havoc because we don't push unstable code to master, BUT it looks bad.
   verify_version:
     name: 'Preflight: Verify version tag'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Clone repository (custom branch)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: 'custom'
           fetch-depth: 0 # Required for the tag verification step.
       # - name: Setup NodeJS ${{ env.NODE_VERSION }}
-      #   uses: actions/setup-node@v3
+      #   uses: actions/setup-node@v4
       #   with:
       #     node-version: ${{ env.NODE_VERSION }}
       #     cache: 'yarn'
@@ -123,11 +123,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout branch ${{ github.ref_name }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
@@ -142,7 +142,7 @@ jobs:
           # CSC_LINK: ${{ secrets.WIN_CERT_2025_03_15 }}
           # CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASS_2025_03_15 }}
       - name: Cache installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: win32_x64
           path: |
@@ -328,11 +328,11 @@ jobs:
     steps:
       # Check out master for a regular release, or develop branch for a nightly
       - name: Checkout branch ${{ github.ref_name }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
@@ -346,7 +346,7 @@ jobs:
           yarn package:linux-x64
           yarn release:linux-x64
       - name: Cache installers
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux_x64
           path: |
@@ -409,12 +409,12 @@ jobs:
       # - build_macos_arm64
       - build_linux_x64
       # - build_linux_arm64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout branch ${{ github.ref_name }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup NodeJS ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
@@ -427,7 +427,7 @@ jobs:
         run: mkdir ./release
       # Download all resulting assets from the previous steps.
       - name: Retrieve installers (Windows x86_64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: win32_x64
           path: ./release
@@ -447,7 +447,7 @@ jobs:
       #     name: darwin_arm64
       #     path: ./release
       - name: Retrieve installers (Linux x86_64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: linux_x64
           path: ./release
@@ -472,7 +472,7 @@ jobs:
       # Create a new release draft
       - name: Create release draft
         if: github.ref_name == 'custom'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
