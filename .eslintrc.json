@@ -15,13 +15,21 @@
     "parser": "@typescript-eslint/parser",
     "ecmaVersion": 2018,
     "project": "./tsconfig.json",
-    "extraFileExtensions": [".vue", ".mjs"]
+    "extraFileExtensions": [".vue"]
   },
   // We don't want to write all our stuff ourselves, but instead extend these
   // rulesets
   "extends": [
     "standard-with-typescript",
     "plugin:vue/vue3-recommended"
+  ],
+  // The following overrides ensure that any pure JavaScript files are also
+  // linted with ESLint, but not type checked.
+  "overrides": [
+    {
+      "files": ["**/*.js"],
+      "extends": ["plugin:@typescript-eslint/disable-type-checked"]
+    }
   ],
   "globals": {
     "Atomics": "readonly",
@@ -33,7 +41,7 @@
     // ... and turn on the TypeScript one. HOWEVER, we also need to use the
     // appropriate option that allows us to declare variables as unused by
     // prefixing it with an underscore.
-    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_|^event$" }],
+    "@typescript-eslint/no-unused-vars": "off",
     // See https://typescript-eslint.io/rules/no-unused-vars/
 
     "space-before-function-paren": [2, "always"],
@@ -95,6 +103,7 @@
         "ignoredTypeNames": ["Text"]
       }
     ],
+    "@typescript-eslint/no-non-null-assertion": "off",
     // DEBUG: Turn a few errors into warnings after upgrading ESLint to >6.x
     // This rule is difficult to disable right now; it interferes with the
     // "no-null-assertion" rule, and it won't be an easy fix. We'll have to

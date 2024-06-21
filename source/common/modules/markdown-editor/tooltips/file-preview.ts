@@ -22,6 +22,7 @@ import { hoverTooltip, EditorView, type Tooltip } from '@codemirror/view'
 // import sanitizeHtml from 'sanitize-html'
 import { getSearchButton, getCopyButton } from './common'
 import { type MDFileDescriptor } from '@dts/common/fsal'
+import { configField } from '../util/configuration'
 
 const ipcRenderer = window.ipc
 
@@ -32,16 +33,25 @@ const ipcRenderer = window.ipc
 async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1): Promise<Tooltip|null> {
   const nodeAt = syntaxTree(view.state).resolve(pos, side)
 
-  if (nodeAt.type.name !== 'ZknLinkContent') {
+  if (![ 'ZknLinkContent', 'ZknLinkPipe', 'ZknLink', 'ZknLinkTitle' ].includes(nodeAt.type.name)) {
     return null
   }
 
-  const fileToDisplay = view.state.sliceDoc(nodeAt.from, nodeAt.to)
+  const wrapperNode = nodeAt.type.name === 'ZknLink' ? nodeAt : nodeAt.parent
+  const contentNode = wrapperNode?.getChild('ZknLinkContent')
+
+  if (contentNode == null) {
+    return null
+  }
+
+  const fileToDisplay = view.state.sliceDoc(contentNode.from, contentNode.to)
 
   const desc: MDFileDescriptor = await ipcRenderer.invoke(
     'application',
     { command: 'find-exact', payload: fileToDisplay }
   )
+
+  const { zknLinkFormat } = view.state.field(configField)
 
   // By annotating a range (providing `end`) the hover tooltip will stay as long
   // as the user is somewhere over the links

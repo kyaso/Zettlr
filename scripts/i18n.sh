@@ -23,6 +23,8 @@ node ./scripts/split-vue-sfc.js
 FILES=$(find ./source -type f -name "*.ts" -o -name "*.js")
 PKGVER=$(cat package.json | jq -r '.version')
 
+echo "Current version is $PKGVER"
+
 echo "Running xgettext ..."
 xgettext \
   --language=JavaScript \
@@ -50,8 +52,14 @@ cd static/lang
 for file in *.po; do
     [ -f "$file" ] || break
     echo "Merging new strings to $file ..."
+
+    # First, run msguniq over the file which removes duplicate entries (which
+    # would cause msgmerge to fail, see https://www.gnu.org/software/gettext/manual/html_node/msguniq-Invocation.html)
+    msguniq $file -o $file
+
     # NOTE the --backup=off flag, since we're using git-svn to backup old files
-    msgmerge --update $file --backup=off ../i18n.pot
+    # NOTE the --no-fuzzy-matching flag that prevents inaccurate translations
+    msgmerge --update $file --backup=off --no-fuzzy-matching ../i18n.pot
 done
 
 echo "Finished generating i18n files!"

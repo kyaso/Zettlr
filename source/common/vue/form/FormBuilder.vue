@@ -35,11 +35,6 @@
             ?
           </div>
         </div>
-        <!-- If the first fieldset field is not a separator and we have following fields, add a small gap -->
-        <div
-          v-if="fieldset.fields.length > 0 && fieldset.fields[0].type !== 'separator'"
-          style="height: 10px;"
-        ></div>
         <!-- Now to the contents of the fieldset -->
         <template v-for="(field, fieldIdx) in fieldset.fields" v-bind:key="fieldIdx">
           <FormFieldControl
@@ -375,9 +370,13 @@ body.dark .form-container {
     color: inherit;
     border-color: rgb(30, 30, 30);
   }
+
+  hr {
+    border-top-color: #5a5a5a;
+  }
 }
 
-body.win32 .form-container {
+body.win32:not(.dark) .form-container {
   fieldset {
     border-radius: 0px;
     background-color: rgb(245, 245, 245);

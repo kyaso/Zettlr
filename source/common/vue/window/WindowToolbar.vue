@@ -122,7 +122,7 @@ function handleDoubleClick (event: MouseEvent): void {
   // Only emit a double click event if the user double clicked on the
   // _toolbar_ or on a spacer, and not just on any button.
   const t = event.target as HTMLElement|null
-  if (t === element.value || (t !== null && t.className.includes('spacer'))) {
+  if (t === element.value || t?.className.includes('spacer') === true) {
     emit('dblclick')
   }
 }
@@ -135,11 +135,7 @@ body div#toolbar {
   display: flex;
   align-items: center;
   justify-content: space-around;
-
-  button {
-    // Reset the min-width from generic.less
-    min-width: auto;
-  }
+  gap: 10px;
 
   div.spacer {
     .size-1x { flex-grow: 1; }
@@ -155,6 +151,10 @@ body div#toolbar {
       font-size: 10px;
       text-align: center;
     }
+  }
+
+  button {
+    flex-grow: 1;
   }
 }
 

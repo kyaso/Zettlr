@@ -20,7 +20,8 @@ export const mainOverride = EditorView.baseTheme({
   '&.cm-editor': {
     height: '100%',
     fontFamily: 'inherit',
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
+    cursor: 'auto'
   },
   '.cm-scroller': {
     flexGrow: '1', // Ensure the content pushes possible panels towards the edge
@@ -46,7 +47,10 @@ export const mainOverride = EditorView.baseTheme({
     userSelect: 'none' // prevent search panel text elements from being selected
   },
   // TOOLTIPS
-  '.cm-tooltip': { padding: '4px' },
+  '.cm-tooltip': {
+    padding: '4px',
+    maxWidth: '800px'
+  },
   // Footnotes
   '.footnote, .footnote-ref-label': {
     verticalAlign: 'super',

@@ -96,7 +96,7 @@ const tabs = [
 ]
 
 function setCurrentTab (which: string): void {
-  window.config.set('window.currentSidebarTab', which)
+  configStore.setConfigValue('window.currentSidebarTab', which)
 }
 </script>
 
@@ -116,7 +116,7 @@ body {
     flex-direction: column;
 
     #sidebar-tab-container {
-      padding: 0px 5px 5px 0px;
+      padding: 10px;
       overflow-y: auto;
 
       #toc-tab {
@@ -139,15 +139,12 @@ body {
     }
 
     h1 {
-      padding: 10px;
       font-size: 16px;
+      margin: 10px 0;
     }
-
-    p { padding: 10px; }
 
     a.attachment {
       display: block;
-      margin: 10px;
       padding: 4px;
       text-decoration: none;
       color: inherit;
@@ -191,7 +188,6 @@ body {
       // margin-left: calc(attr(data-level) * 10px);
       display: flex;
       margin-bottom: 10px;
-      margin-right: 10px;
 
       div.toc-level {
         flex-shrink: 1;
@@ -213,8 +209,6 @@ body {
     }
 
     div.related-files-container {
-      padding: 10px;
-
       div.related-file {
         // NOTE: The margin + height equal 42, which was the automatic height
         // before we fixed it here. We have to fix it because the Recycle
@@ -263,7 +257,7 @@ body {
   }
 }
 
-body.darwin {
+body.darwin, body.linux {
   div#sidebar {
     background-color: transparent;
 

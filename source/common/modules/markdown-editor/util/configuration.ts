@@ -48,6 +48,7 @@ export interface EditorConfiguration {
   indentUnit: number
   indentWithTabs: boolean
   linkPreference: 'always'|'never'|'withID'
+  zknLinkFormat: 'link|title'|'title|link'
   linkFilenameOnly: boolean
   metadata: {
     path: string
@@ -69,6 +70,7 @@ export interface EditorConfiguration {
   darkMode: boolean
   theme: MarkdownTheme
   margins: 'S'|'M'|'L'
+  highlightWhitespace: boolean
 }
 
 export function getDefaultConfig (): EditorConfiguration {
@@ -100,6 +102,7 @@ export function getDefaultConfig (): EditorConfiguration {
     indentUnit: 4,
     indentWithTabs: false,
     linkPreference: 'always',
+    zknLinkFormat: 'link|title',
     linkFilenameOnly: false,
     metadata: {
       path: '',
@@ -120,7 +123,8 @@ export function getDefaultConfig (): EditorConfiguration {
     showStatusbar: false,
     darkMode: false,
     theme: 'berlin',
-    margins: 'M'
+    margins: 'M',
+    highlightWhitespace: false
   }
 }
 

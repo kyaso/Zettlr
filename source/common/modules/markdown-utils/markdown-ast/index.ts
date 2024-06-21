@@ -34,33 +34,15 @@
 
 import extractCitations, { type CitePosition } from '@common/util/extract-citations'
 import { type SyntaxNode } from '@lezer/common'
-
-/**
- * This list contains all Node names that do not themselves have any content.
- * These are either purely formatting nodes (such as heading marks or link
- * marks) who can be reconstructed without the verbatim value, as well as larger
- * container nodes (whose contents is represented via their children).
- *
- * @var {string[]}
- */
-const EMPTY_NODES = [
-  'HeaderMark',
-  'CodeMark',
-  'EmphasisMark',
-  'QuoteMark',
-  'ListMark',
-  'YAMLFrontmatterStart',
-  'YAMLFrontmatterEnd',
-  'Document',
-  'List',
-  'ListItem',
-  'PandocAttribute'
-]
+import { parseTableNode } from './parse-table-node'
+import { getWhitespaceBeforeNode } from './get-whitespace-before-node'
+import { genericTextNode } from './generic-text-node'
+import { parseChildren } from './parse-children'
 
 /**
  * Basic info every ASTNode needs to provide
  */
-interface MDNode {
+export interface MDNode {
   /**
    * The node.name property (may differ from the type; significant mainly for
    * generics)
@@ -74,6 +56,12 @@ interface MDNode {
    * The end offset of this node in the original source
    */
   to: number
+  /**
+   * This property contains the whitespace before this node; required to
+   * determine appropriate significant whitespace portions for some elements
+   * upon converting to HTML.
+   */
+  whitespaceBefore: string
   /**
    * Can be used to store arbitrary attributes (e.g. Pandoc-style attributes
    * such as {.className})
@@ -171,6 +159,16 @@ export interface Highlight extends MDNode {
   /**
    * Since it's a regular inline element, it can have children
    */
+  children: ASTNode[]
+}
+
+export interface Superscript extends MDNode {
+  type: 'Superscript'
+  children: ASTNode[]
+}
+
+export interface Subscript extends MDNode {
+  type: 'Subscript'
   children: ASTNode[]
 }
 
@@ -301,10 +299,6 @@ export interface Emphasis extends MDNode {
 export interface YAMLFrontmatter extends MDNode {
   type: 'YAMLFrontmatter'
   /**
-   * The info string will always be yaml frontmatter.
-   */
-  info: string
-  /**
    * The verbatim YAML source.
    */
   source: string
@@ -345,6 +339,15 @@ export interface Table extends MDNode {
    * A list of rows of this table
    */
   rows: TableRow[]
+  /**
+   * A list of column alignments in the table. May be undefined; the default is
+   * for all columns to be left-aligned.
+   */
+  alignment?: Array<'left'|'center'|'right'>
+  /**
+   * This property can optionally contain the table type in the source.
+   */
+  tableType?: 'grid'|'pipe'
 }
 
 /**
@@ -356,6 +359,10 @@ export interface ZettelkastenLink extends MDNode {
    * Contains the raw contents of the link
    */
   value: string
+  /**
+   * The link title; may be the same as value
+   */
+  title: TextNode
 }
 
 /**
@@ -405,120 +412,14 @@ export interface GenericNode extends MDNode {
 /**
  * Any node that can be part of the AST is an ASTNode.
  */
-export type ASTNode = Comment | Footnote | FootnoteRef | LinkOrImage | TextNode | Heading | Citation | Highlight | OrderedList | BulletList | ListItem | GenericNode | FencedCode | InlineCode | YAMLFrontmatter | Emphasis | Table | TableCell | TableRow | ZettelkastenLink | ZettelkastenTag
+export type ASTNode = Comment | Footnote | FootnoteRef | LinkOrImage | TextNode
+| Heading | Citation | Highlight | Superscript | Subscript | OrderedList
+| BulletList | ListItem | GenericNode | FencedCode | InlineCode | YAMLFrontmatter
+| Emphasis | Table | TableCell | TableRow | ZettelkastenLink | ZettelkastenTag
 /**
  * Extract the "type" properties from the ASTNodes that can differentiate these.
  */
 export type ASTNodeType = ASTNode['type']
-
-/**
- * Creates a generic text node; this is used to represent textual contents of
- * SyntaxNodes.
- *
- * @param   {number}    from   The start offset (absolute; zero-indexed)
- * @param   {number}    to     The end offset (absolute; zero-indexed)
- * @param   {string}    value  The actual text
- *
- * @return  {TextNode}         The rendered TextNode
- */
-function genericTextNode (from: number, to: number, value: string): TextNode {
-  return { type: 'Text', name: 'text', from, to, value }
-}
-
-/**
- * Parses an attribute node (PandocAttribute), according to the Pandoc rules
- * (mostly). cf.: https://pandoc.org/MANUAL.html#extension-attributes
- *
- * @param   {Record<string, string>}  oldAttributes  Attribute nodes are merged.
- * @param   {SyntaxNode}              node           The SyntaxNode
- * @param   {string}                  markdown       The original markdown
- *
- * @return  {Record<string, string>}                 A map of the attributes
- */
-function parseAttributeNode (oldAttributes: Record<string, string> = {}, node: SyntaxNode, markdown: string): Record<string, string> {
-  if (node.name !== 'PandocAttribute') {
-    return oldAttributes
-  }
-
-  const rawString: string = markdown.substring(node.from + 1, node.to - 1) // Remove { and }
-  const rawAttributes: string[] = rawString.split(/\s+/)
-  // General syntax: {#identifier .class .class key=value key=value}
-  for (const attribute of rawAttributes) {
-    if (attribute.startsWith('.')) {
-      // It's a class
-      if ('class' in oldAttributes) {
-        oldAttributes.class = oldAttributes.class + ' ' + attribute.substring(1)
-      } else {
-        oldAttributes.class = attribute.substring(1)
-      }
-    } else if (attribute.startsWith('#') && !('id' in oldAttributes)) {
-      // It's an ID, but only the *first* one found counts
-      oldAttributes.id = attribute.substring(1)
-    } else if (attribute.includes('=')) {
-      // It's a key=value attribute. NOTE: Later generic attributes override
-      // earlier ones!
-      const parts: string[] = attribute.split('=')
-      if (parts.length === 2) {
-        oldAttributes[parts[0]] = parts[1]
-      } // Else: Invalid
-    }
-  }
-  return oldAttributes
-}
-
-/**
- * Parses the children of ASTNodes who can have children.
- *
- * @param   {T}           astNode   The AST node that must support children
- * @param   {SyntaxNode}  node      The original Lezer SyntaxNode
- * @param   {string}      markdown  The Markdown source
- *
- * @return  {T}                     Returns the same astNode with children.
- */
-function parseChildren<T extends { children: ASTNode[] } & MDNode> (astNode: T, node: SyntaxNode, markdown: string): T {
-  if (node.firstChild === null) {
-    if (!EMPTY_NODES.includes(node.name)) {
-      const textNode = genericTextNode(node.from, node.to, markdown.substring(node.from, node.to))
-      astNode.children = [textNode]
-    }
-    return astNode // We're done
-  }
-
-  astNode.children = []
-
-  let currentChild: SyntaxNode|null = node.firstChild
-  let currentIndex = node.from
-  while (currentChild !== null) {
-    // NOTE: We have to account for "gaps" where a node has children that do not
-    // completely cover the node's contents. In that case, we have to add text
-    // nodes that just contain those strings.
-    if (currentChild.from > currentIndex && !EMPTY_NODES.includes(node.name)) {
-      const gap = markdown.substring(currentIndex, currentChild.from)
-      const textNode = genericTextNode(currentIndex, currentChild.from, gap)
-      astNode.children.push(textNode)
-    }
-    if (currentChild.name === 'PandocAttribute') {
-      // PandocAttribute nodes should never show up in the tree
-      // TODO: This assumes that the PandocAttribute should apply to the parent
-      // node, but often (e.g., for images) they belong to the previous child!
-      // TODO: Check what the *previous* child was, and if it can have attributes
-      // Docs: https://pandoc.org/MANUAL.html#extension-attributes
-      astNode.attributes = parseAttributeNode(astNode.attributes, currentChild, markdown)
-    } else {
-      astNode.children.push(parseNode(currentChild, markdown))
-    }
-    currentIndex = currentChild.to // Must happen before the nextSibling assignment
-    currentChild = currentChild.nextSibling
-  }
-
-  if (currentIndex < node.to && !EMPTY_NODES.includes(node.name)) {
-    // One final text node
-    const textNode = genericTextNode(currentIndex, node.to, markdown.substring(currentIndex, node.to))
-    astNode.children.push(textNode)
-  }
-
-  return astNode
-}
 
 /**
  * Parses a single Lezer style SyntaxNode to an ASTNode.
@@ -544,6 +445,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
           name: node.name,
           from: node.from,
           to: node.to,
+          whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
           children: [genericTextNode(node.from, node.to, markdown.substring(node.from, node.to))]
         }
       }
@@ -553,6 +455,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         // title: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to)), TODO
         url: markdown.substring(url.from, url.to),
         alt: alt !== null
@@ -577,6 +480,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         // title: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to)), TODO
         url: markdown.substring(node.from, node.to),
         alt: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to))
@@ -596,6 +500,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         value: genericTextNode(mark?.to ?? node.from, node.to, markdown.substring(mark?.to ?? node.from, node.to).trim()),
         level
       }
@@ -610,6 +515,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         value: genericTextNode(mark?.to ?? node.from, node.to, markdown.substring(node.from, mark?.from ?? node.to).trim()),
         level
       }
@@ -622,7 +528,8 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         value: markdown.substring(node.from, node.to),
         parsedCitation: extractCitations(markdown.substring(node.from, node.to))[0],
         from: node.from,
-        to: node.to
+        to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown)
       }
       return astNode
     }
@@ -634,6 +541,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         from: node.from,
         inline: contents.endsWith('^'),
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         label: contents.endsWith('^') ? contents.substring(0, contents.length - 1) : contents
       }
       return astNode
@@ -646,6 +554,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: 'FootnoteRef',
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         label: label !== null ? markdown.substring(label.from + 2, label.to - 2) : '',
         children: []
       }
@@ -663,6 +572,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: 'Highlight',
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         children: []
       }
       return parseChildren(astNode, content ?? node, markdown)
@@ -676,6 +586,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         items: []
       }
 
@@ -685,6 +596,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
           name: 'ListItem',
           from: item.from,
           to: item.to,
+          whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
           children: [],
           marker: { from: item.from, to: item.from }
         }
@@ -726,6 +638,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         items: []
       }
 
@@ -735,6 +648,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
           name: 'ListItem',
           from: item.from,
           to: item.to,
+          whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
           children: [],
           marker: { from: item.from, to: item.from }
         }
@@ -776,13 +690,25 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         }
       }
       const source = node.getChild('CodeText')
-      const isFrontmatter = node.getChild('YAMLFrontmatterStart') !== null
-      const astNode: FencedCode|YAMLFrontmatter = {
-        type: isFrontmatter ? 'YAMLFrontmatter' : 'FencedCode',
-        name: isFrontmatter ? 'YAMLFrontmatter' : 'FencedCode',
+      const astNode: FencedCode = {
+        type: 'FencedCode',
+        name: 'FencedCode',
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         info: info !== null ? markdown.substring(info.from, info.to) : '',
+        source: source !== null ? markdown.substring(source.from, source.to) : ''
+      }
+      return astNode
+    }
+    case 'YAMLFrontmatter': {
+      const source = node.getChild('CodeText')
+      const astNode: YAMLFrontmatter = {
+        type: 'YAMLFrontmatter',
+        name: 'YAMLFrontmatter',
+        from: node.from,
+        to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         source: source !== null ? markdown.substring(source.from, source.to) : ''
       }
       return astNode
@@ -794,6 +720,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: 'InlineCode',
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         source: markdown.substring(start.to, end.from)
       }
       return astNode
@@ -805,6 +732,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         value: markdown.slice(node.from + 4, node.to - 3).trim() // <!-- and -->
       }
       return astNode
@@ -817,56 +745,53 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         which: node.name === 'Emphasis' ? 'italic' : 'bold',
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         children: []
       }
 
       return parseChildren(astNode, node, markdown)
     }
-    case 'Table': {
-      const astNode: Table = {
-        type: 'Table',
-        name: 'Table',
+    case 'Superscript': {
+      const astNode: Superscript = {
+        type: 'Superscript',
+        name: 'Superscript',
         from: node.from,
         to: node.to,
-        rows: []
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
+        children: []
       }
-      const header = node.getChildren('TableHeader')
-      const rows = node.getChildren('TableRow')
-      for (const row of [ ...header, ...rows ]) {
-        const rowNode: TableRow = {
-          type: 'TableRow',
-          name: row.name,
-          from: row.from,
-          to: row.to,
-          isHeaderOrFooter: row.name === 'TableHeader',
-          cells: []
-        }
-        for (const cell of row.getChildren('TableCell')) {
-          const cellNode: TableCell = {
-            type: 'TableCell',
-            name: 'TableCell',
-            from: cell.from,
-            to: cell.to,
-            children: []
-          }
-          rowNode.cells.push(parseChildren(cellNode, cell, markdown))
-        }
-        astNode.rows.push(rowNode)
-      }
-      return astNode
+
+      return parseChildren(astNode, node, markdown)
     }
+    case 'Subscript': {
+      const astNode: Subscript = {
+        type: 'Subscript',
+        name: 'Subscript',
+        from: node.from,
+        to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
+        children: []
+      }
+
+      return parseChildren(astNode, node, markdown)
+    }
+    case 'Table':
+      // Tables are somewhat cumbersome to convert, so we outsource it to its own function
+      return parseTableNode(node, markdown)
     case 'ZknLink': {
       const content = node.getChild('ZknLinkContent')
       if (content === null) {
         throw new Error('Could not parse node ZknLink: No ZknLinkContent node found within children!')
       }
-
+      const title = node.getChild('ZknLinkTitle') ?? content
       const astNode: ZettelkastenLink = {
         type: 'ZettelkastenLink',
         name: 'ZknLink',
         from: node.from,
         to: node.to,
-        value: markdown.substring(content.from, content.to)
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
+        value: markdown.substring(content.from, content.to),
+        title: genericTextNode(title.from, title.to, markdown.substring(title.from, title.to))
       }
       return astNode
     }
@@ -876,6 +801,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: 'ZknTag',
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         value: markdown.substring(node.from + 1, node.to)
       }
       return astNode
@@ -886,6 +812,7 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         name: node.name,
         from: node.from,
         to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
         children: []
       }
       return parseChildren(astNode, node, markdown)

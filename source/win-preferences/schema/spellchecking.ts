@@ -13,10 +13,12 @@
  */
 
 import { trans } from '@common/i18n-renderer'
-import { mapLangCodeToName } from '@common/util/map-lang-code'
-import { PreferencesGroups, type PreferencesFieldset } from '../App.vue'
+import { mapLangCodeToName, resolveLangCode } from '@common/util/map-lang-code'
+import { type PreferencesFieldset } from '../App.vue'
+import { PreferencesGroups } from './_preferences-groups'
+import type { ConfigOptions } from 'source/app/service-providers/config/get-config-template'
 
-export function getSpellcheckingFields (): PreferencesFieldset[] {
+export function getSpellcheckingFields (config: ConfigOptions): PreferencesFieldset[] {
   return [
     {
       title: trans('LanguageTool'),
@@ -36,7 +38,7 @@ export function getSpellcheckingFields (): PreferencesFieldset[] {
             picky: trans('Picky')
           },
           model: 'editor.lint.languageTool.level',
-          disabled: window.config.get('editor.lint.languageTool.active') === false
+          disabled: !config.editor.lint.languageTool.active
         },
         { type: 'separator' },
         {
@@ -53,6 +55,59 @@ export function getSpellcheckingFields (): PreferencesFieldset[] {
           },
           model: 'editor.lint.languageTool.motherTongue'
         },
+        {
+          type: 'form-text',
+          display: 'sub-heading',
+          contents: trans('Preferred Variants')
+        },
+        {
+          type: 'form-text',
+          display: 'info',
+          contents: trans('LanguageTool cannot distinguish certain language\'s variants. These settings will nudge LanguageTool to auto-detect your preferred variant of these languages.')
+        },
+        {
+          type: 'select',
+          model: 'editor.lint.languageTool.variants.en',
+          label: trans('Interpret English as'),
+          options: {
+            'en-US': resolveLangCode('en-US', 'flag') + ' ' + resolveLangCode('en-US'),
+            'en-GB': resolveLangCode('en-GB', 'flag') + ' ' + resolveLangCode('en-GB'),
+            'en-AU': resolveLangCode('en-AU', 'flag') + ' ' + resolveLangCode('en-AU'),
+            'en-CA': resolveLangCode('en-CA', 'flag') + ' ' + resolveLangCode('en-CA'),
+            'en-NZ': resolveLangCode('en-NZ', 'flag') + ' ' + resolveLangCode('en-NZ'),
+            'en-ZA': resolveLangCode('en-ZA', 'flag') + ' ' + resolveLangCode('en-ZA')
+          }
+        },
+        {
+          type: 'select',
+          model: 'editor.lint.languageTool.variants.de',
+          label: trans('Interpret German as'),
+          options: {
+            'de-DE': resolveLangCode('de-DE', 'flag') + ' ' + resolveLangCode('de-DE'),
+            'de-AT': resolveLangCode('de-AT', 'flag') + ' ' + resolveLangCode('de-AT'),
+            'de-CH': resolveLangCode('de-CH', 'flag') + ' ' + resolveLangCode('de-CH')
+          }
+        },
+        {
+          type: 'select',
+          model: 'editor.lint.languageTool.variants.pt',
+          label: trans('Interpret Portuguese as'),
+          options: {
+            'pt-PT': resolveLangCode('pt-PT', 'flag') + ' ' + resolveLangCode('pt-PT'),
+            'pt-BR': resolveLangCode('pt-BR', 'flag') + ' ' + resolveLangCode('pt-BR'),
+            'pt-AO': resolveLangCode('pt-AO', 'flag') + ' ' + resolveLangCode('pt-AO'),
+            'pt-MZ': resolveLangCode('pt-MZ', 'flag') + ' ' + resolveLangCode('pt-MZ')
+          }
+        },
+        {
+          type: 'select',
+          model: 'editor.lint.languageTool.variants.ca',
+          label: trans('Interpret Catalan as'),
+          options: {
+            'ca-ES': resolveLangCode('ca-ES', 'flag') + ' ' + resolveLangCode('ca-ES'),
+            'ca-ES-valencia': resolveLangCode('ca-ES-valencia', 'flag') + ' ' + resolveLangCode('ca-ES-valencia')
+          }
+        },
         { type: 'separator' },
         {
           type: 'radio',
@@ -63,14 +118,14 @@ export function getSpellcheckingFields (): PreferencesFieldset[] {
             custom: trans('Custom server')
           },
           model: 'editor.lint.languageTool.provider',
-          disabled: window.config.get('editor.lint.languageTool.active') === false
+          disabled: !config.editor.lint.languageTool.active
         },
         {
           type: 'text',
           label: trans('Custom server address'),
           placeholder: 'https://api.languagetoolplus.com',
           model: 'editor.lint.languageTool.customServer',
-          disabled: window.config.get('editor.lint.languageTool.provider') !== 'custom'
+          disabled: config.editor.lint.languageTool.provider !== 'custom'
         },
         { type: 'separator' },
         {
@@ -88,14 +143,14 @@ export function getSpellcheckingFields (): PreferencesFieldset[] {
           label: trans('LanguageTool Username'),
           model: 'editor.lint.languageTool.username',
           placeholder: 'Username',
-          disabled: window.config.get('editor.lint.languageTool.active') === false || window.config.get('editor.lint.languageTool.provider') === 'custom'
+          disabled: !config.editor.lint.languageTool.active || config.editor.lint.languageTool.provider === 'custom'
         },
         {
           type: 'text',
           label: trans('LanguageTool API key'),
           model: 'editor.lint.languageTool.apiKey',
           placeholder: 'API key',
-          disabled: window.config.get('editor.lint.languageTool.active') === false || window.config.get('editor.lint.languageTool.provider') === 'custom'
+          disabled: !config.editor.lint.languageTool.active || config.editor.lint.languageTool.provider === 'custom'
         }
       ]
     },

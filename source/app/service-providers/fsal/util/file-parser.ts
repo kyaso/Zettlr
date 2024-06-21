@@ -29,6 +29,7 @@ import type {
   ZettelkastenTag
 } from '@common/modules/markdown-utils/markdown-ast'
 import extractZknLinksInHeadings from './extract-heading-zkn-links'
+import { extractLinefeed } from './extract-linefeed'
 
 // Here are all supported variables for Pandoc:
 // https://pandoc.org/MANUAL.html#variables
@@ -63,9 +64,7 @@ export default function getMarkdownFileParser (
     // First of all, determine all the things that have nothing to do with any
     // Markdown contents.
     file.bom = extractBOM(content)
-    file.linefeed = '\n'
-    if (content.includes('\r\n')) file.linefeed = '\r\n'
-    if (content.includes('\n\r')) file.linefeed = '\n\r'
+    file.linefeed = extractLinefeed(content)
     file.id = extractFileId(file.name, content, idREPattern)
 
     // Extract any Zkn links in headings

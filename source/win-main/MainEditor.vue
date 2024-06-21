@@ -1,6 +1,6 @@
 <template>
   <div
-    ref="editor"
+    ref="mainEditorWrapper"
     class="main-editor-wrapper"
     v-bind:style="{ 'font-size': `${fontSize}px` }"
     v-bind:class="{
@@ -34,13 +34,13 @@
 import MarkdownEditor from '@common/modules/markdown-editor'
 import objectToArray from '@common/util/object-to-array'
 
-import { ref, computed, onMounted, watch, toRef } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, toRef, onUpdated } from 'vue'
 import { type EditorCommands } from './App.vue'
 import { hasMarkdownExt } from '@providers/fsal/util/is-md-or-code-file'
 import { DP_EVENTS, type OpenDocument } from '@dts/common/documents'
 import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 import { type EditorConfigOptions } from '@common/modules/markdown-editor/util/configuration'
-import { type CodeFileDescriptor, type MDFileDescriptor } from '@dts/common/fsal'
+import type { AnyDescriptor, CodeFileDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import { getBibliographyForDescriptor as getBibliography } from '@common/util/get-bibliography-for-descriptor'
 import { EditorSelection } from '@codemirror/state'
 import { documentAuthorityIPCAPI } from '@common/modules/markdown-editor/util/ipc-api'
@@ -177,6 +177,10 @@ ipcRenderer.on('documents-update', (e, payload: { event: DP_EVENTS, context: Doc
   }
 })
 
+ipcRenderer.on('reload-editors', _e => {
+  currentEditor?.reload().catch(err => console.error('Failed to reload editor after `reload-editors` event', err))
+})
+
 // Update the file database whenever links have been updated
 ipcRenderer.on('links', _e => {
   updateFileDatabase().catch(err => console.error('Could not update file database', err))
@@ -187,8 +191,32 @@ onMounted(() => {
   loadDocument().catch(err => console.error(err))
 })
 
+onBeforeUnmount(() => {
+  currentEditor?.unmount()
+})
+
+onUpdated(() => {
+  // We hook into the onUpdated lifecycle event since that will fire when the
+  // data for this component update, which includes visibility with the v-show
+  // directive. In case that the editor component is mounted and non-hidden, we
+  // will fire
+  const elem = mainEditorWrapper.value
+  if (elem === null || currentEditor === null) {
+    return
+  }
+
+  if (elem.style.display === 'none') {
+    return // Editor is hidden by v-show directive
+  }
+
+  if (!currentEditor.hasFocus()) {
+    currentEditor.focus()
+  }
+})
+
 // DATA SETUP
 const showSearch = ref(false)
+const mainEditorWrapper = ref<HTMLDivElement|null>(null)
 
 // COMPUTED PROPERTIES
 const useH1 = computed<boolean>(() => configStore.config.fileNameDisplay.includes('heading'))
@@ -240,6 +268,7 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
     renderTables: editor.enableTableHelper,
     renderEmphasis: display.renderEmphasis,
     linkPreference: zkn.linkWithFilename,
+    zknLinkFormat: zkn.linkFormat,
     linkFilenameOnly: zkn.linkFilenameOnly,
     inputMode: editor.inputMode,
     lintMarkdown: editor.lint.markdown,
@@ -248,7 +277,8 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
     distractionFree: props.distractionFree.valueOf(),
     showStatusbar: editor.showStatusbar,
     darkMode,
-    theme: display.theme
+    theme: display.theme,
+    highlightWhitespace: editor.showWhitespace
   } satisfies EditorConfigOptions
 })
 
@@ -323,7 +353,7 @@ const fsalFiles = computed<MDFileDescriptor[]>(() => {
 
   for (const item of tree) {
     if (item.type === 'directory') {
-      const contents = objectToArray(item, 'children')
+      const contents = objectToArray<AnyDescriptor>(item, 'children')
         .filter((descriptor): descriptor is MDFileDescriptor => {
           return descriptor.type === 'file'
         })

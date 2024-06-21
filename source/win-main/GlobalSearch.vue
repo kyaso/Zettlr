@@ -25,12 +25,13 @@
       <ButtonControl
         v-bind:label="searchButtonLabel"
         v-bind:inline="true"
+        v-bind:disabled="filesToSearch.length > 0"
         v-on:click="startSearch()"
       ></ButtonControl>
     </p>
-    <hr>
     <!-- ... as well as two buttons to clear the results or toggle them. -->
     <template v-if="searchResults.length > 0">
+      <hr>
       <p style="text-align: center;">
         <ButtonControl
           v-if="filesToSearch.length === 0"
@@ -149,7 +150,7 @@ import showPopupMenu from '@common/modules/window-register/application-menu-help
 import { type AnyMenuItem } from '@dts/renderer/context'
 // import { markText } from './shared'
 import { hasMdOrCodeExt } from '@providers/fsal/util/is-md-or-code-file'
-import { useConfigStore, useOpenDirectoryStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
+import { useConfigStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
 
 const ipcRenderer = window.ipc
 
@@ -213,12 +214,10 @@ const activeLineIdx = ref<undefined|number>(undefined)
 const individualResults = ref<number>(0)
 
 const workspacesStore = useWorkspacesStore()
-const openDirectoryStory = useOpenDirectoryStore()
 const configStore = useConfigStore()
 const windowStateStore = useWindowStateStore()
 
 const recentGlobalSearches = computed(() => configStore.config.window.recentGlobalSearches)
-const selectedDir = computed(() => openDirectoryStory.openDirectory)
 
 const fileTree = computed(() => workspacesStore.rootDescriptors)
 const useH1 = computed(() => configStore.config.fileNameDisplay.includes('heading'))
@@ -232,7 +231,13 @@ const searchResults = computed(() => {
   return results.sort((a, b) => b.weight - a.weight)
 })
 
-const resultsMessage = computed<string>(() => trans('%s matches', searchResults.value.length))
+const resultsMessage = computed<string>(() => {
+  const nMatches = searchResults.value
+    .map(x => x.result.length)
+    .reduce((prev, cur) => prev + cur, 0)
+  const nFiles = searchResults.value.length
+  return trans('%s matches across %s files', nMatches, nFiles)
+})
 
 /**
  * Allows search results to be further filtered
@@ -297,6 +302,11 @@ function recomputeDirectorySuggestions (): void {
 }
 
 function startSearch (overrideQuery?: string): void {
+  if (filesToSearch.value.length > 0) {
+    console.warn('Global search in progress: Not starting a new one.')
+    return
+  }
+
   // This allows other components to inject a new query when starting a search
   if (overrideQuery !== undefined) {
     query.value = overrideQuery
@@ -349,11 +359,7 @@ function startSearch (overrideQuery?: string): void {
       }
     })
 
-    if (selectedDir.value !== null && selectedDir.value.path.startsWith(treeItem.path)) {
-      // Append the selected directory's contents BEFORE any other items
-      // since that's probably something the user sees as more relevant.
-      fileList = dirContents.concat(fileList)
-    } else if (treeItem.type === 'directory') {
+    if (treeItem.type === 'directory') {
       fileList = fileList.concat(dirContents)
     }
   }
@@ -380,6 +386,7 @@ function startSearch (overrideQuery?: string): void {
   }
 
   recentSearches.unshift(query.value)
+  // TODO: Refactor to use pinia's config store instead!
   ;(global as any).config.set('window.recentGlobalSearches', recentSearches.slice(0, 10))
 
   // Now we're good to go!
@@ -599,7 +606,11 @@ body div#global-search-pane {
   overflow: auto;
   height: 100%;
 
-  hr { margin: 5px 0; }
+  hr {
+    margin: 10px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+  }
 
   div.search-result-container {
     border-bottom: 1px solid rgb(180, 180, 180);

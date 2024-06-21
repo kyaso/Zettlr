@@ -54,7 +54,7 @@ const PROJECT_TEMPLATE: ProjectSettings = {
   // General values that not only pertain to the PDF generation
   title: 'Untitled', // Default project title is the directory's name
   profiles: [], // NOTE: Must correspond to the defaults in ProjectProperties.vue
-  filters: [], // A list of filters (glob patterns) to exclude certain files
+  files: [], // A list of absolute paths to the files to be included, sorted (!)
   cslStyle: '', // A path to an optional CSL style file.
   templates: {
     tex: '', // An optional tex template
@@ -265,7 +265,7 @@ export function getDirNotFoundDescriptor (dirPath: string): DirDescriptor {
  * @param   {DirDescriptor}  dirObject  The directory descriptor in question.
  * @param   {any}            settings   A settings object to be assigned
  */
-export async function setSetting (dirObject: DirDescriptor, settings: any): Promise<void> {
+export async function setSetting (dirObject: DirDescriptor, settings: Partial<DirDescriptor['settings']>): Promise<void> {
   dirObject.settings = safeAssign(settings, dirObject.settings)
   await persistSettings(dirObject)
 }
@@ -298,7 +298,7 @@ export async function sort (
  * @param   {DirDescriptor}  dirObject   The directory descriptor
  * @param   {any}            properties  Initial properties to set
  */
-export async function makeProject (dirObject: DirDescriptor, properties: any): Promise<void> {
+export async function makeProject (dirObject: DirDescriptor, properties: Partial<ProjectSettings>): Promise<void> {
   dirObject.settings.project = safeAssign(properties, PROJECT_TEMPLATE)
   await persistSettings(dirObject)
 }

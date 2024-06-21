@@ -66,6 +66,7 @@ export interface ConfigOptions {
     idGen: string
     linkFilenameOnly: boolean
     linkWithFilename: 'always'|'never'|'withID'
+    linkFormat: 'link|title'|'title|link'
     autoSearch: boolean
     customDirectory: string
     tooltipDelay: number
@@ -84,6 +85,7 @@ export interface ConfigOptions {
     autoCloseBrackets: boolean
     showLinkPreviews: boolean
     showStatusbar: boolean
+    showWhitespace: boolean
     defaultSaveImagePath: string
     enableTableHelper: boolean
     indentUnit: number
@@ -100,6 +102,12 @@ export interface ConfigOptions {
         active: boolean
         level: 'picky'|'default'
         motherTongue: string // e.g., en-US, de-DE
+        variants: {
+          en: string
+          de: string
+          pt: string
+          ca: string
+        }
         provider: 'official'|'custom'
         customServer: string
         username: string
@@ -267,7 +275,8 @@ export function getConfigTemplate (): ConfigOptions {
       idRE: '(\\d{14})',
       idGen: '%Y%M%D%h%m%s',
       linkFilenameOnly: false,
-      linkWithFilename: 'always', // can be always|never|withID
+      linkWithFilename: 'never', // can be always|never|withID
+      linkFormat: 'link|title', // Determines what internal links ([[link|title]]) look like
       autoSearch: true, // Automatically start a search upon following a link?
       customDirectory: '', // If present, saves auto-created files here
       tooltipDelay: 250, // Tooltip popup delay (ms)
@@ -285,6 +294,7 @@ export function getConfigTemplate (): ConfigOptions {
       autocompleteSuggestEmojis: true,
       autoCloseBrackets: true,
       showLinkPreviews: true, // Whether to fetch link previews in the editor
+      showWhitespace: false,
       defaultSaveImagePath: '',
       citeStyle: 'regular', // Determines how autocomplete will complete citations
       enableTableHelper: true, // Enable the table helper plugin
@@ -303,6 +313,13 @@ export function getConfigTemplate (): ConfigOptions {
           active: false, // Utilize languageTool?
           level: 'picky', // API: https://languagetool.org/http-api/#!/default/post_check
           motherTongue: '', // Optional motherTongue property
+          variants: {
+            // These defaults are taken from LT's extension
+            en: 'en-US',
+            de: 'de-DE',
+            pt: 'pt-PT',
+            ca: 'ca-ES'
+          },
           provider: 'official',
           customServer: '',
           username: '',

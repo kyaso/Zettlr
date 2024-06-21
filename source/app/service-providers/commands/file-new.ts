@@ -39,11 +39,9 @@ export default class FileNew extends ZettlrCommand {
     // the name has the following function: If it is given, the user will not
     // be asked for a filename, but if it's missing, a new name will be
     // generated and the user is asked to confirm the name.
-    const shouldPromptUser = this._app.config.get('newFileDontPrompt') === false
+    const { newFileDontPrompt, newFileNamePattern } = this._app.config.get()
     const type = arg.type ?? 'md'
-    const filenamePattern = this._app.config.get('newFileNamePattern')
-    const idGenPattern = this._app.config.get('zkn.idGen')
-    const generatedName = generateFilename(filenamePattern, idGenPattern)
+    const generatedName = generateFilename(newFileNamePattern, this._app.config.get().zkn.idGen)
     const leafId = arg.leafId
 
     if (arg.windowId === undefined) {
@@ -63,23 +61,22 @@ export default class FileNew extends ZettlrCommand {
       return
     }
 
-    let dirpath = this._app.documents.getOpenDirectory()
+    let dirpath = app.getPath('documents')
     let isFallbackDir = false
-    if (dirpath === null && arg?.path !== undefined) {
+    if (typeof arg.path === 'string' && await this._app.fsal.isDir(arg.path)) {
       dirpath = arg.path
-    } else if (dirpath === null) {
+    } else {
       // There is no directory we could salvage, so choose a default one: the
       // documents directory. Displaying the file choosing dialog should never
       // fail because we can't decide on a directory.
       isFallbackDir = true
-      dirpath = app.getPath('documents')
     }
 
     // Make sure we have a filename and have the user confirm this if applicable
     // Also, if the user does not want to be prompted BUT we had to use the
     // fallback directory, we should also prompt the user as otherwise it would
     // be opaque to the user where the notes end up in.
-    if ((arg.name === undefined && shouldPromptUser) || (!shouldPromptUser && isFallbackDir)) {
+    if ((arg.name === undefined && !newFileDontPrompt) || (newFileDontPrompt && isFallbackDir)) {
       // The user wishes to confirm the filename
       const chosenPath = await this._app.windows.saveFile(path.join(dirpath, generatedName))
       if (chosenPath === undefined) {
@@ -140,10 +137,18 @@ export default class FileNew extends ZettlrCommand {
       }
 
       // First create the file
-      await this._app.fsal.createFile(absPath, '')
+      await this._app.fsal.writeTextFile(absPath, '')
 
       // And directly thereafter, open the file
       await this._app.documents.openFile(windowId, leafId, absPath, true)
+      // Final check: If the file has been created outside of any loaded
+      // workspace, we must add it as root so that some other functions of
+      // Zettlr work fine (even though the editing should work flawlessly.).
+      // Since at this point the events that add the file to the tree likely
+      // haven't fired yet, we can check whether the parent directory exists.
+      if (this._app.workspaces.findDir(path.dirname(absPath)) === undefined) {
+        this._app.config.addPath(absPath)
+      }
     } catch (err: any) {
       this._app.log.error(`Could not create file: ${err.message as string}`)
       this._app.windows.prompt({
