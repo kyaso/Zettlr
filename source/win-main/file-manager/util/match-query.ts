@@ -63,11 +63,12 @@ export default function matchQuery (query: string, includeTitle: boolean, includ
           queryMatched = true
         }
 
-      // Let's check for tag matches
-      if (q.startsWith('#')) {
-        const tagMatch = item.tags.find(tag => fuzzyMatch(q.substr(1), tag))
-        if (tagMatch !== undefined) {
-          queryMatched = true
+        // Let's check for tag matches
+        if (q.startsWith('#')) {
+          const tagMatch = item.tags.find(tag => fuzzyMatch(q.substr(1), tag))
+          if (tagMatch !== undefined) {
+            queryMatched = true
+          }
         }
 
         const hasFrontmatter = item.frontmatter != null
@@ -78,11 +79,12 @@ export default function matchQuery (query: string, includeTitle: boolean, includ
           queryMatched = true
         }
 
-      // Check if 'firstHeading' exists before accessing it
-      // Should we use headings 1 and, if so, does it match?
-      if (includeH1 && 'firstHeading' in fileDescriptor && fileDescriptor.firstHeading !== null) {
-        if (fuzzyMatch(q, fileDescriptor.firstHeading?.toLowerCase())) {
-          queryMatched = true
+        // Check if 'firstHeading' exists before accessing it
+        // Should we use headings 1 and, if so, does it match?
+        if (includeH1 && 'firstHeading' in fileDescriptor && fileDescriptor.firstHeading !== null) {
+          if (fuzzyMatch(q, fileDescriptor.firstHeading?.toLowerCase())) {
+            queryMatched = true
+          }
         }
       }
 
