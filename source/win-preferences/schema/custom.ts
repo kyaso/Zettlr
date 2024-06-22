@@ -12,7 +12,8 @@
  * END HEADER
  */
 
-import { PreferencesGroups, type PreferencesFieldset } from '../App.vue'
+import { type PreferencesFieldset } from '../App.vue'
+import { PreferencesGroups } from './_preferences-groups'
 
 export function getCustomFields (): PreferencesFieldset[] {
   return [
