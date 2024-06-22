@@ -6856,10 +6856,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fuzzysort@npm:^1.2.1":
-  version: 1.9.0
-  resolution: "fuzzysort@npm:1.9.0"
-  checksum: bfc32a83d03d3bfcb92c1b3abe3302e9fe8045059fa1ce3a01482d1e2b96c2c836c361a2090447ce85443af62d204a53584d4706832bef893ef60ee3900985a1
+"fuzzysort@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "fuzzysort@npm:3.0.2"
+  checksum: 049633b2dcca879f4875bf0d433cf1922b5344a7ef810bd2f2b3d835a6d441b299cc72dd983545aa1ec95324b05513c7be78d1497e526017ba99c380abba3c16
   languageName: node
   linkType: hard
 
@@ -14747,7 +14747,7 @@ __metadata:
     eslint-plugin-vue: ^9.25.0
     fix-path: ^4.0.0
     fsevents: ^2.3.3
-    fuzzysort: ^1.2.1
+    fuzzysort: ^3.0.2
     gemoji: ^8.1.0
     gettext-parser: ^8.0.0
     got: ^14.2.1

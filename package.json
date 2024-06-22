@@ -73,7 +73,7 @@
     "citeproc": "^2.4.63",
     "d3": "^7.9.0",
     "fix-path": "^4.0.0",
-    "fuzzysort": "^1.2.1",
+    "fuzzysort": "^3.0.2",
     "gemoji": "^8.1.0",
     "gettext-parser": "^8.0.0",
     "got": "^14.2.1",
