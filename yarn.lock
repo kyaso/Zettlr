@@ -1252,10 +1252,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@orama/orama@npm:^2.0.0-beta.7":
-  version: 2.0.0-beta.7
-  resolution: "@orama/orama@npm:2.0.0-beta.7"
-  checksum: 8589c58ad82ed0c1e5146e4d1abcb2b92d7f02116021d04d2768ce3af886a1b47aedad4fd035b6cd22e7077d88efad6897193f16bef3842abe768369f1d676cf
+"@orama/orama@npm:^2.0.20":
+  version: 2.0.20
+  resolution: "@orama/orama@npm:2.0.20"
+  checksum: 3189563ae067a08ec3cb7938409a53d8fa1d7f8417059fb0fb499388b7a3adc8f8e990a6aa90cd61bd2eac9eb30fa3e045735b0610f66363439d82976b3be947
   languageName: node
   linkType: hard
 
@@ -14700,7 +14700,7 @@ __metadata:
     "@electron/notarize": ^2.3.0
     "@lezer/common": ^1.2.1
     "@lezer/highlight": ^1.2.0
-    "@orama/orama": ^2.0.0-beta.7
+    "@orama/orama": ^2.0.20
     "@replit/codemirror-emacs": ^6.0.1
     "@replit/codemirror-vim": ^6.2.1
     "@types/adm-zip": ^0.5.5
