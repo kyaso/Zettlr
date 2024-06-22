@@ -379,6 +379,7 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
   const fileNameMd = pathBasename(lastActiveFile.value.path)
   const activeFileName = fileNameMd.slice(0, -3)
   const fileNameLink = '[[' + activeFileName + ']]'
+  const fileNameLinkWithTitle = '[[' + activeFileName + '|'
   const fileNameExact = '"' + activeFileName + '"'
 
   // First, get all mentions
@@ -409,7 +410,9 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
 
     // Iterate over the lines of the current result set
     for (let j = x.result.length - 1; j >= 0; j--) {
-      const isBacklink: boolean = x.result[j].restext.includes(fileNameLink)
+      const isBacklink: boolean = ( x.result[j].restext.includes(fileNameLink) ||
+                                    x.result[j].restext.includes(fileNameLinkWithTitle)
+                                  )
       const isNegOne: boolean = x.result[j].line === -1
 
       if (isBacklink || isNegOne) {
