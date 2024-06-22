@@ -3,21 +3,21 @@
     <h4>{{ searchTitle }}</h4>
     <!-- First: Two text controls for search terms and to restrict the search -->
     <AutocompleteText
-      ref="query-input"
+      ref="queryInputElement"
       v-model="query"
+      name="query-input"
       v-bind:label="queryInputLabel"
       v-bind:autocomplete-values="recentGlobalSearches"
       v-bind:placeholder="queryInputPlaceholder"
       v-on:keydown.enter="startSearch()"
-      v-on:keydown.tab="($refs['restrict-to-dir-input'] as any).focus()"
     ></AutocompleteText>
     <AutocompleteText
       ref="restrict-to-dir-input"
       v-model="restrictToDir"
+      name="restrict-to-dir-input"
       v-bind:label="restrictDirLabel"
       v-bind:autocomplete-values="directorySuggestions"
       v-bind:placeholder="restrictDirPlaceholder"
-      v-on:confirm="restrictToDir = $event"
       v-on:keydown.enter="startSearch()"
     ></AutocompleteText>
     <!-- Then an always-visible search button ... -->
@@ -25,12 +25,13 @@
       <ButtonControl
         v-bind:label="searchButtonLabel"
         v-bind:inline="true"
+        v-bind:disabled="filesToSearch.length > 0"
         v-on:click="startSearch()"
       ></ButtonControl>
     </p>
-    <hr>
     <!-- ... as well as two buttons to clear the results or toggle them. -->
     <template v-if="searchResults.length > 0">
+      <hr>
       <p style="text-align: center;">
         <ButtonControl
           v-if="filesToSearch.length === 0"
@@ -72,7 +73,6 @@
       </p>
       <!-- First, display a filter ... -->
       <TextControl
-        ref="filter"
         v-model="filter"
         v-bind:placeholder="filterPlaceholder"
         v-bind:label="filterLabel"
@@ -122,7 +122,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 /**
  * @ignore
  * BEGIN HEADER
@@ -139,21 +139,33 @@
 
 import objectToArray from '@common/util/object-to-array'
 import compileSearchTerms from '@common/util/compile-search-terms'
-import TextControl from '@common/vue/form/elements/Text.vue'
-import ButtonControl from '@common/vue/form/elements/Button.vue'
-import ProgressControl from '@common/vue/form/elements/Progress.vue'
+import TextControl from '@common/vue/form/elements/TextControl.vue'
+import ButtonControl from '@common/vue/form/elements/ButtonControl.vue'
+import ProgressControl from '@common/vue/form/elements/ProgressControl.vue'
 import AutocompleteText from '@common/vue/form/elements/AutocompleteText.vue'
 import { trans } from '@common/i18n-renderer'
-import { defineComponent } from 'vue'
-import { SearchResult, SearchResultWrapper, SearchTerm } from '@dts/common/search'
-import { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
+import { ref, computed, watch, onMounted } from 'vue'
+import { type SearchResult, type SearchResultWrapper } from '@dts/common/search'
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
-import { AnyMenuItem } from '@dts/renderer/context'
-import { markText } from './shared'
+import { type AnyMenuItem } from '@dts/renderer/context'
+// import { markText } from './shared'
 import { hasMdOrCodeExt } from '@providers/fsal/util/is-md-or-code-file'
+import { useConfigStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
 
-const path = window.path
 const ipcRenderer = window.ipc
+
+const sep = process.platform === 'win32' ? '\\': '/'
+
+const searchTitle = trans('Full-Text Search')
+const queryInputLabel = trans('Enter your search terms below')
+const queryInputPlaceholder = trans('Find …')
+const filterPlaceholder = trans('Filter …')
+const filterLabel = trans('Filter search results')
+const restrictDirLabel = trans('Restrict search to directory')
+const restrictDirPlaceholder = trans('Restrict to directory …')
+const searchButtonLabel = trans('Search')
+const clearButtonLabel = trans('Clear search')
+const toggleButtonLabel = trans('Toggle results')
 
 // Again: We have a side effect that trans() cannot be executed during import
 // stage. It needs to be executed after the window registration ran for now. It
@@ -171,437 +183,421 @@ function getContextMenu (): AnyMenuItem[] {
   ]
 }
 
-export default defineComponent({
-  name: 'GlobalSearch',
-  components: {
-    TextControl,
-    ProgressControl,
-    ButtonControl,
-    AutocompleteText
-  },
-  props: {
-    windowId: {
-      type: String,
-      required: true
+defineProps<{
+  windowId: string
+}>()
+
+const emit = defineEmits<(e: 'jtl', filePath: string, lineNumber: number, openInNewTab: boolean) => void>()
+
+// The current search
+const query = ref<string>('')
+// An additional query allowing search results to be filtered further
+const filter = ref<string>('')
+// Whether or not we should restrict search to a given directory
+const restrictToDir = ref<string>('')
+// All directories we've found in the file tree
+const directorySuggestions = ref<string[]>([])
+// All files that we need to search. Will be emptied during a search.
+const filesToSearch = ref<any[]>([]) // TODO
+// The number of files the search started with (for progress bar)
+const sumFilesToSearch = ref<number>(0)
+// A global trigger for the result set trigger. This will determine what
+// the toggle will do to all result sets -- either hide or display them.
+const toggleState = ref<boolean>(false)
+// Contains the current search's maximum (combined) weight across the results
+const maxWeight = ref<number>(0)
+// The file list index of the most recently clicked search result.
+const activeFileIdx = ref<undefined|number>(undefined)
+// The result line index of the most recently clicked search result.
+const activeLineIdx = ref<undefined|number>(undefined)
+// Actual number of search results (not just number of files)
+const individualResults = ref<number>(0)
+
+const workspacesStore = useWorkspacesStore()
+const configStore = useConfigStore()
+const windowStateStore = useWindowStateStore()
+
+const recentGlobalSearches = computed(() => configStore.config.window.recentGlobalSearches)
+
+const fileTree = computed(() => workspacesStore.rootDescriptors)
+const useH1 = computed(() => configStore.config.fileNameDisplay.includes('heading'))
+const useTitle = computed(() => configStore.config.fileNameDisplay.includes('title'))
+const queryInputElement = ref<HTMLInputElement|null>(null)
+
+const searchResults = computed(() => {
+  // NOTE: Vue's reactivity can be tricky, and one thing is to sort arrays.
+  // This is why we first clone them, sort the cloned array and return that one.
+  const results = [...windowStateStore.searchResults]
+  return results.sort((a, b) => b.weight - a.weight)
+})
+
+const resultsMessage = computed<string>(() => {
+  const nMatches = searchResults.value
+    .map(x => x.result.length)
+    .reduce((prev, cur) => prev + cur, 0)
+  const nFiles = searchResults.value.length
+  return trans('%s matches across %s files', nMatches, nFiles)
+})
+
+/**
+ * Allows search results to be further filtered
+ */
+const filteredSearchResults = computed<SearchResultWrapper[]>(() => {
+  if (filter.value === '') {
+    return searchResults.value
+  }
+
+  const lowercase = filter.value.toLowerCase()
+
+  return searchResults.value.filter(result => {
+    // First check the actual results in the files
+    for (const lineResult of result.result) {
+      if (lineResult.restext.toLowerCase().includes(lowercase)) {
+        return true
+      }
     }
-  },
-  emits: ['jtl'],
-  data: function () {
-    return {
-      // The current search
-      query: '',
-      // An additional query allowing search results to be filtered further
-      filter: '',
-      // Whether or not we should restrict search to a given directory
-      restrictToDir: '',
-      // All directories we've found in the file tree
-      directorySuggestions: [] as string[],
-      // The compiled search terms
-      compiledTerms: null as null|SearchTerm[],
-      // Number of files where results where found
-      individualResults: 0,
-      filesToSearch: [] as any[],
-      // The number of files the search started with (for progress bar)
-      sumFilesToSearch: 0,
-      // A global trigger for the result set trigger. This will determine what
-      // the toggle will do to all result sets -- either hide or display them.
-      toggleState: false,
-      // Contains the current search's maximum (combined) weight across the results
-      maxWeight: 0,
-      // The file list index of the most recently clicked search result.
-      activeFileIdx: undefined as undefined|number,
-      // The result line index of the most recently clicked search result.
-      activeLineIdx: undefined as undefined|number
+
+    // Next, try the different variations on filename and displayName
+    if (result.file.filename.toLowerCase().includes(lowercase)) {
+      return true
     }
-  },
-  computed: {
-    recentGlobalSearches: function (): string[] {
-      return this.$store.state.config['window.recentGlobalSearches']
-    },
-    selectedDir: function (): DirDescriptor|null {
-      return this.$store.state.selectedDirectory
-    },
-    fileTree: function (): Array<MDFileDescriptor|CodeFileDescriptor|DirDescriptor> {
-      return this.$store.state.fileTree
-    },
-    activeFile: function (): MDFileDescriptor|null {
-      return this.$store.state.activeFile
-    },
-    activeDocumentInfo: function (): any|null {
-      return this.$store.state.activeDocumentInfo
-    },
-    useH1: function (): boolean {
-      return this.$store.state.config.fileNameDisplay.includes('heading')
-    },
-    useTitle: function (): boolean {
-      return this.$store.state.config.fileNameDisplay.includes('title')
-    },
-    queryInputElement: function (): HTMLInputElement|null {
-      return this.$refs['query-input'] as HTMLInputElement|null
-    },
-    searchTitle: function () {
-      return trans('Full-Text Search')
-    },
-    resultsMessage: function () {
-      return trans('%s matches', this.searchResults.length)
-    },
-    queryInputLabel: function () {
-      return trans('Enter your search terms below')
-    },
-    queryInputPlaceholder: function () {
-      return trans('Find …')
-    },
-    filterPlaceholder: function () {
-      return trans('Filter …')
-    },
-    filterLabel: function () {
-      return trans('Filter search results')
-    },
-    restrictDirLabel: function () {
-      return trans('Restrict search to directory')
-    },
-    restrictDirPlaceholder: function () {
-      return trans('Restrict to directory …')
-    },
-    searchButtonLabel: function () {
-      return trans('Search')
-    },
-    clearButtonLabel: function () {
-      return trans('Clear search')
-    },
-    toggleButtonLabel: function () {
-      return trans('Toggle results')
-    },
-    sep: function (): string {
-      return path.sep
-    },
-    searchResults: function (): SearchResultWrapper[] {
-      return this.$store.state.searchResults
-    },
-    /**
-     * Allows search results to be further filtered
-     */
-    filteredSearchResults: function () {
-      if (this.filter === '') {
-        return this.searchResults
+    if (result.file.displayName.toLowerCase().includes(lowercase)) {
+      return true
+    }
+    if (result.file.path.toLowerCase().includes(lowercase)) {
+      return true
+    }
+
+    // No luck here.
+    return false
+  })
+})
+
+watch(fileTree, () => {
+  recomputeDirectorySuggestions()
+})
+
+onMounted(() => {
+  queryInputElement.value?.focus()
+  recomputeDirectorySuggestions()
+})
+
+function recomputeDirectorySuggestions (): void {
+  let dirList: string[] = []
+
+  for (const treeItem of fileTree.value) {
+    if (treeItem.type !== 'directory') {
+      continue
+    }
+
+    let dirContents = objectToArray(treeItem, 'children')
+    dirContents = dirContents.filter(item => item.type === 'directory')
+    // Remove the workspace directory path itself so only the
+    // app-internal relative path remains. Also, we're removing the leading (back)slash
+    dirList = dirList.concat(dirContents.map(item => item.path.replace(treeItem.dir, '').substr(1)))
+  }
+
+  // Remove duplicates
+  directorySuggestions.value = [...new Set(dirList)]
+}
+
+function startSearch (overrideQuery?: string): void {
+  if (filesToSearch.value.length > 0) {
+    console.warn('Global search in progress: Not starting a new one.')
+    return
+  }
+
+  // This allows other components to inject a new query when starting a search
+  if (overrideQuery !== undefined) {
+    query.value = overrideQuery
+  }
+
+  // We should start a search. We need two types of information for that:
+  // 1. A list of files to be searched
+  // 2. The compiled search terms.
+  // Let's do that first.
+
+  let fileList: any[] = []
+
+  for (const treeItem of fileTree.value) {
+    if (treeItem.type !== 'directory') {
+      let displayName = treeItem.name
+      if (treeItem.type === 'file') {
+        if (useTitle.value && typeof treeItem.frontmatter?.title === 'string') {
+          displayName = treeItem.frontmatter.title
+        } else if (useH1.value && treeItem.firstHeading !== null) {
+          displayName = treeItem.firstHeading
+        }
       }
 
-      const lowercase = this.filter.toLowerCase()
-
-      return this.searchResults.filter(result => {
-        // First check the actual results in the files
-        for (const lineResult of result.result) {
-          if (lineResult.restext.toLowerCase().includes(lowercase) === true) {
-            return true
-          }
-        }
-
-        // Next, try the different variations on filename and displayName
-        if (result.file.filename.toLowerCase().includes(lowercase) === true) {
-          return true
-        }
-        if (result.file.displayName.toLowerCase().includes(lowercase) === true) {
-          return true
-        }
-        if (result.file.path.toLowerCase().includes(lowercase) === true) {
-          return true
-        }
-
-        // No luck here.
-        return false
+      fileList.push({
+        path: treeItem.path,
+        relativeDirectoryPath: '',
+        filename: treeItem.name,
+        displayName
       })
+      continue
     }
-  },
-  watch: {
-    fileTree: function () {
-      this.recomputeDirectorySuggestions()
-    }
-  },
-  mounted: function () {
-    (this.$refs['query-input'] as HTMLInputElement).focus()
-    this.recomputeDirectorySuggestions()
-  },
-  methods: {
-    recomputeDirectorySuggestions: function () {
-      let dirList: string[] = []
 
-      for (const treeItem of this.fileTree) {
-        if (treeItem.type !== 'directory') {
-          continue
-        }
+    let dirContents = objectToArray(treeItem, 'children')
+    dirContents = dirContents.filter(item => item.type !== 'directory')
+    dirContents = dirContents.map(item => {
+      let displayName = item.name
+      if (useTitle.value && item.frontmatter != null && typeof item.frontmatter.title === 'string') {
+        displayName = item.frontmatter.title
+      } else if (useH1.value && item.firstHeading !== null) {
+        displayName = item.firstHeading
+      }
 
-        let dirContents = objectToArray(treeItem, 'children')
-        dirContents = dirContents.filter(item => item.type === 'directory')
+      return {
+        path: item.path,
         // Remove the workspace directory path itself so only the
         // app-internal relative path remains. Also, we're removing the leading (back)slash
-        dirList = dirList.concat(dirContents.map(item => item.path.replace(treeItem.dir, '').substr(1)))
+        relativeDirectoryPath: item.dir.replace(treeItem.dir, '').substr(1),
+        filename: item.name,
+        displayName
       }
+    })
 
-      // Remove duplicates
-      this.directorySuggestions = [...new Set(dirList)]
-    },
-    startSearch: function () {
-      // We should start a search. We need two types of information for that:
-      // 1. A list of files to be searched
-      // 2. The compiled search terms.
-      // Let's do that first.
-
-      let fileList: any[] = []
-
-      for (const treeItem of this.fileTree) {
-        if (treeItem.type !== 'directory') {
-          let displayName = treeItem.name
-          if (treeItem.type === 'file') {
-            if (this.useTitle && typeof treeItem.frontmatter?.title === 'string') {
-              displayName = treeItem.frontmatter.title
-            } else if (this.useH1 && treeItem.firstHeading !== null) {
-              displayName = treeItem.firstHeading
-            }
-          }
-
-          fileList.push({
-            path: treeItem.path,
-            relativeDirectoryPath: '',
-            filename: treeItem.name,
-            displayName
-          })
-          continue
-        }
-
-        let dirContents = objectToArray(treeItem, 'children')
-        dirContents = dirContents.filter(item => item.type !== 'directory')
-        dirContents = dirContents.map(item => {
-          let displayName = item.name
-          if (this.useTitle && item.frontmatter != null && typeof item.frontmatter.title === 'string') {
-            displayName = item.frontmatter.title
-          } else if (this.useH1 && item.firstHeading !== null) {
-            displayName = item.firstHeading
-          }
-
-          return {
-            path: item.path,
-            // Remove the workspace directory path itself so only the
-            // app-internal relative path remains. Also, we're removing the leading (back)slash
-            relativeDirectoryPath: item.dir.replace(treeItem.dir, '').substr(1),
-            filename: item.name,
-            displayName
-          }
-        })
-
-        if (this.selectedDir !== null && this.selectedDir.path.startsWith(treeItem.path) === true) {
-          // Append the selected directory's contents BEFORE any other items
-          // since that's probably something the user sees as more relevant.
-          fileList = dirContents.concat(fileList)
-        } else if (treeItem.type === 'directory') {
-          fileList = fileList.concat(dirContents)
-        }
-      }
-
-      // Filter out non-searchable files
-      fileList = fileList.filter(file => hasMdOrCodeExt(file.path))
-
-      // And also all files that are not within the selected directory
-      if (this.restrictToDir.trim() !== '') {
-        fileList = fileList.filter(item => item.relativeDirectoryPath.startsWith(this.restrictToDir))
-      }
-
-      if (fileList.length === 0) {
-        return console.warn('Could not begin search: The file list was empty.')
-      }
-
-      this.compiledTerms = compileSearchTerms(this.query)
-
-      // One last thing: Add the query to the recent searches
-      const recentSearches: string[] = this.$store.state.config['window.recentGlobalSearches']
-
-      const idx = recentSearches.indexOf(this.query)
-
-      if (idx > -1) {
-        recentSearches.splice(idx, 1)
-      }
-
-      recentSearches.unshift(this.query)
-      ;(global as any).config.set('window.recentGlobalSearches', recentSearches.slice(0, 10))
-
-      // Now we're good to go!
-      this.emptySearchResults()
-      this.blurQueryInput()
-      this.filter = '' // Reset the filter
-      this.sumFilesToSearch = fileList.length
-      this.filesToSearch = fileList
-      this.maxWeight = 0
-      this.singleSearchRun().catch(err => console.error(err))
-    },
-    singleSearchRun: async function () {
-      // Take the file to be searched ...
-      const terms = compileSearchTerms(this.query)
-
-      // Query the index
-      let res: SearchResult[] = []
-      // This array will hold all the NOT matches
-      // It is later used to filter out the NOT matches
-      let notRes: SearchResult[] = []
-
-      // console.log('[GlobalSearch] Terms: '+terms)
-
-      // Loop over the search terms
-      for (let i = 0; i < terms.length; i++) {
-        // Loop over the words of the current term
-        for (let j = 0; j < terms[i].words.length; j++) {
-          // Query the search index for the word
-          const queryRes: [] = await ipcRenderer.invoke('application', {
-            command: 'query-index',
-            payload: {
-              query: terms[i].words[j]
-            }
-          })
-
-          if (terms[i].operator !== 'NOT') {
-            // If the corresponding operator of the current terms is not NOT,
-            // add the query result to the res array.
-            res = res.concat(queryRes)
-          } else {
-            // If the operator is NOT, add the result to the notRes array.
-            notRes = notRes.concat(queryRes)
-          }
-        }
-      }
-
-      // console.log('[GlobalSearch] Query result: '+res)
-      // console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
-
-      // First filter out all NOT files
-      this.filesToSearch = this.filesToSearch.filter(f => !notRes.includes(f.path))
-
-      // console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
-
-      // Next, make sure indexed files are in front
-      this.filesToSearch.sort((a, b) => {
-        const aInRes = res.includes(a.path)
-        const bInRes = res.includes(b.path)
-
-        if (aInRes && !bInRes) {
-          return -1
-        } else if (!aInRes && bInRes) {
-          return 1
-        } else {
-          return 0
-        }
-      })
-
-      while (this.filesToSearch.length > 0) {
-        const fileToSearch = this.filesToSearch.shift() as any
-        // Now start the search
-        const result: SearchResult[] = await ipcRenderer.invoke('application', {
-          command: 'file-search',
-          payload: {
-            path: fileToSearch.path,
-            terms
-          }
-        })
-
-        if (result.length > 0) {
-          const newResult: SearchResultWrapper = {
-            file: fileToSearch,
-            result,
-            hideResultSet: false, // If true, the individual results won't be displayed
-            weight: result.reduce((accumulator: number, currentValue: SearchResult) => {
-              return accumulator + currentValue.weight
-            }, 0) // This is the initialValue, b/c we're summing up props
-          }
-          // If the file was found in the index, artificially blow up the weight of
-          // all its results so the file shows up near the top.
-          //
-          // Rationale: Prefix matches (which are found by default orama) should weigh
-          // higher than infix matches. E.g., if we search for "ita", and there
-          // is one file with only one occurrence of "italy", and another file
-          // with 20 times "digital", the first file should still appear above
-          // the second file (even though the latter one has more results).
-          //
-          // In general: If the search result was also found by the index, give
-          // it significantly more weight.
-          if (res.includes(fileToSearch.path)) {
-            newResult.weight += 100
-          }
-          this.$store.commit('addSearchResult', newResult)
-          if (newResult.weight > this.maxWeight) {
-            this.maxWeight = newResult.weight
-          }
-
-          // Accumulate individual results
-          this.individualResults += result.length
-          // If title/tag matched there will be a "-1" result line -> don't
-          // count that.
-          if (result[0].line === -1) {
-            this.individualResults--
-          }
-        }
-      }
-
-      this.finaliseSearch()
-    },
-    finaliseSearch: function () {
-      this.compiledTerms = null
-      this.filesToSearch = [] // Reset, in case the search was aborted.
-    },
-    emptySearchResults: function () {
-      this.$store.commit('clearSearchResults')
-      this.individualResults = 0
-
-      // Clear indices of active search result
-      this.activeFileIdx = -1
-      this.activeLineIdx = -1
-
-      // Also, for convenience, re-focus and select the input if available
-      this.queryInputElement?.focus()
-      this.queryInputElement?.select()
-    },
-    toggleIndividualResults: function () {
-      this.toggleState = !this.toggleState
-      for (const result of this.searchResults) {
-        result.hideResultSet = this.toggleState
-      }
-    },
-    fileContextMenu: function (event: MouseEvent, filePath: string, lineNumber: number) {
-      const point = { x: event.clientX, y: event.clientY }
-      showPopupMenu(point, getContextMenu(), (clickedID: string) => {
-        switch (clickedID) {
-          case 'new-tab':
-            this.jumpToLine(filePath, lineNumber, true)
-            break
-        }
-      })
-    },
-    onResultClick: function (event: MouseEvent, idx: number, idx2: number, filePath: string, lineNumber: number) {
-      // This intermediary function is needed to make sure that jumpToLine can
-      // also be called from within the context menu (see above).
-      if (event.button === 2) {
-        return // Do not handle right-clicks
-      }
-
-      // Update indices so we can keep track of the most recently clicked
-      // search result.
-      this.activeFileIdx = idx
-      this.activeLineIdx = idx2
-
-      const isMiddleClick = (event.type === 'mousedown' && event.button === 1)
-      this.jumpToLine(filePath, lineNumber, isMiddleClick)
-    },
-    jumpToLine: function (filePath: string, lineNumber: number, openInNewTab: boolean = false) {
-      // NOTE that we have to increase the line number for the JTL command
-      this.$emit('jtl', filePath, lineNumber + 1, openInNewTab)
-    },
-    markText: function (resultObject: SearchResult) {
-      return markText(resultObject)
-    },
-    focusQueryInput: function () {
-      this.queryInputElement?.focus()
-    },
-    blurQueryInput: function () {
-      this.queryInputElement?.blur()
+    if (treeItem.type === 'directory') {
+      fileList = fileList.concat(dirContents)
     }
   }
-})
+
+  // Filter out non-searchable files
+  fileList = fileList.filter(file => hasMdOrCodeExt(file.path))
+
+  // And also all files that are not within the selected directory
+  if (restrictToDir.value.trim() !== '') {
+    fileList = fileList.filter(item => item.relativeDirectoryPath.startsWith(restrictToDir.value))
+  }
+
+  if (fileList.length === 0) {
+    return console.warn('Could not begin search: The file list was empty.')
+  }
+
+  // One last thing: Add the query to the recent searches
+  const recentSearches: string[] = recentGlobalSearches.value.map(x => x)
+
+  const idx = recentSearches.indexOf(query.value)
+
+  if (idx > -1) {
+    recentSearches.splice(idx, 1)
+  }
+
+  recentSearches.unshift(query.value)
+  // TODO: Refactor to use pinia's config store instead!
+  ;(global as any).config.set('window.recentGlobalSearches', recentSearches.slice(0, 10))
+
+  // Now we're good to go!
+  emptySearchResults()
+  blurQueryInput()
+  filter.value = '' // Reset the filter
+  sumFilesToSearch.value = fileList.length
+  filesToSearch.value = fileList
+  maxWeight.value = 0
+  singleSearchRun().catch(err => console.error(err))
+}
+
+async function singleSearchRun (): Promise<void> {
+  // Take the file to be searched ...
+  const terms = compileSearchTerms(query.value)
+
+  // Query the index
+  let res: SearchResult[] = []
+  // This array will hold all the NOT matches
+  // It is later used to filter out the NOT matches
+  let notRes: SearchResult[] = []
+
+  // console.log('[GlobalSearch] Terms: '+terms)
+
+  // Loop over the search terms
+  for (let i = 0; i < terms.length; i++) {
+    // Loop over the words of the current term
+    for (let j = 0; j < terms[i].words.length; j++) {
+      // Query the search index for the word
+      const queryRes: [] = await ipcRenderer.invoke('application', {
+        command: 'query-index',
+        payload: {
+          query: terms[i].words[j]
+        }
+      })
+
+      if (terms[i].operator !== 'NOT') {
+        // If the corresponding operator of the current terms is not NOT,
+        // add the query result to the res array.
+        res = res.concat(queryRes)
+      } else {
+        // If the operator is NOT, add the result to the notRes array.
+        notRes = notRes.concat(queryRes)
+      }
+    }
+  }
+
+  // console.log('[GlobalSearch] Query result: '+res)
+  // console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
+
+  // First filter out all NOT files
+  filesToSearch.value = filesToSearch.value.filter(f => !notRes.includes(f.path))
+
+  // console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
+
+  // Next, make sure indexed files are in front
+  filesToSearch.value.sort((a, b) => {
+    const aInRes = res.includes(a.path)
+    const bInRes = res.includes(b.path)
+
+    if (aInRes && !bInRes) {
+      return -1
+    } else if (!aInRes && bInRes) {
+      return 1
+    } else {
+      return 0
+    }
+  })
+
+  while (filesToSearch.value.length > 0) {
+    const fileToSearch = filesToSearch.value.shift()
+    // Now start the search
+    const result: SearchResult[] = await ipcRenderer.invoke('application', {
+      command: 'file-search',
+      payload: {
+        path: fileToSearch.path,
+        terms
+      }
+    })
+
+    if (result.length > 0) {
+      const newResult: SearchResultWrapper = {
+        file: fileToSearch,
+        result,
+        hideResultSet: false, // If true, the individual results won't be displayed
+        weight: result.reduce((accumulator: number, currentValue: SearchResult) => {
+          return accumulator + currentValue.weight
+        }, 0) // This is the initialValue, b/c we're summing up props
+      }
+
+      // If the file was found in the index, artificially blow up the weight of
+      // all its results so the file shows up near the top.
+      //
+      // Rationale: Prefix matches (which are found by default orama) should weigh
+      // higher than infix matches. E.g., if we search for "ita", and there
+      // is one file with only one occurrence of "italy", and another file
+      // with 20 times "digital", the first file should still appear above
+      // the second file (even though the latter one has more results).
+      //
+      // In general: If the search result was also found by the index, give
+      // it significantly more weight.
+      if (res.includes(fileToSearch.path)) {
+        newResult.weight += 100
+      }
+
+      windowStateStore.searchResults.push(newResult)
+      if (newResult.weight > maxWeight.value) {
+        maxWeight.value = newResult.weight
+      }
+
+      // Accumulate individual results
+      individualResults.value += result.length
+      // If title/tag matched there will be a "-1" result line -> don't
+      // count that.
+      if (result[0].line === -1) {
+        individualResults.value--
+      }
+    }
+  }
+
+  finaliseSearch()
+}
+
+function finaliseSearch (): void {
+  filesToSearch.value = [] // Reset, in case the search was aborted.
+}
+
+function emptySearchResults (): void {
+  windowStateStore.searchResults = []
+  individualResults.value = 0
+
+  // Clear indices of active search result
+  activeFileIdx.value = -1
+  activeLineIdx.value = -1
+
+  // Also, for convenience, re-focus and select the input if available
+  queryInputElement.value?.focus()
+  queryInputElement.value?.select()
+}
+
+function toggleIndividualResults (): void {
+  toggleState.value = !toggleState.value
+  for (const result of searchResults.value) {
+    result.hideResultSet = toggleState.value
+  }
+}
+
+function fileContextMenu (event: MouseEvent, filePath: string, lineNumber: number): void {
+  const point = { x: event.clientX, y: event.clientY }
+  showPopupMenu(point, getContextMenu(), (clickedID: string) => {
+    switch (clickedID) {
+      case 'new-tab':
+        jumpToLine(filePath, lineNumber, true)
+        break
+    }
+  })
+}
+
+function onResultClick (event: MouseEvent, idx: number, idx2: number, filePath: string, lineNumber: number): void {
+  // This intermediary function is needed to make sure that jumpToLine can
+  // also be called from within the context menu (see above).
+  if (event.button === 2) {
+    return // Do not handle right-clicks
+  }
+
+  // Update indices so we can keep track of the most recently clicked
+  // search result.
+  activeFileIdx.value = idx
+  activeLineIdx.value = idx2
+
+  const isMiddleClick = (event.type === 'mousedown' && event.button === 1)
+  jumpToLine(filePath, lineNumber, isMiddleClick)
+}
+
+function jumpToLine (filePath: string, lineNumber: number, openInNewTab: boolean = false): void {
+  // NOTE that we have to increase the line number for the JTL command
+  emit('jtl', filePath, lineNumber + 1, openInNewTab)
+}
+
+function markText (resultObject: SearchResult): string {
+  const startTag = '<span class="search-result-highlight">'
+  const endTag = '</span>'
+  // We receive a result object and should return an HTML string containing
+  // highlighting (we're using <strong>) where the result works. We have
+  // access to restext, weight, line, and an array of from-to-ranges
+  // indicating all matches on the given line. NOTE that all results are
+  // being sorted correctly by the main process, so we can just assume the
+  // results to be non-overlapping and from beginning to the end of the
+  // line.
+  let marked = resultObject.restext
+
+  // We go through the ranges in reverse order so that the range positions
+  // remain valid as we highlight parts of the string
+  for (let i = resultObject.ranges.length - 1; i > -1; i--) {
+    const range = resultObject.ranges[i]
+    marked = marked.substring(0, range.to) + endTag + marked.substring(range.to)
+    marked = marked.substring(0, range.from) + startTag + marked.substring(range.from)
+  }
+
+  return marked
+}
+
+function focusQueryInput (): void {
+  queryInputElement.value?.focus()
+}
+
+function blurQueryInput (): void {
+  queryInputElement.value?.blur()
+}
+
+defineExpose({ focusQueryInput, blurQueryInput, startSearch })
 </script>
 
 <style lang="less">
@@ -610,7 +606,11 @@ body div#global-search-pane {
   overflow: auto;
   height: 100%;
 
-  hr { margin: 5px 0; }
+  hr {
+    margin: 10px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+  }
 
   div.search-result-container {
     border-bottom: 1px solid rgb(180, 180, 180);

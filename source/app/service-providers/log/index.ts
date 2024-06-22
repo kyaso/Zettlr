@@ -17,7 +17,6 @@ import { promises as fs } from 'fs'
 import { app, ipcMain } from 'electron'
 import chalk from 'chalk'
 import ProviderContract from '../provider-contract'
-const hasProp = Object.prototype.hasOwnProperty
 
 /**
  * How many logfiles should the app keep at most?
@@ -44,7 +43,7 @@ export interface LogMessage {
   time: string
   level: LogLevel
   message: string
-  details: any
+  details?: Error|Record<string, any>|number|string|boolean|any[]
 }
 
 const debugConsole = {
@@ -72,8 +71,8 @@ export default class LogProvider extends ProviderContract {
       const { command } = payload
 
       if (command === 'retrieve-log-chunk') {
-        let { nextIndex } = payload
-        if (nextIndex >= this._log.length) {
+        const nextIndex = parseInt(String(payload.nextIndex), 10)
+        if (nextIndex >= this._log.length || nextIndex < 0) {
           return []
         }
 
@@ -264,12 +263,12 @@ export default class LogProvider extends ProviderContract {
     } else if (Array.isArray(message.details)) {
       details = ` | Details: ${message.details.join(', ')}`
     } else if ([ 'number', 'string', 'boolean' ].includes(typeof message.details)) {
-      details = ` | Details: ${message.details as string}`
-    } else if (Object.keys(message.details).length > 0) {
+      details = ` | Details: ${String(message.details)}`
+    } else if (message.details !== undefined && Object.keys(message.details).length > 0) {
       details = ` | Details: ${JSON.stringify(message.details)}`
     }
 
-    let timestamp = (hasProp.call(message, 'time')) ? `[${message.time}] ` : ''
+    let timestamp = ('time' in message) ? `[${message.time}] ` : ''
 
     return `${timestamp}[${level}] ${message.message}${details}`
   }

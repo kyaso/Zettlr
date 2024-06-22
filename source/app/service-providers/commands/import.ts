@@ -31,24 +31,26 @@ export default class ImportFiles extends ZettlrCommand {
     * @return {void} Does not return.
     */
   async run (evt: string, arg: any): Promise<boolean> {
-    const openDirectory = this._app.fsal.openDirectory
-    if (openDirectory === null) {
+    const dirs = await this._app.windows.askDir(trans('Import directory'), undefined, trans('Select folder'), trans('Select import destination'))
+    if (dirs.length === 0) {
       showNativeNotification(trans('You have to select a directory to import to.'))
       return false
     }
 
+    const targetDirectory = dirs[0]
+
     // Prepare the list of file filters
     // The "All Files" filter should be at the top
-    let fltr = [{ 'name': trans('All Files'), 'extensions': ['*'] }]
-    for (let f of FORMATS) {
+    const fltr = [{ name: trans('All Files'), extensions: ['*'] }]
+    for (const f of FORMATS) {
       // The import_files array has the structure "readable format" "extensions"...
       // Here we set index 1 as readable name and all following elements (without leading dots)
       // as extensions
-      fltr.push({ 'name': f[0], 'extensions': f.slice(1) })
+      fltr.push({ name: f[0], extensions: f.slice(1) })
     }
 
     // First ask the user for a fileList
-    let fileList = await this._app.windows.askFile(fltr, true)
+    const fileList = await this._app.windows.askFile(fltr, true)
     if (fileList.length === 0) {
       // The user seems to have decided not to import anything. Gracefully
       // fail. Not like the German SPD.
@@ -57,13 +59,17 @@ export default class ImportFiles extends ZettlrCommand {
 
     // Now import.
     showNativeNotification(trans('Importing. Please wait …'))
+
     try {
-      let ret = await makeImport(fileList, openDirectory, this._app.assets, (file: string, error: string) => {
+      const directory = await this._app.fsal.getAnyDirectoryDescriptor(targetDirectory)
+      this._app.log.info(`[Importer] Importing ${fileList.length} files: ${fileList.join(', ')} ...`)
+      const ret = await makeImport(fileList, directory, this._app.assets, (file: string, error: string) => {
         this._app.log.error(`[Importer] Could not import file ${file}: ${error}`)
         // This callback gets called whenever there is an error while running pandoc.
         showNativeNotification(trans('Couldn\'t import %s.', path.basename(file)))
       }, (file: string) => {
         // And this on each success!
+        this._app.log.info(`[Importer] File ${file} imported successfully.`)
         showNativeNotification(trans('%s imported successfully.', path.basename(file)))
       })
 
@@ -75,7 +81,7 @@ export default class ImportFiles extends ZettlrCommand {
       // There has been an error on importing (e.g. Pandoc was not found)
       // This catches this and displays it.
       this._app.log.error(`[Importer] Could not import files: ${String(err.message)}`, err)
-      showNativeNotification(trans('The following %s files could not be imported, because their filetype is unknown: %s', fileList.length, ''))
+      showNativeNotification(trans(`Could not import files due to an error: ${err.message as string}`), trans('Import failed'))
     }
 
     return true

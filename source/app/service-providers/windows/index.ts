@@ -21,11 +21,11 @@ import {
   BrowserWindow,
   ipcMain,
   shell,
-  type FileFilter
+  type FileFilter,
+  type MessageBoxOptions
 } from 'electron'
 import EventEmitter from 'events'
 import path from 'path'
-import type { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import createMainWindow from './create-main-window'
 import createPrintWindow from './create-print-window'
 import createUpdateWindow from './create-update-window'
@@ -46,7 +46,6 @@ import promptDialog from './dialog/prompt'
 import type { WindowPosition } from './types'
 import askFileDialog from './dialog/ask-file'
 import saveFileDialog from './dialog/save-dialog'
-import confirmRemove from './dialog/confirm-remove'
 import * as bcp47 from 'bcp-47'
 import mapFSError from './map-fs-error'
 import ProviderContract from '@providers/provider-contract'
@@ -664,11 +663,14 @@ export default class WindowProvider extends ProviderContract {
 
   /**
    * Displays the defaults window
+   *
+   * @param  {string}  preselectTab  Whether to preselect one of the tabs; this
+   *                                 is effectively the URL hash fragment.
    */
-  showDefaultsWindow (): void {
+  showDefaultsWindow (preselectTab?: string): void {
     if (this._assetsWindow === null) {
       const conf = this._retrieveWindowPosition('assets', null)
-      this._assetsWindow = createAssetsWindow(this._logger, this._config, conf)
+      this._assetsWindow = createAssetsWindow(this._logger, this._config, conf, preselectTab)
       this._hookWindowResize(this._assetsWindow, 'assets')
 
       // Dereference the window as soon as it is closed
@@ -774,16 +776,20 @@ export default class WindowProvider extends ProviderContract {
       }
       this._pasteImageModal = createPasteImageModal(this._logger, this._config, firstMainWin, startPath)
 
-      ipcMain.on('paste-image-ready', (event, data) => {
+      let hasResolved = false
+      ipcMain.once('paste-image-ready', (event, data) => {
         // Resolve now
         resolve(data)
+        hasResolved = true
         this._pasteImageModal?.close()
       })
 
-      // Dereference the modal as soon as it is closed
+      // Dereference the modal as soon as it is closed.
       this._pasteImageModal.on('closed', () => {
         ipcMain.removeAllListeners('paste-image-ready') // Not to have a dangling listener hanging around
-        resolve(undefined) // Resolve with undefined to indicate that the user has aborted
+        if (!hasResolved) {
+          resolve(undefined) // Resolve with undefined to indicate that the user has aborted
+        }
         this._pasteImageModal = null
       })
     })
@@ -967,15 +973,15 @@ export default class WindowProvider extends ProviderContract {
     * Show the dialog for choosing a directory
     * @return {string[]} An array containing all selected paths.
     */
-  async askDir (title: string, win?: BrowserWindow|null, buttonLabel?: string|undefined): Promise<string[]> {
+  async askDir (title: string, win?: BrowserWindow|null, buttonLabel?: string, message?: string): Promise<string[]> {
     if (win != null) {
-      return await askDirectoryDialog(this._config, win, title, buttonLabel)
+      return await askDirectoryDialog(this._config, win, title, buttonLabel, message)
     } else {
       const firstMainWin = this.getFirstMainWindow()
       if (firstMainWin === undefined) {
         throw new Error('Could not ask user for directory: No main window open!')
       }
-      return await askDirectoryDialog(this._config, firstMainWin, title, buttonLabel)
+      return await askDirectoryDialog(this._config, firstMainWin, title, buttonLabel, message)
     }
   }
 
@@ -1031,24 +1037,11 @@ export default class WindowProvider extends ProviderContract {
     * This function prompts the user with information.
     * @param  {any} options Necessary information for displaying the prompt
     */
-  prompt (options: any): void {
+  prompt (options: Partial<MessageBoxOptions> & { message: string }|string): void {
     const firstMainWin = this.getFirstMainWindow()
     if (firstMainWin === undefined) {
       return
     }
     promptDialog(this._logger, firstMainWin, options)
-  }
-
-  /**
-    * Ask to remove the associated path for the descriptor
-    * @param  {MDFileDescriptor|DirDescriptor} descriptor The corresponding descriptor
-    * @return {boolean}                                   True if user wishes to remove it.
-    */
-  async confirmRemove (descriptor: MDFileDescriptor|CodeFileDescriptor|DirDescriptor): Promise<boolean> {
-    const firstMainWin = this.getFirstMainWindow()
-    if (firstMainWin === undefined) {
-      return true
-    }
-    return await confirmRemove(firstMainWin, descriptor)
   }
 }

@@ -1,6 +1,6 @@
 <template>
   <div
-    ref="editor"
+    ref="mainEditorWrapper"
     class="main-editor-wrapper"
     v-bind:style="{ 'font-size': `${fontSize}px` }"
     v-bind:class="{
@@ -34,22 +34,21 @@
 import MarkdownEditor from '@common/modules/markdown-editor'
 import objectToArray from '@common/util/object-to-array'
 
-import { ref, computed, onMounted, watch, toRef } from 'vue'
-import { useStore } from 'vuex'
-import { key as storeKey } from './store'
-import { EditorCommands } from '@dts/renderer/editor'
+import { ref, computed, onMounted, onBeforeUnmount, watch, toRef, onUpdated } from 'vue'
+import { type EditorCommands } from './App.vue'
 import { hasMarkdownExt } from '@providers/fsal/util/is-md-or-code-file'
-import { DP_EVENTS, OpenDocument } from '@dts/common/documents'
+import { DP_EVENTS, type OpenDocument } from '@dts/common/documents'
 import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
-import { EditorConfigOptions } from '@common/modules/markdown-editor/util/configuration'
-import { CodeFileDescriptor, MDFileDescriptor } from '@dts/common/fsal'
+import { type EditorConfigOptions } from '@common/modules/markdown-editor/util/configuration'
+import type { AnyDescriptor, CodeFileDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import { getBibliographyForDescriptor as getBibliography } from '@common/util/get-bibliography-for-descriptor'
 import { EditorSelection } from '@codemirror/state'
-import { TagRecord } from '@providers/tags'
 import { documentAuthorityIPCAPI } from '@common/modules/markdown-editor/util/ipc-api'
+import { useConfigStore, useDocumentTreeStore, useTagsStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
+import { isAbsolutePath, pathBasename, resolvePath } from '@common/util/renderer-path-polyfill'
+import { type DocumentsUpdateContext } from 'source/app/service-providers/documents'
 
 const ipcRenderer = window.ipc
-const path = window.path
 
 // This function overwrites the getBibliographyForDescriptor function to ensure
 // the library is always absolute. We have to do it this ridiculously since the
@@ -58,8 +57,8 @@ const path = window.path
 function getBibliographyForDescriptor (descriptor: MDFileDescriptor): string {
   const library = getBibliography(descriptor)
 
-  if (library !== CITEPROC_MAIN_DB && !path.isAbsolute(library)) {
-    return path.resolve(descriptor.dir, library)
+  if (library !== CITEPROC_MAIN_DB && !isAbsolutePath(library)) {
+    return resolvePath(descriptor.dir, library)
   } else {
     return library
   }
@@ -92,16 +91,19 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits<{(e: 'globalSearch', query: string): void}>()
+const emit = defineEmits<(e: 'globalSearch', query: string) => void>()
 
-const store = useStore(storeKey)
+const windowStateStore = useWindowStateStore()
+const documentTreeStore = useDocumentTreeStore()
+const configStore = useConfigStore()
+const tagStore = useTagsStore()
 
 // UNREFFED STUFF
 let currentEditor: MarkdownEditor|null = null
 const isMarkdown = hasMarkdownExt(props.file.path)
 
 // EVENT LISTENERS
-ipcRenderer.on('citeproc-database-updated', (event, dbPath: string) => {
+ipcRenderer.on('citeproc-database-updated', (_event, _dbPath: string) => {
   const descriptor = activeFileDescriptor.value
 
   if (descriptor === undefined || descriptor.type !== 'file') {
@@ -140,7 +142,8 @@ ipcRenderer.on('shortcut', (event, command) => {
   }
 })
 
-ipcRenderer.on('documents-update', (e, { event, context }) => {
+ipcRenderer.on('documents-update', (e, payload: { event: DP_EVENTS, context: DocumentsUpdateContext }) => {
+  const { event, context } = payload
   if (event === DP_EVENTS.FILE_REMOTELY_CHANGED && context.filePath === props.file.path) {
     // The currently loaded document has been changed remotely. This event indicates
     // that the document provider has already reloaded the document and we only
@@ -174,8 +177,12 @@ ipcRenderer.on('documents-update', (e, { event, context }) => {
   }
 })
 
+ipcRenderer.on('reload-editors', _e => {
+  currentEditor?.reload().catch(err => console.error('Failed to reload editor after `reload-editors` event', err))
+})
+
 // Update the file database whenever links have been updated
-ipcRenderer.on('links', e => {
+ipcRenderer.on('links', _e => {
   updateFileDatabase().catch(err => console.error('Could not update file database', err))
 })
 
@@ -184,16 +191,41 @@ onMounted(() => {
   loadDocument().catch(err => console.error(err))
 })
 
+onBeforeUnmount(() => {
+  currentEditor?.unmount()
+})
+
+onUpdated(() => {
+  // We hook into the onUpdated lifecycle event since that will fire when the
+  // data for this component update, which includes visibility with the v-show
+  // directive. In case that the editor component is mounted and non-hidden, we
+  // will fire
+  const elem = mainEditorWrapper.value
+  if (elem === null || currentEditor === null) {
+    return
+  }
+
+  if (elem.style.display === 'none') {
+    return // Editor is hidden by v-show directive
+  }
+
+  if (!currentEditor.hasFocus()) {
+    currentEditor.focus()
+  }
+})
+
 // DATA SETUP
 const showSearch = ref(false)
+const mainEditorWrapper = ref<HTMLDivElement|null>(null)
 
 // COMPUTED PROPERTIES
-const useH1 = computed<boolean>(() => store.state.config.fileNameDisplay.includes('heading'))
-const useTitle = computed<boolean>(() => store.state.config.fileNameDisplay.includes('title'))
-const filenameOnly = computed<boolean>(() => store.state.config['zkn.linkFilenameOnly'])
-const fontSize = computed<number>(() => store.state.config['editor.fontSize'])
-const globalSearchResults = computed(() => store.state.searchResults)
-const snippets = computed(() => store.state.snippets)
+const useH1 = computed<boolean>(() => configStore.config.fileNameDisplay.includes('heading'))
+const useTitle = computed<boolean>(() => configStore.config.fileNameDisplay.includes('title'))
+const filenameOnly = computed<boolean>(() => configStore.config.zkn.linkFilenameOnly)
+const fontSize = computed<number>(() => configStore.config.editor.fontSize)
+const globalSearchResults = computed(() => windowStateStore.searchResults)
+const snippets = computed(() => windowStateStore.snippets)
+const tags = computed(() => tagStore.tags)
 
 const activeFileDescriptor = ref<undefined|MDFileDescriptor|CodeFileDescriptor>(undefined)
 
@@ -202,49 +234,52 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
   // right after setting the new configurations. Plus, the user won't update
   // everything all the time, but rather do one initial configuration, so
   // even if we incur a performance penalty, it won't be noticed that much.
+  const { editor, display, zkn, darkMode } = configStore.config
   return {
-    indentUnit: store.state.config['editor.indentUnit'],
-    indentWithTabs: store.state.config['editor.indentWithTabs'],
-    autoCloseBrackets: store.state.config['editor.autoCloseBrackets'],
+    indentUnit: editor.indentUnit,
+    indentWithTabs: editor.indentWithTabs,
+    autoCloseBrackets: editor.autoCloseBrackets,
     autocorrect: {
-      active: store.state.config['editor.autoCorrect.active'],
-      matchWholeWords: store.state.config['editor.autoCorrect.matchWholeWords'],
-      style: store.state.config['editor.autoCorrect.style'],
+      active: editor.autoCorrect.active,
+      matchWholeWords: editor.autoCorrect.matchWholeWords,
       magicQuotes: {
-        primary: store.state.config['editor.autoCorrect.magicQuotes.primary'],
-        secondary: store.state.config['editor.autoCorrect.magicQuotes.secondary']
+        primary: editor.autoCorrect.magicQuotes.primary,
+        secondary: editor.autoCorrect.magicQuotes.secondary
       },
-      replacements: store.state.config['editor.autoCorrect.replacements']
+      replacements: editor.autoCorrect.replacements
     },
-    imagePreviewWidth: store.state.config['display.imageWidth'],
-    imagePreviewHeight: store.state.config['display.imageHeight'],
-    boldFormatting: store.state.config['editor.boldFormatting'],
-    italicFormatting: store.state.config['editor.italicFormatting'],
-    muteLines: store.state.config.muteLines,
-    citeStyle: store.state.config['editor.citeStyle'],
-    readabilityAlgorithm: store.state.config['editor.readabilityAlgorithm'],
-    idRE: store.state.config['zkn.idRE'],
-    idGen: store.state.config['zkn.idGen'],
-    renderCitations: store.state.config['display.renderCitations'],
-    renderIframes: store.state.config['display.renderIframes'],
-    renderImages: store.state.config['display.renderImages'],
-    renderLinks: store.state.config['display.renderLinks'],
-    renderMath: store.state.config['display.renderMath'],
-    renderTasks: store.state.config['display.renderTasks'],
-    renderHeadings: store.state.config['display.renderHTags'],
-    renderTables: store.state.config['editor.enableTableHelper'],
-    renderEmphasis: store.state.config['display.renderEmphasis'],
-    linkPreference: store.state.config['zkn.linkWithFilename'],
-    linkFilenameOnly: store.state.config['zkn.linkFilenameOnly'],
-    inputMode: store.state.config['editor.inputMode'],
-    lintMarkdown: store.state.config['editor.lint.markdown'],
+    autocompleteSuggestEmojis: editor.autocompleteSuggestEmojis,
+    imagePreviewWidth: display.imageWidth,
+    imagePreviewHeight: display.imageHeight,
+    boldFormatting: editor.boldFormatting,
+    italicFormatting: editor.italicFormatting,
+    muteLines: configStore.config.muteLines,
+    citeStyle: editor.citeStyle,
+    readabilityAlgorithm: editor.readabilityAlgorithm,
+    idRE: zkn.idRE,
+    idGen: zkn.idGen,
+    renderCitations: display.renderCitations,
+    renderIframes: display.renderIframes,
+    renderImages: display.renderImages,
+    renderLinks: display.renderLinks,
+    renderMath: display.renderMath,
+    renderTasks: display.renderTasks,
+    renderHeadings: display.renderHTags,
+    renderTables: editor.enableTableHelper,
+    renderEmphasis: display.renderEmphasis,
+    linkPreference: zkn.linkWithFilename,
+    zknLinkFormat: zkn.linkFormat,
+    linkFilenameOnly: zkn.linkFilenameOnly,
+    inputMode: editor.inputMode,
+    lintMarkdown: editor.lint.markdown,
     // The editor only needs to know if it should use languageTool
-    lintLanguageTool: store.state.config['editor.lint.languageTool.active'],
+    lintLanguageTool: editor.lint.languageTool.active,
     distractionFree: props.distractionFree.valueOf(),
-    showStatusbar: store.state.config['editor.showStatusbar'],
-    darkMode: store.state.config.darkMode,
-    theme: store.state.config['display.theme']
-  } as EditorConfigOptions
+    showStatusbar: editor.showStatusbar,
+    darkMode,
+    theme: display.theme,
+    highlightWhitespace: editor.showWhitespace
+  } satisfies EditorConfigOptions
 })
 
 // External commands/"event" system
@@ -255,15 +290,17 @@ watch(toRef(props.editorCommands, 'jumpToLine'), () => {
     jtl(lineNumber)
   }
 })
+
 watch(toRef(props.editorCommands, 'moveSection'), () => {
-  if (props.activeFile?.path !== props.file.path || store.state.lastLeafId !== props.leafId) {
+  if (props.activeFile?.path !== props.file.path || documentTreeStore.lastLeafId !== props.leafId) {
     return
   }
 
   const { from, to } = props.editorCommands.data
   currentEditor?.moveSection(from, to)
 })
-watch(toRef(props.editorCommands, 'readabilityMode'), (newValue) => {
+
+watch(toRef(props.editorCommands, 'readabilityMode'), () => {
   if (currentEditor === null || props.activeFile?.path !== props.file.path) {
     return
   }
@@ -271,8 +308,8 @@ watch(toRef(props.editorCommands, 'readabilityMode'), (newValue) => {
   currentEditor.readabilityMode = !currentEditor.readabilityMode
 })
 
-watch(toRef(props, 'distractionFree'), (newValue) => {
-  if (currentEditor !== null && props.activeFile?.path === props.file.path && store.state.lastLeafId === props.leafId) {
+watch(toRef(props, 'distractionFree'), () => {
+  if (currentEditor !== null && props.activeFile?.path === props.file.path && documentTreeStore.lastLeafId === props.leafId) {
     currentEditor.distractionFree = props.distractionFree
   }
 })
@@ -282,7 +319,7 @@ watch(toRef(props.editorCommands, 'executeCommand'), () => {
     return
   }
 
-  if (store.state.lastLeafId !== props.leafId) {
+  if (documentTreeStore.lastLeafId !== props.leafId) {
     // This editor, even though it may be focused, was not the last focused
     // See https://github.com/Zettlr/Zettlr/issues/4361
     return
@@ -292,12 +329,13 @@ watch(toRef(props.editorCommands, 'executeCommand'), () => {
   currentEditor.runCommand(command)
   currentEditor.focus()
 })
+
 watch(toRef(props.editorCommands, 'replaceSelection'), () => {
   if (props.activeFile?.path !== props.file.path) {
     return
   }
 
-  if (store.state.lastLeafId !== props.leafId) {
+  if (documentTreeStore.lastLeafId !== props.leafId) {
     // This editor, even though it may be focused, was not the last focused
     // See https://github.com/Zettlr/Zettlr/issues/4361
     return
@@ -307,13 +345,18 @@ watch(toRef(props.editorCommands, 'replaceSelection'), () => {
   currentEditor?.replaceSelection(textToInsert)
 })
 
+const workspacesStore = useWorkspacesStore()
+
 const fsalFiles = computed<MDFileDescriptor[]>(() => {
-  const tree = store.state.fileTree
+  const tree = workspacesStore.rootDescriptors
   const files = []
 
   for (const item of tree) {
     if (item.type === 'directory') {
-      const contents = objectToArray(item, 'children').filter(descriptor => descriptor.type === 'file')
+      const contents = objectToArray<AnyDescriptor>(item, 'children')
+        .filter((descriptor): descriptor is MDFileDescriptor => {
+          return descriptor.type === 'file'
+        })
       files.push(...contents)
     } else if (item.type === 'file') {
       files.push(item)
@@ -342,6 +385,10 @@ watch(snippets, (newValue) => {
   currentEditor?.setCompletionDatabase('snippets', newValue)
 })
 
+watch(tags, (newValue) => {
+  currentEditor?.setCompletionDatabase('tags', newValue)
+})
+
 // METHODS
 /**
  * Returns a MarkdownEditor for the provided path.
@@ -356,13 +403,13 @@ async function getEditorFor (doc: string): Promise<MarkdownEditor> {
   // Update the document info on corresponding events
   editor.on('change', () => {
     if (currentEditor === editor) {
-      store.commit('updateTableOfContents', currentEditor.tableOfContents)
+      windowStateStore.tableOfContents = currentEditor.tableOfContents
     }
   })
 
   editor.on('cursorActivity', () => {
     if (currentEditor === editor) {
-      store.commit('activeDocumentInfo', currentEditor.documentInfo)
+      windowStateStore.activeDocumentInfo = currentEditor.documentInfo
     }
   })
 
@@ -375,13 +422,15 @@ async function getEditorFor (doc: string): Promise<MarkdownEditor> {
       }
     }).catch(err => console.error(err))
 
-    store.dispatch('lastLeafId', props.leafId).catch(err => console.error(err))
+    // NOTE: The lastLeafId will be changed in the documentTreeStore in response
+    // to an event from main (DP_EVENTS.ACTIVE_FILE) which will be emitted as a
+    // result of our focus-leaf event above.
     if (currentEditor === editor) {
-      store.commit('updateTableOfContents', currentEditor.tableOfContents)
+      windowStateStore.tableOfContents = currentEditor.tableOfContents
     }
   })
 
-  editor.on('zettelkasten-link', (linkContents) => {
+  editor.on('zettelkasten-link', (linkContents: string) => {
     ipcRenderer.invoke('application', {
       command: 'force-open',
       payload: {
@@ -393,12 +442,12 @@ async function getEditorFor (doc: string): Promise<MarkdownEditor> {
     })
       .catch(err => console.error(err))
 
-    if (store.state.config['zkn.autoSearch'] === true) {
+    if (configStore.config.zkn.autoSearch) {
       emit('globalSearch', linkContents)
     }
   })
 
-  editor.on('zettelkasten-tag', (tag) => {
+  editor.on('zettelkasten-tag', (tag: string) => {
     emit('globalSearch', tag)
   })
 
@@ -410,7 +459,7 @@ async function getEditorFor (doc: string): Promise<MarkdownEditor> {
 /**
  * Loads the document for this editor instance.
  */
-async function loadDocument () {
+async function loadDocument (): Promise<void> {
   const newEditor = await getEditorFor(props.file.path)
 
   const wrapper = document.getElementById(`cm-text-${props.leafId}`)
@@ -421,11 +470,10 @@ async function loadDocument () {
   wrapper.replaceWith(newEditor.dom)
   currentEditor = newEditor
 
-  store.commit('updateTableOfContents', currentEditor.tableOfContents)
-  store.commit('activeDocumentInfo', currentEditor.documentInfo)
+  windowStateStore.tableOfContents = currentEditor.tableOfContents
+  windowStateStore.activeDocumentInfo = currentEditor.documentInfo
 
-  const tags = await ipcRenderer.invoke('tag-provider', { command: 'get-all-tags' }) as TagRecord[]
-  currentEditor.setCompletionDatabase('tags', tags)
+  currentEditor.setCompletionDatabase('tags', tags.value)
   currentEditor.setCompletionDatabase('snippets', snippets.value)
 
   maybeHighlightSearchResults()
@@ -452,12 +500,12 @@ async function loadDocument () {
   })
 }
 
-function jtl (lineNumber: number) {
+function jtl (lineNumber: number): void {
   currentEditor?.jtl(lineNumber)
 }
 
 async function updateCitationKeys (library: string): Promise<void> {
-  const items: any[] = (await ipcRenderer.invoke('citeproc-provider', {
+  const items: Array<{ citekey: string, displayText: string }> = (await ipcRenderer.invoke('citeproc-provider', {
     command: 'get-items',
     payload: { database: library }
   }))
@@ -510,7 +558,7 @@ async function updateCitationKeys (library: string): Promise<void> {
   currentEditor?.setCompletionDatabase('citations', items)
 }
 
-async function updateFileDatabase () {
+async function updateFileDatabase (): Promise<void> {
   // Get all our files ...
   const fileDatabase: Array<{ filename: string, displayName: string, id: string }> = []
 
@@ -520,14 +568,14 @@ async function updateFileDatabase () {
 
   // First, add all existing files to the database ...
   for (const file of fsalFiles.value) {
-    let displayName = path.basename(file.name, file.ext)
+    let displayName = pathBasename(file.name, file.ext)
     if (useTitle.value && file.yamlTitle !== undefined) {
       displayName = file.yamlTitle
     } else if (useH1.value && file.firstHeading !== null) {
       displayName = file.firstHeading
     }
     fileDatabase.push({
-      filename: path.basename(file.name, file.ext),
+      filename: pathBasename(file.name, file.ext),
       displayName,
       id: file.id
     })
@@ -545,7 +593,7 @@ async function updateFileDatabase () {
   currentEditor?.setCompletionDatabase('files', fileDatabase)
 }
 
-function maybeHighlightSearchResults () {
+function maybeHighlightSearchResults (): void {
   if (currentEditor === null) {
     return
   }
@@ -691,3 +739,5 @@ body.darwin {
 }
 
 </style>
+@common/util/renderer-path-polyfill
+../pinia

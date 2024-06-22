@@ -39,11 +39,9 @@ export default class FileNew extends ZettlrCommand {
     // the name has the following function: If it is given, the user will not
     // be asked for a filename, but if it's missing, a new name will be
     // generated and the user is asked to confirm the name.
-    const shouldPromptUser = this._app.config.get('newFileDontPrompt') === false
-    const type = (arg.type !== undefined) ? arg.type : 'md'
-    const filenamePattern = this._app.config.get('newFileNamePattern')
-    const idGenPattern = this._app.config.get('zkn.idGen')
-    const generatedName = generateFilename(filenamePattern, idGenPattern)
+    const { newFileDontPrompt, newFileNamePattern } = this._app.config.get()
+    const type = arg.type ?? 'md'
+    const generatedName = generateFilename(newFileNamePattern, this._app.config.get().zkn.idGen)
     const leafId = arg.leafId
 
     if (arg.windowId === undefined) {
@@ -63,18 +61,14 @@ export default class FileNew extends ZettlrCommand {
       return
     }
 
-    let dir = this._app.fsal.openDirectory ?? undefined
-
-    if (arg?.path !== undefined) {
-      dir = this._app.fsal.findDir(arg.path)
-    }
-
+    let dirpath = app.getPath('documents')
     let isFallbackDir = false
-    if (dir === undefined) {
+    if (typeof arg.path === 'string' && await this._app.fsal.isDir(arg.path)) {
+      dirpath = arg.path
+    } else {
       // There is no directory we could salvage, so choose a default one: the
       // documents directory. Displaying the file choosing dialog should never
       // fail because we can't decide on a directory.
-      dir = await this._app.fsal.getAnyDirectoryDescriptor(app.getPath('documents'))
       isFallbackDir = true
     }
 
@@ -82,9 +76,9 @@ export default class FileNew extends ZettlrCommand {
     // Also, if the user does not want to be prompted BUT we had to use the
     // fallback directory, we should also prompt the user as otherwise it would
     // be opaque to the user where the notes end up in.
-    if ((arg.name === undefined && shouldPromptUser) || (!shouldPromptUser && isFallbackDir)) {
+    if ((arg.name === undefined && !newFileDontPrompt) || (newFileDontPrompt && isFallbackDir)) {
       // The user wishes to confirm the filename
-      const chosenPath = await this._app.windows.saveFile(path.join(dir.path, generatedName))
+      const chosenPath = await this._app.windows.saveFile(path.join(dirpath, generatedName))
       if (chosenPath === undefined) {
         this._app.log.info('Did not create new file since the dialog was aborted.')
         return
@@ -93,8 +87,8 @@ export default class FileNew extends ZettlrCommand {
       arg.name = path.basename(chosenPath)
       // The user may also have selected a different directory altogether. If
       // that directory exists and is loaded by the FSAL, overwrite the dir.
-      if (path.dirname(chosenPath) !== dir.path) {
-        dir = await this._app.fsal.getAnyDirectoryDescriptor(path.dirname(chosenPath))
+      if (path.dirname(chosenPath) !== dirpath) {
+        dirpath = path.dirname(chosenPath)
       }
     } else if (arg.name === undefined) {
       // Just generate a name.
@@ -103,7 +97,7 @@ export default class FileNew extends ZettlrCommand {
 
     try {
       // Then, make sure the name is correct.
-      let filename = sanitize(arg.name.trim(), { 'replacement': '-' })
+      let filename = sanitize(arg.name.trim(), { replacement: '-' })
       if (filename === '') {
         throw new Error('Could not create file: Filename was not valid')
       }
@@ -126,29 +120,35 @@ export default class FileNew extends ZettlrCommand {
         }
       }
 
+      const absPath = path.join(dirpath, filename)
+
       // Check if there's already a file with this name in the directory
       // NOTE: There are case-sensitive file systems, but we'll disallow this
-      let found = dir.children.find(e => e.name.toLowerCase() === filename.toLowerCase())
-      if (found !== undefined && found.type !== 'directory') {
+      if (await this._app.fsal.pathExists(absPath)) {
         // Ask before overwriting
         if (!await this._app.windows.shouldOverwriteFile(filename)) {
           return
         } else {
           // Remove the file before creating it anew. We'll use the
           // corresponding command for that.
-          await this._app.fsal.removeFile(found)
+          this._app.documents.closeFileEverywhere(absPath)
+          await this._app.fsal.removeFile(absPath)
         }
       }
 
       // First create the file
-      await this._app.fsal.createFile(dir, {
-        name: filename,
-        content: '',
-        type: (type === 'md') ? 'file' : 'code'
-      })
+      await this._app.fsal.writeTextFile(absPath, '')
 
       // And directly thereafter, open the file
-      await this._app.documents.openFile(windowId, leafId, path.join(dir.path, filename), true)
+      await this._app.documents.openFile(windowId, leafId, absPath, true)
+      // Final check: If the file has been created outside of any loaded
+      // workspace, we must add it as root so that some other functions of
+      // Zettlr work fine (even though the editing should work flawlessly.).
+      // Since at this point the events that add the file to the tree likely
+      // haven't fired yet, we can check whether the parent directory exists.
+      if (this._app.workspaces.findDir(path.dirname(absPath)) === undefined) {
+        this._app.config.addPath(absPath)
+      }
     } catch (err: any) {
       this._app.log.error(`Could not create file: ${err.message as string}`)
       this._app.windows.prompt({

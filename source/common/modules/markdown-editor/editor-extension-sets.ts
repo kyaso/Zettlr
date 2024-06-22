@@ -21,7 +21,7 @@ import { type Update } from '@codemirror/collab'
 import { defaultKeymap, history, undo, redo, undoSelection, redoSelection } from '@codemirror/commands'
 import { bracketMatching, codeFolding, foldGutter, indentOnInput, indentUnit, StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
-import { yaml } from '@codemirror/legacy-modes/mode/yaml'
+import { yaml } from '@codemirror/lang-yaml'
 import { search, searchKeymap } from '@codemirror/search'
 import { Compartment, EditorState, Prec, type Extension } from '@codemirror/state'
 import {
@@ -52,7 +52,7 @@ import { type EditorConfiguration, configField } from './util/configuration'
 import { highlightRanges } from './plugins/highlight-ranges'
 import { jsonFolding } from './code-folding/json'
 import { markdownFolding } from './code-folding/markdown'
-import { jsonLanguage, jsonParseLinter } from '@codemirror/lang-json'
+import { json, jsonParseLinter } from '@codemirror/lang-json'
 import { softwrapVisualIndent } from './plugins/visual-indent'
 import { backgroundLayers } from './plugins/code-background'
 import { vim } from '@replit/codemirror-vim'
@@ -60,11 +60,20 @@ import { emacs } from '@replit/codemirror-emacs'
 import { distractionFree } from './plugins/distraction-free'
 import { languageTool } from './linters/language-tool'
 import { statusbar } from './statusbar'
-import { themeManager } from './theme'
 import { renderers } from './renderers'
 import { mdPasteDropHandlers } from './plugins/md-paste-drop-handlers'
 import { footnoteGutter } from './plugins/footnote-gutter'
 import { yamlFrontmatterLint } from './linters/yaml-frontmatter-lint'
+import { darkMode } from './theme/dark-mode'
+import { themeBerlinLight, themeBerlinDark } from './theme/berlin'
+import { themeBielefeldLight, themeBielefeldDark } from './theme/bielefeld'
+import { themeBordeauxLight, themeBordeauxDark } from './theme/bordeaux'
+import { themeFrankfurtLight, themeFrankfurtDark } from './theme/frankfurt'
+import { themeKarlMarxStadtLight, themeKarlMarxStadtDark } from './theme/karl-marx-stadt'
+import { mainOverride } from './theme/main-override'
+import { highlightWhitespace } from './plugins/highlight-whitespace'
+import { tagClasses } from './plugins/tag-classes'
+import { autocompleteTriggerCharacter } from './autocomplete/snippets'
 
 /**
  * This interface describes the required properties which the extension sets
@@ -90,6 +99,31 @@ export interface CoreExtensionOptions {
  * @var  {Compartment}
  */
 export const inputModeCompartment = new Compartment()
+
+export function getMainEditorThemes (): Record<EditorConfiguration['theme'], { lightThemes: Extension[], darkThemes: Extension[] }> {
+  return {
+    berlin: {
+      lightThemes: [ mainOverride, themeBerlinLight ],
+      darkThemes: [ mainOverride, themeBerlinDark ]
+    },
+    bielefeld: {
+      lightThemes: [ mainOverride, themeBielefeldLight ],
+      darkThemes: [ mainOverride, themeBielefeldDark ]
+    },
+    bordeaux: {
+      lightThemes: [ mainOverride, themeBordeauxLight ],
+      darkThemes: [ mainOverride, themeBordeauxDark ]
+    },
+    frankfurt: {
+      lightThemes: [ mainOverride, themeFrankfurtLight ],
+      darkThemes: [ mainOverride, themeFrankfurtDark ]
+    },
+    'karl-marx-stadt': {
+      lightThemes: [ mainOverride, themeKarlMarxStadtLight ],
+      darkThemes: [ mainOverride, themeKarlMarxStadtDark ]
+    }
+  }
+}
 
 /**
  * This private function loads a set of core extensions that are required for
@@ -126,6 +160,8 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     autoCloseBracketsConfig.push(closeBrackets())
   }
 
+  const themes = getMainEditorThemes()
+
   return [
     // Both vim and emacs modes need to be included first, before any other
     // keymap.
@@ -142,8 +178,7 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
       ...closeBracketsKeymap, // Binds Backspace to deletion of matching brackets
       ...searchKeymap // Search commands (Ctrl+F, etc.)
     ]),
-    softwrapVisualIndent, // Always indent visually
-    themeManager(options),
+    darkMode({ darkMode: options.initialConfig.darkMode, ...themes[options.initialConfig.theme] }),
     // CODE FOLDING
     codeFolding(),
     foldGutter(),
@@ -152,6 +187,7 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     // SELECTIONS
     // Overrides the default browser selection drawing, allows styling
     drawSelection({ drawRangeCursor: false, cursorBlinkRate: 1000 }),
+    highlightWhitespace(options.initialConfig.highlightWhitespace),
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
     // Ensure the cursor never completely sticks to the top or bottom of the editor
@@ -162,6 +198,10 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     indentUnit.from(configField, (val) => val.indentWithTabs ? '\t' : ' '.repeat(val.indentUnit)),
     EditorView.lineWrapping, // Enable line wrapping,
     autoCloseBracketsConfig,
+
+    // Allow configuration of the trigger character
+    autocompleteTriggerCharacter.of(':'),
+    // TODO: autocompleteTriggerCharacter.from(configField, val => val.FINDANAME),
 
     // Add the statusbar
     statusbar,
@@ -280,7 +320,9 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
       ...customKeymap
     ])),
     // The parser generates the AST for the document ...
-    markdownParser(),
+    markdownParser({
+      zknLinkParserConfig: { format: options.initialConfig.zknLinkFormat }
+    }),
     // ... which can then be styled with a highlighter
     markdownSyntaxHighlighter(),
     syntaxExtensions, // Add our own specific syntax plugin
@@ -303,6 +345,8 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     tagTooltipExt,
     backgroundLayers, // Add a background behind inline code and code blocks
     defaultContextMenu, // A default context menu
+    softwrapVisualIndent, // Always indent visually
+    tagClasses(), // Apply a custom class to each tag so that users can style them (#4589)
     EditorView.domEventHandlers(options.domEventsListeners)
   ]
 }
@@ -320,7 +364,7 @@ export function getJSONExtensions (options: CoreExtensionOptions): Extension[] {
   return [
     ...getGenericCodeExtensions(options),
     jsonFolding,
-    jsonLanguage,
+    json(),
     linter(jsonParseLinter())
   ]
 }
@@ -337,7 +381,7 @@ export function getJSONExtensions (options: CoreExtensionOptions): Extension[] {
 export function getYAMLExtensions (options: CoreExtensionOptions): Extension[] {
   return [
     ...getGenericCodeExtensions(options),
-    StreamLanguage.define(yaml)
+    yaml()
   ]
 }
 

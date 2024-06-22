@@ -17,18 +17,17 @@
 
 import EventEmitter from 'events'
 import path from 'path'
-import { promises as fs, constants as FSConstants } from 'fs'
+import { constants as FSConstants } from 'fs'
 import { FSALCodeFile, FSALFile } from '@providers/fsal'
 import ProviderContract from '@providers/provider-contract'
 import broadcastIpcMessage from '@common/util/broadcast-ipc-message'
 import type AppServiceContainer from 'source/app/app-service-container'
-import { ipcMain, app, dialog, type BrowserWindow } from 'electron'
+import { ipcMain, app, dialog, type BrowserWindow, type MessageBoxOptions } from 'electron'
 import { DocumentTree, type DTLeaf } from './document-tree'
 import PersistentDataContainer from '@common/modules/persistent-data-container'
 import { type TabManager } from '@providers/documents/document-tree/tab-manager'
 import { DP_EVENTS, type OpenDocument, DocumentType } from '@dts/common/documents'
 import { v4 as uuid4 } from 'uuid'
-import chokidar from 'chokidar'
 import { type Update } from '@codemirror/collab'
 import { ChangeSet, Text } from '@codemirror/state'
 import type { CodeFileDescriptor, MDFileDescriptor } from '@dts/common/fsal'
@@ -36,6 +35,7 @@ import { countChars, countWords } from '@common/util/counter'
 import { markdownToAST } from '@common/modules/markdown-utils'
 import isFile from '@common/util/is-file'
 import { trans } from '@common/i18n-main'
+import type FSALWatchdog from '@providers/fsal/fsal-watchdog'
 
 type DocumentWindows = Record<string, DocumentTree>
 
@@ -149,7 +149,7 @@ export default class DocumentManager extends ProviderContract {
    *
    * @var {chokidar.FSWatcher}
    */
-  private readonly _watcher: chokidar.FSWatcher
+  private readonly _watcher: FSALWatchdog
 
   /**
    * Holds a list of strings for files that have recently been saved by the
@@ -199,36 +199,10 @@ export default class DocumentManager extends ProviderContract {
       leafId: undefined
     }
 
-    const options: chokidar.WatchOptions = {
-      persistent: true,
-      ignoreInitial: true, // Do not track the initial watch as changes
-      followSymlinks: true, // Follow symlinks
-      ignorePermissionErrors: true, // In the worst case one has to reboot the software, but so it looks nicer.
-      // See the description for the next vars in the fsal-watchdog.ts
-      interval: 5000,
-      binaryInterval: 5000
-    }
-
-    if (this._app.config.get('watchdog.activatePolling') as boolean) {
-      let threshold: number = this._app.config.get('watchdog.stabilityThreshold')
-      if (typeof threshold !== 'number' || threshold < 0) {
-        threshold = 1000
-      }
-
-      // From chokidar docs: "[...] in some cases some change events will be
-      // emitted while the file is being written." --> hence activate this.
-      options.awaitWriteFinish = {
-        stabilityThreshold: threshold,
-        pollInterval: 100
-      }
-
-      this._app.log.info(`[DocumentManager] Activating file polling with a threshold of ${threshold}ms.`)
-    }
-
     // Start up the chokidar process
-    this._watcher = new chokidar.FSWatcher(options)
+    this._watcher = this._app.fsal.getWatchdog()
 
-    this._watcher.on('all', (event, filePath) => {
+    this._watcher.on('change', (event, filePath) => {
       if (this._ignoreChanges.includes(filePath) && event === 'change') {
         this._app.log.info(`[DocumentManager] Ignoring change for ${filePath}`)
         this._ignoreChanges.splice(this._ignoreChanges.indexOf(filePath), 1)
@@ -359,22 +333,36 @@ export default class DocumentManager extends ProviderContract {
       if (!this.isClean()) {
         event.preventDefault()
 
-        this._app.windows.askSaveChanges()
+        // NOTE: We are re-implementing `askSaveChanges` here since we cannot
+        // give the user the choice to cancel.
+        // TODO: Once the window management logic is put here, we have better
+        // control over the windows and can ask this question *before* the
+        // window is being closed.
+        const opt: MessageBoxOptions = {
+          type: 'question',
+          buttons: [
+            trans('Save changes'),
+            trans('Discard changes')
+          ],
+          defaultId: 0,
+          title: trans('Unsaved changes'),
+          message: trans('There are unsaved changes. Do you want to save or discard them?')
+        }
+
+        dialog.showMessageBox(opt)
           .then(async result => {
             // 0 = Save, 1 = Don't save, 2 = Cancel
-            if (result.response < 2) {
-              for (const document of this.documents) {
-                if (result.response === 1) {
-                  document.lastSavedVersion = document.currentVersion
-                } else {
-                  await this.saveFile(document.filePath)
-                }
+            for (const document of this.documents) {
+              if (result.response === 0) {
+                await this.saveFile(document.filePath)
+              } else {
+                document.lastSavedVersion = document.currentVersion
               }
 
               // TODO: Emit events that the documents are now clean, same below
 
               app.quit()
-            } // Else: Don't quit
+            }
           })
           .catch(err => {
             this._app.log.error('[DocumentManager] Cannot ask user to save or omit changes!', err)
@@ -457,9 +445,7 @@ export default class DocumentManager extends ProviderContract {
         const tree = DocumentTree.fromJSON(treedata[key])
         for (const leaf of tree.getAllLeafs()) {
           for (const file of leaf.tabMan.openFiles.map(x => x.path)) {
-            try {
-              await fs.access(file, FSConstants.F_OK|FSConstants.W_OK|FSConstants.R_OK)
-            } catch (err: any) {
+            if (!await this._app.fsal.testAccess(file, FSConstants.F_OK|FSConstants.W_OK|FSConstants.R_OK)) {
               leaf.tabMan.closeFile(file)
             }
           }
@@ -558,7 +544,7 @@ export default class DocumentManager extends ProviderContract {
     // every chokidar process we utilize. Otherwise, the fsevents dylib will
     // still hold on to some memory after the Electron process itself shuts down
     // which will result in a crash report appearing on macOS.
-    await this._watcher.close()
+    await this._watcher.shutdown()
     this._config.shutdown()
   }
 
@@ -614,7 +600,7 @@ export default class DocumentManager extends ProviderContract {
       lastSavedVersion: 0,
       lastSavedContent: content,
       updates: [],
-      document: Text.of(content.split(descriptor.linefeed)),
+      document: Text.of(content.split('\n')),
       lastSavedCharCount: descriptor.type === 'file' ? descriptor.charCount : 0,
       lastSavedWordCount: descriptor.type === 'file' ? descriptor.wordCount : 0,
       saveTimeout: undefined
@@ -649,7 +635,7 @@ export default class DocumentManager extends ProviderContract {
     }
   }
 
-  private async pushUpdates (filePath: string, clientVersion: number, clientUpdates: any[]): Promise<boolean> { // clientUpdates must be produced via "toJSON"
+  private async pushUpdates (filePath: string, clientVersion: number, clientUpdates: Update[]): Promise<boolean> { // clientUpdates must be produced via "toJSON"
     const doc = this.documents.find(doc => doc.filePath === filePath)
     if (doc === undefined) {
       throw new Error(`Could not receive updates for file ${filePath}: Not found.`)
@@ -668,7 +654,17 @@ export default class DocumentManager extends ProviderContract {
     for (const update of clientUpdates) {
       const changes = ChangeSet.fromJSON(update.changes)
       doc.updates.push(update)
-      doc.document = changes.apply(doc.document)
+      try {
+        doc.document = changes.apply(doc.document)
+      } catch (err: any) {
+        dialog.showErrorBox(
+          'Document out of sync',
+          `Your modifications could not be applied to the document in memory.
+This means that saving might fail. Please report this bug to us, copy the
+current contents from the editor somewhere else, and restart the application.`
+        )
+        throw err
+      }
       doc.currentVersion = doc.minimumVersion + doc.updates.length
       // People are lazy, and hence there is a non-zero chance that in a few
       // instances the currentVersion will get dangerously close to
@@ -762,6 +758,7 @@ export default class DocumentManager extends ProviderContract {
     }
 
     if (windowId === undefined) {
+      this._app.log.warning(`Could not open file ${filePath}: windowId was undefined.`)
       return false
     }
 
@@ -778,6 +775,7 @@ export default class DocumentManager extends ProviderContract {
     }
 
     if (leaf === undefined) {
+      this._app.log.warning(`Could not open file ${filePath}: leaf was undefined.`)
       return false
     }
 
@@ -788,6 +786,9 @@ export default class DocumentManager extends ProviderContract {
 
     this._updateFocusLeaf(windowId, leafId)
 
+    // After here, the document will in some way be opened.
+    this._app.recentDocs.add(filePath)
+
     if (leaf.tabMan.openFiles.map(x => x.path).includes(filePath)) {
       // File is already open -> simply set it as active
       // leaf.tabMan.activeFile = filePath
@@ -797,21 +798,22 @@ export default class DocumentManager extends ProviderContract {
       return true
     }
 
-    // TODO: Make sure the active file is not modified!
-    // Close the (formerly active) file if we should avoid new tabs and have not
-    // gotten a specific request to open it in a *new* tab
+    // NOTE: Since openFile will set filePath as active, we have to retrieve the
+    // (previously) active file *before* opening the new one. See bug #5065 for
+    // context.
     const activeFile = leaf.tabMan.activeFile
     const ret = leaf.tabMan.openFile(filePath)
-    const avoidNewTabs = Boolean(this._app.config.get('system.avoidNewTabs'))
+    if (ret) {
+      this.broadcastEvent(DP_EVENTS.OPEN_FILE, { windowId, leafId, filePath })
+    }
 
+    // Close the (formerly active) file if we should avoid new tabs and have not
+    // gotten a specific request to open it in a *new* tab
+    const { avoidNewTabs } = this._app.config.get().system
     if (activeFile !== null && avoidNewTabs && newTab !== true && !this.isModified(activeFile.path)) {
       leaf.tabMan.closeFile(activeFile)
       this.syncWatchedFilePaths()
-      this.broadcastEvent(DP_EVENTS.CLOSE_FILE, { windowId, leafId, filePath })
-      this.broadcastEvent(DP_EVENTS.ACTIVE_FILE, { windowId, leafId, filePath: leaf.tabMan.activeFile?.path })
-    }
-    if (ret) {
-      this.broadcastEvent(DP_EVENTS.OPEN_FILE, { windowId, leafId, filePath })
+      this.broadcastEvent(DP_EVENTS.CLOSE_FILE, { windowId, leafId, filePath: activeFile.path })
     }
 
     this.broadcastEvent(DP_EVENTS.ACTIVE_FILE, { windowId, leafId, filePath: leaf.tabMan.activeFile?.path })
@@ -902,11 +904,23 @@ export default class DocumentManager extends ProviderContract {
         if (leaf.tabMan.openFiles.map(x => x.path).includes(filePath)) {
           leaf.tabMan.setPinnedStatus(filePath, false)
           const success = leaf.tabMan.closeFile(filePath)
-          if (success) {
-            this.broadcastEvent(DP_EVENTS.CLOSE_FILE, { windowId: key, leafId: leaf.id, filePath })
+          if (!success) {
+            continue
+          }
+
+          this.broadcastEvent(DP_EVENTS.CLOSE_FILE, { windowId: key, leafId: leaf.id, filePath })
+
+          if (leaf.tabMan.openFiles.length === 0) {
+            this.closeLeaf(key, leaf.id)
           }
         }
       }
+    }
+
+    // We also must splice the document out of our provider
+    const idx = this.documents.findIndex(doc => doc.filePath === filePath)
+    if (idx > -1) {
+      this.documents.splice(idx, 1)
     }
 
     this.syncWatchedFilePaths()
@@ -936,8 +950,8 @@ export default class DocumentManager extends ProviderContract {
       throw new Error(`Could not handle remote change for file ${filePath}: Could not find corresponding file!`)
     }
 
-    const stat = await fs.lstat(filePath)
-    const modtime = stat.mtime.getTime()
+    const metadata = await this._app.fsal.getFilesystemMetadata(filePath)
+    const modtime = metadata.modtime
     const ourModtime = doc.descriptor.modtime
 
     // In response to issue #1621: We will not check for equal modtime but only
@@ -1090,14 +1104,14 @@ export default class DocumentManager extends ProviderContract {
     // Third, remove those watched files which are no longer open
     for (const watchedFile of watchedFiles) {
       if (!openFiles.includes(watchedFile)) {
-        this._watcher.unwatch(watchedFile)
+        this._watcher.unwatchPath(watchedFile)
       }
     }
 
     // Fourth, add those open files not yet watched
     for (const openFile of openFiles) {
       if (!watchedFiles.includes(openFile)) {
-        this._watcher.add(openFile)
+        this._watcher.watchPath(openFile)
       }
     }
   }
@@ -1283,8 +1297,8 @@ export default class DocumentManager extends ProviderContract {
     this.syncToConfig()
 
     if (filePath !== undefined) {
-      const win = (fromWindow !== undefined) ? fromWindow : originWindow
-      const leaf = (fromLeaf !== undefined) ? fromLeaf : originLeaf
+      const win = fromWindow ?? originWindow
+      const leaf = fromLeaf ?? originLeaf
       await this.moveFile(win, originWindow, leaf, target.id, filePath)
     }
   }
@@ -1409,7 +1423,13 @@ export default class DocumentManager extends ProviderContract {
     // 2. The save commences
     // 3. The user adds more changes
     // 4. The save finishes and undos the modifications
-    const content = doc.document.toString()
+
+    // NOTE: Zettlr internally always uses regular LF linefeeds. The FSAL load
+    // and FSAL save methods will take care to actually use the proper linefeeds
+    // and BOMs. So here we will always use newlines. This should fix and in the
+    // future prevent bugs like #4959
+    const docLines = [...doc.document.iterLines()]
+    const content = docLines.join('\n')
     doc.lastSavedVersion = doc.currentVersion
     doc.lastSavedContent = content
 
@@ -1428,21 +1448,26 @@ export default class DocumentManager extends ProviderContract {
 
     this._ignoreChanges.push(filePath)
 
-    if (doc.descriptor.type === 'file') {
-      await this._app.searchIndex.update(
-        doc.descriptor.path,
-        doc.descriptor.path,
-        content
-      )
-      await FSALFile.save(
-        doc.descriptor,
-        content,
-        this._app.fsal.getMarkdownFileParser(),
-        null
-      )
-      await this.synchronizeDatabases() // The file may have gotten a library
-    } else {
-      await FSALCodeFile.save(doc.descriptor, content, null)
+    try {
+      if (doc.descriptor.type === 'file') {
+        await this._app.searchIndex.update(
+          doc.descriptor.path,
+          doc.descriptor.path,
+          content
+        )
+        await FSALFile.save(
+          doc.descriptor,
+          content,
+          this._app.fsal.getMarkdownFileParser(),
+          null
+        )
+        await this.synchronizeDatabases() // The file may have gotten a library
+      } else {
+        await FSALCodeFile.save(doc.descriptor, content, null)
+      }
+    } catch (err: any) {
+      dialog.showErrorBox(trans('Could not save file'), trans('Could not save file %s: %s', doc.descriptor.name, err.message))
+      throw err
     }
 
     this._app.log.info(`[DocumentManager] File ${filePath} saved.`)
@@ -1455,5 +1480,10 @@ export default class DocumentManager extends ProviderContract {
   private _updateFocusLeaf (windowId: string, leafId: string): void {
     this._lastEditor.windowId = windowId
     this._lastEditor.leafId = leafId
+    this.broadcastEvent(DP_EVENTS.ACTIVE_FILE, {
+      windowId,
+      leafId,
+      filePath: this.getActiveFile(leafId) ?? undefined
+    })
   }
 }

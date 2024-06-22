@@ -53,6 +53,6 @@ function copy (text: string, isLink: boolean): void {
   if (isLink) {
     copyZknLink(text)
   } else {
-    clipboard.writeText(text)
+    navigator.clipboard.writeText(text).catch(err => console.error(err))
   }
 }

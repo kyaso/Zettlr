@@ -35,6 +35,7 @@ import TargetProvider from '@providers/targets'
 import TrayProvider from '@providers/tray'
 import UpdateProvider from '@providers/updates'
 import WindowProvider from '@providers/windows'
+import WorkspaceProvider from '@providers/workspaces'
 import { dialog } from 'electron'
 
 export default class AppServiceContainer {
@@ -58,12 +59,15 @@ export default class AppServiceContainer {
   private readonly _fsal: FSAL
   private readonly _searchIndexProvider: SearchIndexProvider
   private readonly _documentManager: DocumentManager
+  private readonly _workspaces: WorkspaceProvider
 
   constructor () {
     // NOTE: The log and config providers need to be instantiated first. The
     // rest can be instantiated afterwards.
     this._logProvider = new LogProvider()
     this._configProvider = new ConfigProvider(this._logProvider)
+    this._searchIndexProvider = new SearchIndexProvider(this._logProvider)
+    this._fsal = new FSAL(this._logProvider, this._configProvider, this._searchIndexProvider)
     this._commandProvider = new CommandProvider(this)
     this._assetsProvider = new AssetsProvider(this._logProvider)
     this._cssProvider = new CssProvider(this._logProvider)
@@ -72,12 +76,11 @@ export default class AppServiceContainer {
     this._appearanceProvider = new AppearanceProvider(this._logProvider, this._configProvider)
     this._dictionaryProvider = new DictionaryProvider(this._logProvider, this._configProvider)
 
-    this._targetProvider = new TargetProvider(this._logProvider)
+    this._targetProvider = new TargetProvider(this._logProvider, this._fsal)
     this._documentManager = new DocumentManager(this)
-    this._searchIndexProvider = new SearchIndexProvider(this._logProvider)
-    this._fsal = new FSAL(this._logProvider, this._configProvider, this._documentManager, this._searchIndexProvider)
-    this._tagProvider = new TagProvider(this._logProvider, this._fsal)
-    this._linkProvider = new LinkProvider(this._logProvider, this._fsal)
+    this._workspaces = new WorkspaceProvider(this._logProvider, this._configProvider, this._fsal)
+    this._tagProvider = new TagProvider(this._logProvider, this._workspaces)
+    this._linkProvider = new LinkProvider(this._logProvider, this._workspaces)
     this._windowProvider = new WindowProvider(this._logProvider, this._configProvider, this._documentManager)
     this._citeprocProvider = new CiteprocProvider(this._logProvider, this._configProvider, this._windowProvider)
     this._trayProvider = new TrayProvider(this._logProvider, this._configProvider, this._windowProvider)
@@ -92,6 +95,8 @@ export default class AppServiceContainer {
   async boot (): Promise<void> {
     await this._informativeBoot(this._logProvider, 'LogProvider')
     await this._informativeBoot(this._configProvider, 'ConfigProvider')
+    await this._informativeBoot(this._searchIndexProvider, 'SearchIndexProvider')
+    await this._informativeBoot(this._workspaces, 'WorkspaceProvider')
     await this._informativeBoot(this._assetsProvider, 'AssetsProvider')
     await this._informativeBoot(this._linkProvider, 'LinkProvider')
     await this._informativeBoot(this._tagProvider, 'TagProvider')
@@ -109,7 +114,6 @@ export default class AppServiceContainer {
     await this._informativeBoot(this._citeprocProvider, 'CiteprocProvider')
     await this._informativeBoot(this._updateProvider, 'UpdateProvider')
 
-    await this._informativeBoot(this._searchIndexProvider, 'SearchIndexProvider')
     await this._informativeBoot(this._fsal, 'FSAL')
     await this._informativeBoot(this._windowProvider, 'WindowManager')
     await this._informativeBoot(this._documentManager, 'DocumentManager')
@@ -231,14 +235,17 @@ export default class AppServiceContainer {
   public get commands (): CommandProvider { return this._commandProvider }
 
   /**
+   * Returns the WorkspaceProvider
+   */
+  public get workspaces (): WorkspaceProvider { return this._workspaces }
+
+  /**
    * Prepares quitting the app by shutting down the service providers
    */
   async shutdown (): Promise<void> {
     await this._safeShutdown(this._commandProvider, 'CommandProvider')
     await this._safeShutdown(this._documentManager, 'DocumentManager')
     await this._safeShutdown(this._fsal, 'FSAL')
-    await this._safeShutdown(this._searchIndexProvider, 'SearchIndexProvider')
-
     await this._safeShutdown(this._windowProvider, 'WindowManager')
     await this._safeShutdown(this._trayProvider, 'TrayProvider')
     await this._safeShutdown(this._statsProvider, 'StatsProvider')
@@ -253,6 +260,8 @@ export default class AppServiceContainer {
     await this._safeShutdown(this._citeprocProvider, 'CiteprocProvider')
     await this._safeShutdown(this._assetsProvider, 'AssetsProvider')
     await this._safeShutdown(this._appearanceProvider, 'AppearanceProvider')
+    await this._safeShutdown(this._workspaces, 'WorkspaceProvider')
+    await this._safeShutdown(this._searchIndexProvider, 'SearchIndexProvider')
     await this._safeShutdown(this._configProvider, 'ConfigProvider')
     await this._safeShutdown(this._logProvider, 'LogProvider')
   }

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zettlr 3.0.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Zettlr/Zettlr/issues\n"
-"POT-Creation-Date: 2023-11-25 09:50+0000\n"
+"POT-Creation-Date: 2024-04-28 18:04+0200\n"
 "PO-Revision-Date: 2023-09-05 22:51+0900\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -17,13 +17,1028 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.3.2\n"
 
-#: source/common/util/localise-number.ts:28
-msgid ","
-msgstr ","
+#: source/app/service-providers/config/config-validation.ts:278
+#, javascript-format
+msgid "Option %s has to be of type %s."
+msgstr "オプション%sは%s型である必要があります。"
 
-#: source/common/util/localise-number.ts:29
-msgid "."
-msgstr "."
+#: source/app/service-providers/config/config-validation.ts:281
+#, fuzzy, javascript-format
+msgid "Option %s must be one of: %s."
+msgstr "オプション%sは次から設定する必要があります。：%s"
+
+#: source/app/service-providers/config/config-validation.ts:284
+#, javascript-format
+msgid "Option %s must be between %s and %s (characters long)."
+msgstr "オプション%sは%s文字から%s文字の間である必要があります。"
+
+#: source/app/service-providers/config/config-validation.ts:287
+#, javascript-format
+msgid "Option %s may not exceed %s (characters)."
+msgstr "オプション%sは%s文字以下である必要があります。"
+
+#: source/app/service-providers/config/config-validation.ts:290
+#, javascript-format
+msgid "Option %s must be at least %s (characters long)."
+msgstr "オプション%sは%s文字以上である必要があります。"
+
+#: source/app/service-providers/config/config-validation.ts:293
+#, javascript-format
+msgid "Option %s is required."
+msgstr "オプション%sは必須です。"
+
+#: source/app/service-providers/config/index.ts:492
+msgid "Changing this option requires a restart to take effect."
+msgstr "このオプションを有効にするには再起動が必要です。"
+
+#: source/app/service-providers/config/index.ts:495
+#: source/app/service-providers/menu/menu.win32.ts:676
+#: source/app/service-providers/menu/menu.darwin.ts:702
+#, fuzzy
+msgid "Restart now"
+msgstr "今すぐ再起動"
+
+#: source/app/service-providers/config/index.ts:496
+msgid "Restart later"
+msgstr "あとで再起動"
+
+#: source/app/service-providers/config/index.ts:500
+#: source/app/service-providers/commands/file-rename.ts:108
+#: source/app/service-providers/commands/rename-tag.ts:43
+msgid "Confirm"
+msgstr "確認"
+
+#: source/app/service-providers/tray/index.ts:160
+msgid "Show Zettlr"
+msgstr "Zettlrを表示する"
+
+#: source/app/service-providers/tray/index.ts:166
+#: source/app/service-providers/menu/menu.win32.ts:300
+#: source/app/service-providers/menu/menu.darwin.ts:104
+msgid "Quit"
+msgstr "終了"
+
+#: source/app/service-providers/tray/index.ts:173
+msgid "Zettlr"
+msgstr "Zettlr"
+
+#: source/app/service-providers/updates/index.ts:298
+#, javascript-format
+msgid "Could not check for updates: Server Error (Status code: %s)"
+msgstr ""
+"アップデートの確認ができませんでした：サーバ エラー(ステータス コード：%s)"
+
+#: source/app/service-providers/updates/index.ts:300
+#, javascript-format
+msgid "Could not check for updates: Client Error (Status code: %s)"
+msgstr ""
+"アップデートの確認ができませんでした：クライアント エラー(ステータス コード："
+"%s)"
+
+#: source/app/service-providers/updates/index.ts:302
+#, javascript-format
+msgid ""
+"Could not check for updates: The server tried to redirect (Status code: %s)"
+msgstr ""
+"アップデートの確認ができませんでした：サーバーがリダイレクトしようとしました"
+"(ステータス コード：%s)"
+
+#. getaddrinfo has reported that the host has not been found.
+#. This normally only happens if the networking interface is
+#. offline.
+#: source/app/service-providers/updates/index.ts:307
+msgid "Could not check for updates: Could not establish connection"
+msgstr "アップデートの確認ができませんでした：接続の確立に失敗しました"
+
+#. Something else has occurred. GotError objects have a name property.
+#: source/app/service-providers/updates/index.ts:310
+#, javascript-format
+msgid "Could not check for updates. %s: %s"
+msgstr "アップデートを確認できませんでした。%s: %s"
+
+#: source/app/service-providers/updates/index.ts:326
+msgid "Could not check for updates: Server hasn't sent any data"
+msgstr ""
+"アップデートの確認ができませんでした：サーバからデータを受信できませんでした"
+
+#: source/app/service-providers/updates/index.ts:585
+#, javascript-format
+msgid "An update to version %s is available!"
+msgstr "バージョン%sへのアップデートが利用可能です！"
+
+#: source/app/service-providers/workspaces/index.ts:163
+#, fuzzy, javascript-format
+msgid "Loading workspace %s"
+msgstr "%s ワークスペースを読み込んでいます"
+
+#: source/app/service-providers/menu/menu.win32.ts:44
+#: source/app/service-providers/menu/menu.win32.ts:56
+#: source/app/service-providers/menu/menu.darwin.ts:183
+msgid "Recent documents"
+msgstr "最近使ったドキュメント"
+
+#: source/app/service-providers/menu/menu.win32.ts:48
+#: source/app/service-providers/menu/menu.win32.ts:60
+#: source/app/service-providers/menu/menu.darwin.ts:187
+msgid "Empty"
+msgstr "Empty"
+
+#: source/app/service-providers/menu/menu.win32.ts:87
+#: source/app/service-providers/menu/menu.darwin.ts:113
+msgid "File"
+msgstr "ファイル"
+
+#: source/app/service-providers/menu/menu.win32.ts:90
+#: source/app/service-providers/menu/menu.darwin.ts:116
+#: source/win-main/file-manager/util/dir-item-context.ts:37
+#: source/tmp/win-main/App.vue.ts:281
+msgid "New File…"
+msgstr "新規ファイル…"
+
+#: source/app/service-providers/menu/menu.win32.ts:129
+#: source/app/service-providers/menu/menu.darwin.ts:155
+#: source/win-main/file-manager/util/dir-item-context.ts:43
+msgid "New directory…"
+msgstr "新規ディレクトリ…"
+
+#: source/app/service-providers/menu/menu.win32.ts:139
+#: source/app/service-providers/menu/menu.darwin.ts:165
+#: source/common/modules/markdown-editor/tooltips/file-preview.ts:126
+msgid "Open…"
+msgstr "開く…"
+
+#: source/app/service-providers/menu/menu.win32.ts:148
+#: source/app/service-providers/menu/menu.darwin.ts:174
+#: source/tmp/win-main/App.vue.ts:255
+msgid "Open Workspace …"
+msgstr "ワークスペースを開く…"
+
+#. primary: true // It's a primary button
+#: source/app/service-providers/menu/menu.win32.ts:161
+#: source/app/service-providers/menu/menu.darwin.ts:196
+#: source/app/service-providers/commands/export.ts:114
+#: source/tmp/win-assets/DefaultsTab.vue.ts:61
+#: source/tmp/win-assets/SnippetsTab.vue.ts:27
+#: source/tmp/win-assets/CustomCSS.vue.ts:24
+#: source/tmp/win-tag-manager/App.vue.ts:85
+#: source/tmp/win-paste-image/App.vue.ts:66
+msgid "Save"
+msgstr "保存"
+
+#: source/app/service-providers/menu/menu.win32.ts:172
+#: source/app/service-providers/menu/menu.darwin.ts:207
+#: source/tmp/win-main/App.vue.ts:288
+msgid "Previous file"
+msgstr "前のファイル"
+
+#: source/app/service-providers/menu/menu.win32.ts:183
+#: source/app/service-providers/menu/menu.darwin.ts:218
+#: source/tmp/win-main/App.vue.ts:296
+msgid "Next file"
+msgstr "次のファイル"
+
+#: source/app/service-providers/menu/menu.win32.ts:197
+#: source/app/service-providers/menu/menu.darwin.ts:232
+msgid "Import files…"
+msgstr "ファイルをインポート…"
+
+#: source/app/service-providers/menu/menu.win32.ts:205
+#: source/app/service-providers/menu/menu.darwin.ts:240
+msgid "Export…"
+msgstr "エクスポート…"
+
+#: source/app/service-providers/menu/menu.win32.ts:213
+#: source/app/service-providers/menu/menu.darwin.ts:248
+#: source/tmp/win-print/App.vue.ts:44 source/tmp/win-print/App.vue.ts:45
+msgid "Print…"
+msgstr "印刷…"
+
+#: source/app/service-providers/menu/menu.win32.ts:221
+#: source/app/service-providers/menu/menu.win32.ts:225
+#: source/app/service-providers/menu/menu.darwin.ts:51
+msgid "Preferences…"
+msgstr "設定…"
+
+#: source/app/service-providers/menu/menu.win32.ts:233
+#: source/app/service-providers/menu/menu.darwin.ts:59
+#: source/tmp/win-assets/App.vue.ts:15
+msgid "Assets Manager"
+msgstr "アセットマネージャ"
+
+#: source/app/service-providers/menu/menu.win32.ts:241
+#: source/app/service-providers/menu/menu.darwin.ts:67
+msgid "Manage Tags…"
+msgstr "タグ管理…"
+
+#: source/app/service-providers/menu/menu.win32.ts:253
+#: source/app/service-providers/menu/menu.darwin.ts:259
+msgid "Import translation…"
+msgstr "翻訳をインポート…"
+
+#: source/app/service-providers/menu/menu.win32.ts:261
+#: source/app/service-providers/menu/menu.darwin.ts:267
+msgid "Import dictionary…"
+msgstr "辞書をインポート…"
+
+#: source/app/service-providers/menu/menu.win32.ts:280
+#: source/app/service-providers/menu/menu.darwin.ts:286
+#: source/win-main/file-manager/util/file-item-context.ts:43
+#: source/tmp/win-assets/DefaultsTab.vue.ts:58
+msgid "Rename file"
+msgstr "ファイル名を変更"
+
+#: source/app/service-providers/menu/menu.win32.ts:291
+#: source/app/service-providers/menu/menu.darwin.ts:297
+#: source/win-main/file-manager/util/file-item-context.ts:50
+msgid "Delete file"
+msgstr "ファイルを削除"
+
+#: source/app/service-providers/menu/menu.win32.ts:310
+#: source/app/service-providers/menu/menu.darwin.ts:308
+#: source/common/modules/markdown-editor/tooltips/footnotes.ts:109
+msgid "Edit"
+msgstr "編集"
+
+#: source/app/service-providers/menu/menu.win32.ts:315
+#: source/app/service-providers/menu/menu.darwin.ts:313
+msgid "Undo"
+msgstr "元に戻す"
+
+#: source/app/service-providers/menu/menu.win32.ts:321
+#: source/app/service-providers/menu/menu.darwin.ts:319
+msgid "Redo"
+msgstr "やり直し"
+
+#: source/app/service-providers/menu/menu.win32.ts:330
+#: source/app/service-providers/menu/menu.darwin.ts:328
+#: source/common/modules/window-register/register-default-context.ts:76
+#: source/common/modules/markdown-editor/context-menu/default-menu.ts:210
+msgid "Cut"
+msgstr "切り取り"
+
+#: source/app/service-providers/menu/menu.win32.ts:336
+#: source/app/service-providers/menu/menu.darwin.ts:334
+#: source/common/modules/window-register/register-default-context.ts:83
+#: source/common/modules/markdown-editor/context-menu/default-menu.ts:217
+msgid "Copy"
+msgstr "コピー"
+
+#: source/app/service-providers/menu/menu.win32.ts:341
+#: source/app/service-providers/menu/menu.darwin.ts:339
+#: source/common/modules/markdown-editor/context-menu/default-menu.ts:224
+msgid "Copy as HTML"
+msgstr "HTMLとしてコピー"
+
+#: source/app/service-providers/menu/menu.win32.ts:350
+#: source/app/service-providers/menu/menu.darwin.ts:348
+#: source/common/modules/window-register/register-default-context.ts:90
+#: source/common/modules/markdown-editor/context-menu/default-menu.ts:231
+msgid "Paste"
+msgstr "貼り付け"
+
+#: source/app/service-providers/menu/menu.win32.ts:355
+#: source/app/service-providers/menu/menu.darwin.ts:353
+#: source/common/modules/markdown-editor/context-menu/default-menu.ts:238
+msgid "Paste without style"
+msgstr "プレーンテキストとして貼り付け"
+
+#: source/app/service-providers/menu/menu.win32.ts:364
+#: source/app/service-providers/menu/menu.darwin.ts:362
+#: source/common/modules/window-register/register-default-context.ts:100
+#: source/common/modules/markdown-editor/context-menu/default-menu.ts:248
+msgid "Select all"
+msgstr "すべて選択"
+
+#: source/app/service-providers/menu/menu.win32.ts:372
+#: source/app/service-providers/menu/menu.darwin.ts:370
+msgid "Find in file"
+msgstr "ファイルを検索"
+
+#: source/app/service-providers/menu/menu.win32.ts:380
+#: source/app/service-providers/menu/menu.darwin.ts:378
+msgid "Find in directory"
+msgstr "ディレクトリを検索"
+
+#: source/app/service-providers/menu/menu.win32.ts:388
+#: source/app/service-providers/menu/menu.darwin.ts:386
+msgid "Filter files"
+msgstr "ファイルの条件指定"
+
+#: source/app/service-providers/menu/menu.win32.ts:399
+#: source/app/service-providers/menu/menu.darwin.ts:397
+msgid "Generate new ID"
+msgstr "新規IDを生成"
+
+#: source/app/service-providers/menu/menu.win32.ts:407
+#: source/app/service-providers/menu/menu.darwin.ts:405
+#: source/win-main/tabs-context.ts:80
+#: source/win-main/file-manager/util/file-item-context.ts:78
+msgid "Copy ID"
+msgstr "IDをコピー"
+
+#: source/app/service-providers/menu/menu.win32.ts:418
+#: source/app/service-providers/menu/menu.darwin.ts:435
+msgid "View"
+msgstr "表示"
+
+#: source/app/service-providers/menu/menu.win32.ts:422
+#: source/app/service-providers/menu/menu.darwin.ts:439
+#: source/win-preferences/schema/appearance.ts:26
+msgid "Dark mode"
+msgstr "ダークモード"
+
+#: source/app/service-providers/menu/menu.win32.ts:432
+#: source/app/service-providers/menu/menu.darwin.ts:449
+msgid "Additional Information"
+msgstr "追加情報"
+
+#: source/app/service-providers/menu/menu.win32.ts:442
+#: source/app/service-providers/menu/menu.darwin.ts:459
+msgid "Distraction free mode"
+msgstr "集中モード"
+
+#: source/app/service-providers/menu/menu.win32.ts:450
+#: source/app/service-providers/menu/menu.darwin.ts:467
+msgid "Typewriter Mode"
+msgstr "タイプライターモード"
+
+#: source/app/service-providers/menu/menu.win32.ts:461
+#: source/app/service-providers/menu/menu.darwin.ts:478
+msgid "Toggle file manager"
+msgstr "ファイルマネージャーの切り替え"
+
+#: source/app/service-providers/menu/menu.win32.ts:469
+#: source/app/service-providers/menu/menu.darwin.ts:486
+#: source/tmp/win-main/App.vue.ts:389
+msgid "Toggle Sidebar"
+msgstr "サイドバー表示の切り替え"
+
+#: source/app/service-providers/menu/menu.win32.ts:480
+#: source/app/service-providers/menu/menu.darwin.ts:500
+msgid "Reset zoom"
+msgstr "ズームをリセット"
+
+#: source/app/service-providers/menu/menu.win32.ts:489
+#: source/app/service-providers/menu/menu.darwin.ts:509
+msgid "Zoom in"
+msgstr "拡大"
+
+#: source/app/service-providers/menu/menu.win32.ts:496
+#: source/app/service-providers/menu/menu.darwin.ts:516
+msgid "Zoom out"
+msgstr "縮小"
+
+#: source/app/service-providers/menu/menu.win32.ts:506
+#: source/app/service-providers/menu/menu.darwin.ts:526
+msgid "Toggle fullscreen"
+msgstr "フルスクリーンの切り替え"
+
+#: source/app/service-providers/menu/menu.win32.ts:515
+#: source/app/service-providers/menu/menu.darwin.ts:534
+msgid "Develop"
+msgstr "開発"
+
+#: source/app/service-providers/menu/menu.win32.ts:519
+#: source/app/service-providers/menu/menu.darwin.ts:538
+msgid "Reload"
+msgstr "再読み込み"
+
+#: source/app/service-providers/menu/menu.win32.ts:527
+#: source/app/service-providers/menu/menu.darwin.ts:546
+msgid "Toggle developer tools"
+msgstr "開発者ツール表示の切り替え"
+
+#: source/app/service-providers/menu/menu.win32.ts:535
+#: source/app/service-providers/menu/menu.darwin.ts:554
+msgid "Open Logs"
+msgstr "ログを開く"
+
+#: source/app/service-providers/menu/menu.win32.ts:546
+#: source/app/service-providers/menu/menu.darwin.ts:565
+msgid "Window"
+msgstr "ウィンドウ"
+
+#: source/app/service-providers/menu/menu.win32.ts:551
+#: source/app/service-providers/menu/menu.darwin.ts:570
+msgid "Minimize"
+msgstr "最小化"
+
+#: source/app/service-providers/menu/menu.win32.ts:557
+#: source/app/service-providers/menu/menu.darwin.ts:578
+#: source/tmp/win-tag-manager/App.vue.ts:95
+msgid "Close"
+msgstr "閉じる"
+
+#: source/app/service-providers/menu/menu.win32.ts:566
+#: source/app/service-providers/menu/menu.darwin.ts:592
+#: source/win-main/tabs-context.ts:38
+msgid "Close Tab"
+msgstr "タブを閉じる"
+
+#: source/app/service-providers/menu/menu.win32.ts:574
+#: source/app/service-providers/menu/menu.darwin.ts:600
+msgid "Previous Tab"
+msgstr "前のタブ"
+
+#: source/app/service-providers/menu/menu.win32.ts:582
+#: source/app/service-providers/menu/menu.darwin.ts:608
+msgid "Next Tab"
+msgstr "次のタブ"
+
+#: source/app/service-providers/menu/menu.win32.ts:590
+#: source/app/service-providers/menu/menu.darwin.ts:616
+#, fuzzy
+msgid "New window"
+msgstr "ウィンドウ"
+
+#: source/app/service-providers/menu/menu.win32.ts:601
+#: source/app/service-providers/menu/menu.darwin.ts:627
+msgid "Help"
+msgstr "ヘルプ"
+
+#: source/app/service-providers/menu/menu.win32.ts:606
+#: source/app/service-providers/menu/menu.darwin.ts:46
+#: source/app/service-providers/menu/menu.darwin.ts:632
+#: source/tmp/win-about/App.vue.ts:35 source/tmp/win-about/App.vue.ts:76
+msgid "About Zettlr"
+msgstr "Zettlrについて"
+
+#: source/app/service-providers/menu/menu.win32.ts:613
+#: source/app/service-providers/menu/menu.darwin.ts:639
+#: source/tmp/win-update/App.vue.ts:37
+msgid "Check for updates"
+msgstr "アップデートの確認"
+
+#: source/app/service-providers/menu/menu.win32.ts:625
+#: source/app/service-providers/menu/menu.darwin.ts:651
+msgid "Support Zettlr"
+msgstr "Zettlrを支援する"
+
+#: source/app/service-providers/menu/menu.win32.ts:635
+#: source/app/service-providers/menu/menu.darwin.ts:661
+#, fuzzy
+msgid "Visit website"
+msgstr "ウェブサイトへ移動"
+
+#: source/app/service-providers/menu/menu.win32.ts:645
+#: source/app/service-providers/menu/menu.darwin.ts:671
+msgid "Open user manual"
+msgstr "ユーザマニュアルを開く"
+
+#: source/app/service-providers/menu/menu.win32.ts:659
+#: source/app/service-providers/menu/menu.darwin.ts:685
+msgid "Open Tutorial"
+msgstr "チュートリアルを開く"
+
+#: source/app/service-providers/menu/menu.win32.ts:667
+#: source/app/service-providers/menu/menu.darwin.ts:693
+msgid "Clear FSAL cache …"
+msgstr "FSALキャッシュをクリアする…"
+
+#: source/app/service-providers/menu/menu.win32.ts:671
+#: source/app/service-providers/menu/menu.darwin.ts:697
+#, fuzzy
+msgid "Clear FSAL Cache"
+msgstr "FSALキャッシュをクリアする"
+
+#: source/app/service-providers/menu/menu.win32.ts:672
+#: source/app/service-providers/menu/menu.darwin.ts:698
+msgid "Clearing the FSAL cache requires a restart."
+msgstr "FSALキャッシュをクリアするには再起動が必要です。"
+
+#: source/app/service-providers/menu/menu.win32.ts:673
+#: source/app/service-providers/menu/menu.darwin.ts:699
+msgid ""
+"After the restart, Zettlr will recreate the entire cache, which may take a "
+"few moments, depending on the amount of files you have loaded and the speed "
+"of your disk. The window(s) will show afterward."
+msgstr ""
+"再起動後、Zettlr はキャッシュ全体を再作成します。ロードしたファイルの量とディ"
+"スクの速度によっては、少し時間がかかる場合があります。その後ウィンドウが表示"
+"されます。"
+
+#. 1: Omit all changes
+#: source/app/service-providers/menu/menu.win32.ts:677
+#: source/app/service-providers/menu/menu.darwin.ts:703
+#: source/app/service-providers/commands/file-delete.ts:37
+#: source/app/service-providers/commands/rename-tag.ts:47
+#: source/app/service-providers/commands/dir-delete.ts:36
+#: source/app/service-providers/windows/dialog/ask-save-changes.ts:34
+#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:32
+#: source/app/service-providers/windows/dialog/should-replace-file.ts:36
+#: source/tmp/win-paste-image/App.vue.ts:67
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: source/app/service-providers/menu/menu.darwin.ts:77
+msgid "Services"
+msgstr "サービス"
+
+#: source/app/service-providers/menu/menu.darwin.ts:86
+msgid "Hide"
+msgstr "隠す"
+
+#: source/app/service-providers/menu/menu.darwin.ts:91
+msgid "Hide others"
+msgstr "その他を隠す"
+
+#: source/app/service-providers/menu/menu.darwin.ts:96
+msgid "Show"
+msgstr "表示"
+
+#: source/app/service-providers/menu/menu.darwin.ts:416
+msgid "Speech"
+msgstr "読み上げ"
+
+#: source/app/service-providers/menu/menu.darwin.ts:420
+msgid "Start speaking"
+msgstr "読み上げ開始"
+
+#: source/app/service-providers/menu/menu.darwin.ts:425
+msgid "Stop speaking"
+msgstr "読み上げ停止"
+
+#: source/app/service-providers/menu/menu.darwin.ts:584
+msgid "Bring All to Front"
+msgstr "すべて前面に移動"
+
+#: source/app/service-providers/commands/file-delete.ts:36
+#: source/app/service-providers/commands/dir-delete.ts:35
+#: source/app/service-providers/commands/dir-project-export.ts:93
+#: source/app/service-providers/windows/dialog/prompt.ts:32
+#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:33
+#: source/app/service-providers/windows/dialog/should-replace-file.ts:37
+#: source/tmp/win-error/App.vue.ts:43
+msgid "Ok"
+msgstr "OK"
+
+#: source/app/service-providers/commands/file-delete.ts:41
+#: source/app/service-providers/commands/dir-delete.ts:40
+msgid "Really delete?"
+msgstr "本当に削除しますか？"
+
+#: source/app/service-providers/commands/file-delete.ts:42
+#: source/app/service-providers/commands/dir-delete.ts:41
+#, javascript-format
+msgid "Do you really want to remove %s?"
+msgstr "本当に%sを削除してもよろしいですか？"
+
+#: source/app/service-providers/commands/save-image-from-clipboard.ts:38
+msgid "The requested file was not found."
+msgstr "要求されたファイルが見つかりません。"
+
+#: source/app/service-providers/commands/save-image-from-clipboard.ts:83
+msgid "The provided name did not contain any allowed letters."
+msgstr "提供された名前は使用可能な文字を含んでいません。"
+
+#: source/app/service-providers/commands/save-image-from-clipboard.ts:104
+msgid "The requested directory was not found."
+msgstr "要求されたディレクトリが見つかりません。"
+
+#: source/app/service-providers/commands/save-image-from-clipboard.ts:115
+msgid "Could not save image"
+msgstr "画像を保存できませんでした"
+
+#: source/app/service-providers/commands/file-new.ts:156
+#: source/app/service-providers/commands/file-duplicate.ts:42
+#: source/app/service-providers/commands/file-duplicate.ts:59
+msgid "Could not create file"
+msgstr "ファイルを作成できません"
+
+#: source/app/service-providers/commands/importer/import-textbundle.ts:63
+#: source/app/service-providers/commands/importer/import-textbundle.ts:69
+#, javascript-format
+msgid "Malformed Textbundle: %s"
+msgstr "不正な形式のTextbundleです：%s"
+
+#: source/app/service-providers/commands/importer/index.ts:92
+#: source/app/service-providers/commands/importer/index.ts:93
+msgid "Select import profile"
+msgstr ""
+
+#: source/app/service-providers/commands/importer/index.ts:94
+#, javascript-format
+msgid "There are multiple profiles that can import %s. Please choose one."
+msgstr ""
+
+#: source/app/service-providers/commands/file-rename.ts:109
+#, javascript-format
+msgid "Update %s internal links to file %s?"
+msgstr "%s 箇所の内部リンクを「%s」に更新しますか?"
+
+#: source/app/service-providers/commands/file-rename.ts:111
+#: source/app/service-providers/commands/rename-tag.ts:46
+#: source/app/service-providers/windows/dialog/ask-save-changes.ts:32
+msgid "Yes"
+msgstr "はい"
+
+#. 0: Save all changes
+#: source/app/service-providers/commands/file-rename.ts:112
+#: source/app/service-providers/windows/dialog/ask-save-changes.ts:33
+msgid "No"
+msgstr "いいえ"
+
+#: source/app/service-providers/commands/root-open.ts:62
+#: source/tmp/win-main/file-manager/util/PopoverDirProps.vue.ts:32
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:106
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:108
+#: source/tmp/win-main/file-manager/FileTree.vue.ts:75
+msgid "Files"
+msgstr "ファイル"
+
+#. TODO: Move this to a command
+#. The user wants to open another file or directory.
+#: source/app/service-providers/commands/root-open.ts:75
+#: source/app/service-providers/windows/index.ts:221
+msgid "Open project folder"
+msgstr "プロジェクトフォルダを開く"
+
+#: source/app/service-providers/commands/root-open.ts:85
+msgid "Cannot open directory"
+msgstr "ディレクトリを開けません"
+
+#: source/app/service-providers/commands/root-open.ts:86
+#, javascript-format
+msgid "Directory &quot;%s&quot; cannot be opened by Zettlr."
+msgstr "ディレクトリ&quot;%s&quot;をZettlrで開けません。"
+
+#: source/app/service-providers/commands/request-move.ts:53
+msgid "Cannot move directory"
+msgstr "ディレクトリを移動できません"
+
+#: source/app/service-providers/commands/request-move.ts:54
+msgid "You cannot move a directory into one of its subdirectories."
+msgstr "ディレクトリをサブディレクトリに移動できません。"
+
+#: source/app/service-providers/commands/request-move.ts:63
+msgid "Cannot move directory or file"
+msgstr "ディレクトリまたはファイルを移動できません"
+
+#: source/app/service-providers/commands/request-move.ts:64
+#, javascript-format
+msgid "The file/directory %s already exists in target."
+msgstr "%s という名称のファイルまたはディレクトリは既に存在します。"
+
+#: source/app/service-providers/commands/import-lang-file.ts:60
+#, javascript-format
+msgid "Language file imported: %s"
+msgstr "言語ファイルがインポートされました：%s"
+
+#: source/app/service-providers/commands/import-lang-file.ts:62
+#: source/app/service-providers/commands/import-lang-file.ts:65
+#, javascript-format
+msgid "Could not import language file %s!"
+msgstr "言語ファイル%sをインポートできませんでした。"
+
+#: source/app/service-providers/commands/export.ts:55
+#: source/app/service-providers/commands/export.ts:157
+msgid "Export failed"
+msgstr "エクスポート失敗"
+
+#: source/app/service-providers/commands/export.ts:56
+#, fuzzy, javascript-format
+msgid "An error occurred during export: %s"
+msgstr "エクスポート中にエラーが発生しました：%s"
+
+#: source/app/service-providers/commands/export.ts:114
+msgid "Choose export destination"
+msgstr "保存先を選択"
+
+#: source/app/service-providers/commands/export.ts:145
+#, javascript-format
+msgid "Exporting to %s"
+msgstr "%sにエクスポートします"
+
+#: source/app/service-providers/commands/export.ts:158
+#, javascript-format
+msgid "An error occurred on export: %s"
+msgstr "エクスポート中にエラーが発生しました：%s"
+
+#. Else standard val for new dirs.
+#: source/app/service-providers/commands/dir-new.ts:31
+#: source/tmp/win-main/file-manager/TreeItem.vue.ts:232
+msgid "Untitled"
+msgstr "無題"
+
+#: source/app/service-providers/commands/dir-new.ts:37
+#: source/app/service-providers/commands/dir-new.ts:38
+#: source/app/service-providers/commands/dir-new.ts:50
+msgid "Could not create directory"
+msgstr "ディレクトリを作成できませんでした"
+
+#: source/app/service-providers/commands/rename-tag.ts:44
+#, fuzzy, javascript-format
+msgid "Replace tag \"%s\" with \"%s\" across %s files?"
+msgstr "タグ \"%s\" を \"%s\" に置き換えますか？ 対象：%s ファイル"
+
+#. Better error message
+#: source/app/service-providers/commands/open-attachment.ts:113
+#, javascript-format
+msgid "The reference with key %s does not appear to have attachments."
+msgstr "キー%sの参照には添付ファイルがないようです。"
+
+#: source/app/service-providers/commands/open-attachment.ts:118
+msgid "Could not open attachment. Is Zotero running?"
+msgstr ""
+"添付ファイルを開けませんでした。Zoteroが起動していることを確認してください。"
+
+#: source/app/service-providers/commands/language-tool.ts:194
+msgid "Document too long"
+msgstr "ドキュメントが長すぎます"
+
+#: source/app/service-providers/commands/language-tool.ts:199
+msgid "offline"
+msgstr "オフライン"
+
+#. We need to generate our own filename. First, attempt to just use 'copy of'
+#: source/app/service-providers/commands/file-duplicate.ts:71
+#, javascript-format
+msgid "Copy of %s"
+msgstr "%s をコピー"
+
+#: source/app/service-providers/commands/import.ts:34
+msgid "Import directory"
+msgstr ""
+
+#: source/app/service-providers/commands/import.ts:34
+msgid "Select folder"
+msgstr ""
+
+#: source/app/service-providers/commands/import.ts:34
+msgid "Select import destination"
+msgstr ""
+
+#: source/app/service-providers/commands/import.ts:36
+msgid "You have to select a directory to import to."
+msgstr "インポート先のディレクトリを指定する必要があります。"
+
+#. Prepare the list of file filters
+#. The "All Files" filter should be at the top
+#: source/app/service-providers/commands/import.ts:44
+#: source/app/service-providers/windows/dialog/ask-file.ts:47
+#: source/tmp/common/vue/form/elements/FileControl.vue.ts:57
+msgid "All Files"
+msgstr "すべてのファイル"
+
+#. Now import.
+#: source/app/service-providers/commands/import.ts:61
+msgid "Importing. Please wait …"
+msgstr "インポート中。しばらくお待ちください…"
+
+#. This callback gets called whenever there is an error while running pandoc.
+#: source/app/service-providers/commands/import.ts:69
+#, javascript-format
+msgid "Couldn't import %s."
+msgstr "%sをインポートできませんでした。"
+
+#: source/app/service-providers/commands/import.ts:73
+#, javascript-format
+msgid "%s imported successfully."
+msgstr "%s は正常にインポートされました。"
+
+#. Some files failed to import.
+#: source/app/service-providers/commands/import.ts:78
+#, javascript-format
+msgid ""
+"The following %s files could not be imported, because their filetype is "
+"unknown: %s"
+msgstr "次の%sファイルはファイル種別が不明なためインポートできませんでした：%s"
+
+#: source/app/service-providers/commands/import.ts:84
+#, fuzzy
+msgid "Import failed"
+msgstr "エクスポート失敗"
+
+#: source/app/service-providers/commands/dir-project-export.ts:85
+msgid "Cannot export project"
+msgstr "プロジェクトをエクスポートできません"
+
+#: source/app/service-providers/commands/dir-project-export.ts:86
+msgid ""
+"There are no files selected for export. Please select files to be included "
+"in the project settings."
+msgstr ""
+
+#: source/app/service-providers/commands/dir-project-export.ts:91
+msgid "Project File Mismatch"
+msgstr ""
+
+#: source/app/service-providers/commands/dir-project-export.ts:92
+msgid ""
+"One or more files specified in the project settings have not been found. "
+"They may have moved or been deleted. Please verify that all files that you "
+"would like to export are included."
+msgstr ""
+
+#: source/app/service-providers/commands/dir-project-export.ts:168
+#, fuzzy, javascript-format
+msgid "Project \"%s\" successfully exported. Click to show."
+msgstr "プロジェクトは正常にエクスポートされました。クリックして表示します。"
+
+#: source/app/service-providers/commands/dir-project-export.ts:169
+#, fuzzy
+msgid "Project Export"
+msgstr "Export"
+
+#: source/app/service-providers/citeproc/index.ts:249
+#: source/app/service-providers/citeproc/index.ts:457
+msgid "The citation database could not be loaded"
+msgstr "参考文献データベースを読み込めませんでした"
+
+#: source/app/service-providers/citeproc/index.ts:444
+msgid "Changes to the library file detected. Reloading …"
+msgstr "ライブラリ ファイルの更新が検出されました。再読み込み中です…"
+
+#: source/app/service-providers/documents/index.ts:343
+#, fuzzy
+msgid "Save changes"
+msgstr "未保存の変更"
+
+#: source/app/service-providers/documents/index.ts:344
+#, fuzzy
+msgid "Discard changes"
+msgstr "未保存の変更"
+
+#. If the user cancels, do not omit (the default) but actually cancel
+#: source/app/service-providers/documents/index.ts:347
+#: source/app/service-providers/windows/dialog/ask-save-changes.ts:38
+#: source/tmp/win-assets/DefaultsTab.vue.ts:110
+#: source/tmp/win-assets/SnippetsTab.vue.ts:46
+#: source/tmp/win-assets/CustomCSS.vue.ts:34
+#: source/tmp/win-tag-manager/App.vue.ts:91
+msgid "Unsaved changes"
+msgstr "未保存の変更"
+
+#: source/app/service-providers/documents/index.ts:348
+#, fuzzy
+msgid "There are unsaved changes. Do you want to save or discard them?"
+msgstr "現在のファイルには未保存の変更があります。閉じる前に保存しますか？"
+
+#: source/app/service-providers/documents/index.ts:989
+#, fuzzy
+msgid "File changed on disk"
+msgstr "ファイルマネージャーモード"
+
+#: source/app/service-providers/documents/index.ts:990
+#, javascript-format
+msgid "%s changed on disk"
+msgstr ""
+
+#: source/app/service-providers/documents/index.ts:992
+#, javascript-format
+msgid ""
+"%s has changed on disk, but the editor contains unsaved changes. Do you want "
+"to keep the current editor contents or load the file from disk?"
+msgstr ""
+
+#: source/app/service-providers/documents/index.ts:993
+msgid ""
+"Do you want to keep the current editor contents or load the file from disk?"
+msgstr ""
+
+#: source/app/service-providers/documents/index.ts:996
+msgid "Keep editor contents"
+msgstr ""
+
+#: source/app/service-providers/documents/index.ts:997
+msgid "Load changes from disk"
+msgstr ""
+
+#: source/app/service-providers/documents/index.ts:1000
+msgid ""
+"Always load changes from disk if there are no unsaved changes in the editor"
+msgstr ""
+
+#: source/app/service-providers/documents/index.ts:1464
+msgid "Could not save file"
+msgstr ""
+
+#: source/app/service-providers/documents/index.ts:1464
+#, javascript-format
+msgid "Could not save file %s: %s"
+msgstr ""
+
+#: source/app/service-providers/windows/dialog/ask-save-changes.ts:39
+msgid "There are unsaved changes. Do you want to save them first?"
+msgstr "現在のファイルには未保存の変更があります。閉じる前に保存しますか？"
+
+#: source/app/service-providers/windows/dialog/ask-file.ts:54
+msgid "Open file"
+msgstr "ファイルを開く"
+
+#: source/app/service-providers/windows/dialog/save-dialog.ts:58
+msgid "Save file"
+msgstr "ファイルを保存"
+
+#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:29
+msgid "Overwrite existing file"
+msgstr "既存のファイルを上書き"
+
+#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:30
+#, javascript-format
+msgid "The file %s already exists in this directory. Overwrite?"
+msgstr "%s はディレクトリに既に存在します。上書きしますか？"
+
+#: source/app/service-providers/windows/dialog/should-replace-file.ts:31
+msgid "Replace file"
+msgstr ""
+
+#: source/app/service-providers/windows/dialog/should-replace-file.ts:32
+#, javascript-format
+msgid ""
+"File %s has been modified remotely. Replace the loaded version with the "
+"newer one from disk?"
+msgstr ""
+
+#: source/app/service-providers/windows/dialog/should-replace-file.ts:33
+#: source/win-preferences/schema/general.ts:78
+msgid "Always load remote changes to the current file"
+msgstr "現在のファイルに対する外部での変更を常に読み込む"
+
+#: source/win-main/tabs-context.ts:44
+msgid "Close other tabs"
+msgstr "他のタブを閉じる"
+
+#: source/win-main/tabs-context.ts:50
+msgid "Close all tabs"
+msgstr "すべてのタブを閉じる"
+
+#: source/win-main/tabs-context.ts:59
+msgid "Unpin tab"
+msgstr "タブ固定を解除"
+
+#: source/win-main/tabs-context.ts:59
+msgid "Pin tab"
+msgstr "タブを固定"
+
+#: source/win-main/tabs-context.ts:68
+#: source/win-main/file-manager/util/file-item-context.ts:72
+msgid "Copy filename"
+msgstr "ファイル名をコピー"
+
+#: source/win-main/tabs-context.ts:74
+msgid "Copy full path"
+msgstr "フルパスをコピー"
+
+#: source/win-main/file-manager/util/file-item-context.ts:28
+#: source/common/modules/markdown-editor/tooltips/file-preview.ts:147
+#: source/tmp/win-main/GlobalSearch.vue.ts:53
+msgid "Open in a new tab"
+msgstr "新しいタブで開く"
+
+#: source/win-main/file-manager/util/file-item-context.ts:34
+#: source/win-main/file-manager/util/dir-item-context.ts:28
+msgid "Properties"
+msgstr "プロパティ"
+
+#: source/win-main/file-manager/util/file-item-context.ts:57
+msgid "Duplicate file"
+msgstr "ファイルを複製"
+
+#: source/win-main/file-manager/util/file-item-context.ts:66
+#: source/win-main/file-manager/util/dir-item-context.ts:67
+msgid "Copy path"
+msgstr "フルパスをコピー"
+
+#: source/win-main/file-manager/util/file-item-context.ts:87
+#: source/win-main/file-manager/util/dir-item-context.ts:76
+#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:111
+msgid "Reveal in Finder"
+msgstr "Finderで表示"
+
+#: source/win-main/file-manager/util/file-item-context.ts:87
+#: source/win-main/file-manager/util/dir-item-context.ts:76
+msgid "Reveal in Explorer"
+msgstr "エクスプローラーで表示"
+
+#: source/win-main/file-manager/util/file-item-context.ts:87
+#: source/win-main/file-manager/util/dir-item-context.ts:76
+msgid "Reveal in File Browser"
+msgstr "File Browserで表示"
+
+#: source/win-main/file-manager/util/file-item-context.ts:100
+msgid "Close file"
+msgstr "ファイルを閉じる"
+
+#: source/win-main/file-manager/util/dir-item-context.ts:52
+msgid "Rename directory"
+msgstr "ディレクトリ名を変更"
+
+#: source/win-main/file-manager/util/dir-item-context.ts:58
+msgid "Delete directory"
+msgstr "ディレクトリを削除"
+
+#: source/win-main/file-manager/util/dir-item-context.ts:87
+msgid "Check for directory …"
+msgstr "ディレクトリをチェック…"
+
+#: source/win-main/file-manager/util/dir-item-context.ts:104
+msgid "Export Project"
+msgstr "プロジェクトをエクスポート"
+
+#: source/win-main/file-manager/util/dir-item-context.ts:116
+msgid "Close Workspace"
+msgstr "ワークスペースを閉じる"
 
 #: source/common/util/map-lang-code.ts:33
 msgid "Afrikaans"
@@ -58,369 +1073,373 @@ msgid "Catalan"
 msgstr "カタルーニャ語"
 
 #: source/common/util/map-lang-code.ts:41
+msgid "Catalan (Valencia)"
+msgstr ""
+
+#: source/common/util/map-lang-code.ts:42
 msgid "Czech"
 msgstr "チェコ語"
 
-#: source/common/util/map-lang-code.ts:42
+#: source/common/util/map-lang-code.ts:43
 msgid "Danish"
 msgstr "デンマーク語"
 
-#: source/common/util/map-lang-code.ts:43
+#: source/common/util/map-lang-code.ts:44
 msgid "German (Austria)"
 msgstr "ドイツ語 (オーストリア)"
 
-#: source/common/util/map-lang-code.ts:44
+#: source/common/util/map-lang-code.ts:45
 msgid "German (Switzerland)"
 msgstr "ドイツ語 (スイス)"
 
-#: source/common/util/map-lang-code.ts:45
+#: source/common/util/map-lang-code.ts:46
 #, fuzzy
 msgid "German (simple)"
 msgstr "ドイツ語 (シンプル)"
 
-#: source/common/util/map-lang-code.ts:46
+#: source/common/util/map-lang-code.ts:47
 msgid "German (Germany)"
 msgstr "ドイツ語 (ドイツ)"
 
-#: source/common/util/map-lang-code.ts:47
+#: source/common/util/map-lang-code.ts:48
 msgid "German (Luxembourg)"
 msgstr "ドイツ語 (ルクセンブルク)"
 
-#: source/common/util/map-lang-code.ts:48
+#: source/common/util/map-lang-code.ts:49
 msgid "German"
 msgstr "ドイツ語"
 
-#: source/common/util/map-lang-code.ts:49
+#: source/common/util/map-lang-code.ts:50
 msgid "Greek"
 msgstr "ギリシャ語"
 
-#: source/common/util/map-lang-code.ts:50
+#: source/common/util/map-lang-code.ts:51
 msgid "English (Australia)"
 msgstr "英語 (オーストラリア)"
 
-#: source/common/util/map-lang-code.ts:51
+#: source/common/util/map-lang-code.ts:52
 msgid "English (Canada)"
 msgstr "英語 (カナダ)"
 
-#: source/common/util/map-lang-code.ts:52
+#: source/common/util/map-lang-code.ts:53
 msgid "English (United Kingdom)"
 msgstr "英語 (イギリス)"
 
-#: source/common/util/map-lang-code.ts:53
+#: source/common/util/map-lang-code.ts:54
 msgid "English (India)"
 msgstr "英語 (インド)"
 
-#: source/common/util/map-lang-code.ts:54
+#: source/common/util/map-lang-code.ts:55
 msgid "English (New Zealand)"
 msgstr "英語 (ニュージーランド)"
 
-#: source/common/util/map-lang-code.ts:55
+#: source/common/util/map-lang-code.ts:56
 msgid "English (United States)"
 msgstr "英語 (米国)"
 
-#: source/common/util/map-lang-code.ts:56
+#: source/common/util/map-lang-code.ts:57
 msgid "English (South Africa)"
 msgstr "英語 (南アフリカ)"
 
-#: source/common/util/map-lang-code.ts:57
+#: source/common/util/map-lang-code.ts:58
 msgid "English"
 msgstr "英語"
 
-#: source/common/util/map-lang-code.ts:58
+#: source/common/util/map-lang-code.ts:59
 msgid "Esperanto"
 msgstr "エスペラント"
 
-#: source/common/util/map-lang-code.ts:59
+#: source/common/util/map-lang-code.ts:60
 msgid "Spanish (Argentina)"
 msgstr "スペイン語 (アルゼンチン)"
 
-#: source/common/util/map-lang-code.ts:60
+#: source/common/util/map-lang-code.ts:61
 msgid "Spanish (Spain)"
 msgstr "スペイン語 (スペイン)"
 
-#: source/common/util/map-lang-code.ts:61
+#: source/common/util/map-lang-code.ts:62
 msgid "Spanish"
 msgstr "スペイン語"
 
-#: source/common/util/map-lang-code.ts:62
+#: source/common/util/map-lang-code.ts:63
 msgid "Estonian"
 msgstr "エストニア語"
 
-#: source/common/util/map-lang-code.ts:63
+#: source/common/util/map-lang-code.ts:64
 msgid "Basque"
 msgstr "バスク語"
 
-#: source/common/util/map-lang-code.ts:64
+#: source/common/util/map-lang-code.ts:65
 msgid "Persian (Farsi)"
 msgstr "ペルシア語 (ファールシー語)"
 
-#: source/common/util/map-lang-code.ts:65
+#: source/common/util/map-lang-code.ts:66
 msgid "Finnish"
 msgstr "フィンランド語"
 
-#: source/common/util/map-lang-code.ts:66
+#: source/common/util/map-lang-code.ts:67
 msgid "Faroese"
 msgstr "フェロー語"
 
-#: source/common/util/map-lang-code.ts:67
+#: source/common/util/map-lang-code.ts:68
 msgid "French (Belgium)"
 msgstr "フランス語 (ベルギー)"
 
-#: source/common/util/map-lang-code.ts:68
+#: source/common/util/map-lang-code.ts:69
 msgid "French (Switzerland)"
 msgstr "フランス語 (スイス)"
 
-#: source/common/util/map-lang-code.ts:69
+#: source/common/util/map-lang-code.ts:70
 msgid "French (France)"
 msgstr "フランス語 (フランス)"
 
-#: source/common/util/map-lang-code.ts:70
+#: source/common/util/map-lang-code.ts:71
 msgid "French (Luxembourg)"
 msgstr "フランス語 (ルクセンブルク)"
 
-#: source/common/util/map-lang-code.ts:71
+#: source/common/util/map-lang-code.ts:72
 msgid "French (Principality of Monaco)"
 msgstr "フランス語 (モナコ公国)"
 
-#: source/common/util/map-lang-code.ts:72
+#: source/common/util/map-lang-code.ts:73
 msgid "French"
 msgstr "フランス語"
 
-#: source/common/util/map-lang-code.ts:73
+#: source/common/util/map-lang-code.ts:74
 msgid "Irish"
 msgstr "アイルランド語"
 
-#: source/common/util/map-lang-code.ts:74
+#: source/common/util/map-lang-code.ts:75
 msgid "Scottish (Gaelic)"
 msgstr "スコットランド語 (ゲール語)"
 
-#: source/common/util/map-lang-code.ts:75
+#: source/common/util/map-lang-code.ts:76
 msgid "Galician"
 msgstr "ガリシア語"
 
-#: source/common/util/map-lang-code.ts:76
+#: source/common/util/map-lang-code.ts:77
 msgid "Hebrew"
 msgstr "ヘブライ語"
 
-#: source/common/util/map-lang-code.ts:77
+#: source/common/util/map-lang-code.ts:78
 msgid "Hindi"
 msgstr "ヒンディー語"
 
-#: source/common/util/map-lang-code.ts:78
+#: source/common/util/map-lang-code.ts:79
 msgid "Croatian"
 msgstr "クロアチア語"
 
-#: source/common/util/map-lang-code.ts:79
+#: source/common/util/map-lang-code.ts:80
 msgid "Hungarian"
 msgstr "ハンガリー語"
 
-#: source/common/util/map-lang-code.ts:80
+#: source/common/util/map-lang-code.ts:81
 msgid "Armenian"
 msgstr "アルメニア語"
 
-#: source/common/util/map-lang-code.ts:81
+#: source/common/util/map-lang-code.ts:82
 msgid "Indonesian"
 msgstr "インドネシア語"
 
-#: source/common/util/map-lang-code.ts:82
+#: source/common/util/map-lang-code.ts:83
 msgid "Icelandic"
 msgstr "アイスランド語"
 
-#: source/common/util/map-lang-code.ts:83
+#: source/common/util/map-lang-code.ts:84
 msgid "Italian (Switzerland)"
 msgstr "イタリア語 (スイス)"
 
-#: source/common/util/map-lang-code.ts:84
+#: source/common/util/map-lang-code.ts:85
 msgid "Italian (Italy)"
 msgstr "イタリア語 (イタリア)"
 
-#: source/common/util/map-lang-code.ts:85
+#: source/common/util/map-lang-code.ts:86
 msgid "Italian"
 msgstr "イタリア語"
 
-#: source/common/util/map-lang-code.ts:86
+#: source/common/util/map-lang-code.ts:87
 msgid "Japanese"
 msgstr "日本語"
 
-#: source/common/util/map-lang-code.ts:87
+#: source/common/util/map-lang-code.ts:88
 msgid "Georgian"
 msgstr "ジョージア語"
 
-#: source/common/util/map-lang-code.ts:88
+#: source/common/util/map-lang-code.ts:89
 msgid "Khmer (Cambodia)"
 msgstr "クメール語 (カンボジア)"
 
-#: source/common/util/map-lang-code.ts:89
+#: source/common/util/map-lang-code.ts:90
 msgid "Korean"
 msgstr "韓国語"
 
-#: source/common/util/map-lang-code.ts:90
+#: source/common/util/map-lang-code.ts:91
 msgid "Latin"
 msgstr "ラテン語"
 
-#: source/common/util/map-lang-code.ts:91
+#: source/common/util/map-lang-code.ts:92
 msgid "Luxembourgian"
 msgstr "ルクセンブルク語"
 
-#: source/common/util/map-lang-code.ts:92
+#: source/common/util/map-lang-code.ts:93
 msgid "Lithuanian"
 msgstr "リトアニア語"
 
-#: source/common/util/map-lang-code.ts:93
+#: source/common/util/map-lang-code.ts:94
 msgid "Latvian"
 msgstr "ラトビア語"
 
-#: source/common/util/map-lang-code.ts:94
+#: source/common/util/map-lang-code.ts:95
 msgid "Macedonian"
 msgstr "マケドニア語"
 
-#: source/common/util/map-lang-code.ts:95
+#: source/common/util/map-lang-code.ts:96
 msgid "Mongolian"
 msgstr "モンゴル語"
 
-#: source/common/util/map-lang-code.ts:96
+#: source/common/util/map-lang-code.ts:97
 msgid "Malaysian (Brunei Darussalam)"
 msgstr "マレーシア語 (ブルネイ ダルサラーム)"
 
-#: source/common/util/map-lang-code.ts:97
+#: source/common/util/map-lang-code.ts:98
 msgid "Malaysian (Malaysia)"
 msgstr "マレーシア語 (マレーシア)"
 
-#: source/common/util/map-lang-code.ts:98
+#: source/common/util/map-lang-code.ts:99
 msgid "Malaysian"
 msgstr "マレーシア語"
 
-#: source/common/util/map-lang-code.ts:99
+#: source/common/util/map-lang-code.ts:100
 msgid "Norwegian (Bokmål)"
 msgstr "ノルウェー語 (ブークモール)"
 
-#: source/common/util/map-lang-code.ts:100
+#: source/common/util/map-lang-code.ts:101
 msgid "Nepalese"
 msgstr "ネパール語"
 
-#: source/common/util/map-lang-code.ts:101
+#: source/common/util/map-lang-code.ts:102
 msgid "Dutch (Belgium)"
 msgstr "オランダ語 (ベルギー)"
 
-#: source/common/util/map-lang-code.ts:102
+#: source/common/util/map-lang-code.ts:103
 msgid "Dutch (Netherlands)"
 msgstr "オランダ語 (オランダ)"
 
-#: source/common/util/map-lang-code.ts:103
+#: source/common/util/map-lang-code.ts:104
 msgid "Dutch"
 msgstr "オランダ語"
 
-#: source/common/util/map-lang-code.ts:104
+#: source/common/util/map-lang-code.ts:105
 msgid "Norwegian (Nyorsk)"
 msgstr "ノルウェー語 (ニーノシュク)"
 
-#: source/common/util/map-lang-code.ts:105
+#: source/common/util/map-lang-code.ts:106
 msgid "Norwegian"
 msgstr "ノルウェー語"
 
-#: source/common/util/map-lang-code.ts:106
+#: source/common/util/map-lang-code.ts:107
 msgid "Polish"
 msgstr "ポーランド語"
 
-#: source/common/util/map-lang-code.ts:107
+#: source/common/util/map-lang-code.ts:108
 msgid "Portuguese (Angola)"
 msgstr "ポルトガル語 (アンゴラ)"
 
-#: source/common/util/map-lang-code.ts:108
+#: source/common/util/map-lang-code.ts:109
 msgid "Portuguese (Brazil)"
 msgstr "ポルトガル語 (ブラジル)"
 
-#: source/common/util/map-lang-code.ts:109
+#: source/common/util/map-lang-code.ts:110
 msgid "Portuguese (Mozambique)"
 msgstr "ポルトガル語 (モザンビーク)"
 
-#: source/common/util/map-lang-code.ts:110
+#: source/common/util/map-lang-code.ts:111
 msgid "Portuguese (Portugal)"
 msgstr "ポルトガル語 (ポルトガル)"
 
-#: source/common/util/map-lang-code.ts:111
+#: source/common/util/map-lang-code.ts:112
 msgid "Portuguese"
 msgstr "ポルトガル語"
 
-#: source/common/util/map-lang-code.ts:112
+#: source/common/util/map-lang-code.ts:113
 msgid "Romanian"
 msgstr "ルーマニア語"
 
-#: source/common/util/map-lang-code.ts:113
+#: source/common/util/map-lang-code.ts:114
 msgid "Russian"
 msgstr "ロシア語"
 
-#: source/common/util/map-lang-code.ts:114
+#: source/common/util/map-lang-code.ts:115
 msgid "Rwandan (Kinyarwanda)"
 msgstr "ルワンダ語 (ルワンダ)"
 
-#: source/common/util/map-lang-code.ts:115
+#: source/common/util/map-lang-code.ts:116
 msgid "Slovakian"
 msgstr "スロバキア語"
 
-#: source/common/util/map-lang-code.ts:116
+#: source/common/util/map-lang-code.ts:117
 msgid "Slovenian"
 msgstr "スロベニア語"
 
-#: source/common/util/map-lang-code.ts:117
+#: source/common/util/map-lang-code.ts:118
 msgid "Serbian"
 msgstr "セルビア語"
 
-#: source/common/util/map-lang-code.ts:118
+#: source/common/util/map-lang-code.ts:119
 msgid "Albanian"
 msgstr "アルバニア語"
 
-#: source/common/util/map-lang-code.ts:119
+#: source/common/util/map-lang-code.ts:120
 msgid "Albanian (Albania)"
 msgstr "アルバニア語 (アルバニア)"
 
-#: source/common/util/map-lang-code.ts:120
+#: source/common/util/map-lang-code.ts:121
 msgid "Swedish"
 msgstr "スウェーデン語"
 
-#: source/common/util/map-lang-code.ts:121
+#: source/common/util/map-lang-code.ts:122
 msgid "Tamil (India)"
 msgstr "タミル語 (インド)"
 
-#: source/common/util/map-lang-code.ts:122
+#: source/common/util/map-lang-code.ts:123
 msgid "Thai"
 msgstr "タイ語"
 
-#: source/common/util/map-lang-code.ts:123
+#: source/common/util/map-lang-code.ts:124
 msgid "Tagalog (Filipino)"
 msgstr "タガログ語 (フィリピン語)"
 
-#: source/common/util/map-lang-code.ts:124
+#: source/common/util/map-lang-code.ts:125
 msgid "Turkish"
 msgstr "トルコ語"
 
-#: source/common/util/map-lang-code.ts:125
+#: source/common/util/map-lang-code.ts:126
 msgid "Ukrainian"
 msgstr "ウクライナ語"
 
-#: source/common/util/map-lang-code.ts:126
+#: source/common/util/map-lang-code.ts:127
 msgid "Urdu"
 msgstr "ウルドゥー語"
 
-#: source/common/util/map-lang-code.ts:127
+#: source/common/util/map-lang-code.ts:128
 msgid "Vietnamese"
 msgstr "ベトナム語"
 
 #. NOTE: According to ISO 639-2, while hsb and dsb denote Higher and Lower
 #. Sorbian, wen denotes the language family as such
-#: source/common/util/map-lang-code.ts:130
+#: source/common/util/map-lang-code.ts:131
 msgid "Sorbian"
 msgstr "ソルブ語"
 
-#: source/common/util/map-lang-code.ts:131
+#: source/common/util/map-lang-code.ts:132
 msgid "Chinese (China)"
 msgstr "中国語 (簡体字)"
 
-#: source/common/util/map-lang-code.ts:132
+#: source/common/util/map-lang-code.ts:133
 msgid "Chinese (Taiwan)"
 msgstr "中国語 (繁体字)"
 
-#: source/common/util/map-lang-code.ts:133
+#: source/common/util/map-lang-code.ts:134
 msgid "Chinese"
 msgstr "中国語"
 
@@ -428,142 +1447,80 @@ msgstr "中国語"
 msgid "just now"
 msgstr "たった今"
 
-#: source/common/modules/window-register/register-default-context.ts:76
-#: source/common/modules/markdown-editor/context-menu/default-menu.ts:210
-#: source/app/service-providers/menu/menu.darwin.ts:337
-#: source/app/service-providers/menu/menu.win32.ts:338
-msgid "Cut"
-msgstr "切り取り"
+#: source/common/util/localise-number.ts:28
+msgid ","
+msgstr ","
 
-#: source/common/modules/window-register/register-default-context.ts:83
-#: source/common/modules/markdown-editor/context-menu/default-menu.ts:217
-#: source/app/service-providers/menu/menu.darwin.ts:343
-#: source/app/service-providers/menu/menu.win32.ts:344
-msgid "Copy"
-msgstr "コピー"
+#: source/common/util/localise-number.ts:29
+msgid "."
+msgstr "."
 
-#: source/common/modules/window-register/register-default-context.ts:90
-#: source/common/modules/markdown-editor/context-menu/default-menu.ts:231
-#: source/app/service-providers/menu/menu.darwin.ts:357
-#: source/app/service-providers/menu/menu.win32.ts:358
-msgid "Paste"
-msgstr "貼り付け"
-
-#: source/common/modules/window-register/register-default-context.ts:100
-#: source/common/modules/markdown-editor/context-menu/default-menu.ts:248
-#: source/app/service-providers/menu/menu.darwin.ts:371
-#: source/app/service-providers/menu/menu.win32.ts:372
-msgid "Select all"
-msgstr "すべて選択"
-
-#: source/common/modules/markdown-utils/plain-link-highlighter.ts:25
-msgid "Cmd/Ctrl-click to follow this link"
-msgstr "Cmd/Ctrl キーを押しながらクリックして、このリンクをたどります"
-
-#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:42
-#: source/common/modules/markdown-editor/context-menu/default-menu.ts:152
-#: source/win-preferences/schema/editor.ts:27
-#: source/win-preferences/schema/editor.ts:28
-msgid "Bold"
-msgstr "太字"
-
-#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:47
-#: source/win-preferences/schema/editor.ts:35
-#: source/win-preferences/schema/editor.ts:36
-msgid "Italics"
-msgstr "斜体"
-
-#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:52
-msgid "Link"
-msgstr "リンク"
-
-#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:57
-msgid "Image"
-msgstr "画像"
-
-#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:62
-msgid "Comment"
-msgstr "コメント"
-
-#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:67
-msgid "Code"
-msgstr "コード"
-
-#: source/common/modules/markdown-editor/tooltips/file-preview.ts:55
+#: source/common/modules/markdown-editor/renderers/render-images.ts:98
 #, javascript-format
-msgid "File %s does not exist."
-msgstr "ファイル %s は存在しません。"
+msgid "Image not found: %s"
+msgstr "画像が見つかりません: %s"
 
-#: source/common/modules/markdown-editor/tooltips/file-preview.ts:96
-msgid "Word count"
-msgstr "単語数"
+#: source/common/modules/markdown-editor/renderers/render-mermaid.ts:54
+msgid "Rendering mermaid graph …"
+msgstr "Mermaidをレンダリング中 …"
 
-#: source/common/modules/markdown-editor/tooltips/file-preview.ts:98
-#: source/tmp/PopoverFileProps.vue.ts:109 source/tmp/PopoverDirProps.vue.ts:173
-msgid "Modified"
-msgstr "更新日時"
+#: source/common/modules/markdown-editor/renderers/render-mermaid.ts:59
+#, fuzzy
+msgid "Could not render Graph:"
+msgstr "レンダリングできませんでした。"
 
-#: source/common/modules/markdown-editor/tooltips/file-preview.ts:116
-#: source/app/service-providers/menu/menu.darwin.ts:166
-#: source/app/service-providers/menu/menu.win32.ts:140
-msgid "Open…"
-msgstr "開く…"
-
-#: source/common/modules/markdown-editor/tooltips/file-preview.ts:137
-#: source/tmp/GlobalSearch.vue.ts:41
-#: source/win-main/file-manager/util/file-item-context.ts:29
-msgid "Open in a new tab"
-msgstr "新しいタブで開く"
-
-#: source/common/modules/markdown-editor/tooltips/footnotes.ts:90
-msgid "No footnote text found."
-msgstr "脚注テキストが見つかりません。"
-
-#: source/common/modules/markdown-editor/tooltips/footnotes.ts:107
-#: source/app/service-providers/menu/menu.darwin.ts:317
-#: source/app/service-providers/menu/menu.win32.ts:318
-msgid "Edit"
-msgstr "編集"
-
-#: source/common/modules/markdown-editor/plugins/footnote-gutter.ts:31
-msgid "Go to footnote reference"
-msgstr "脚注参照に移動"
-
-#: source/common/modules/markdown-editor/linters/spellcheck.ts:149
-msgid "Spelling mistake"
-msgstr "スペルミス"
+#: source/common/modules/markdown-editor/renderers/readability.ts:39
+#, javascript-format
+msgid "Readability mode (%s)"
+msgstr "可読性モード (%s)"
 
 #: source/common/modules/markdown-editor/autocomplete/code-blocks.ts:42
 msgid "No highlighting"
 msgstr "ハイライトなし"
 
-#: source/common/modules/markdown-editor/context-menu/equation-menu.ts:33
+#: source/common/modules/markdown-editor/plugins/footnote-gutter.ts:31
+msgid "Go to footnote reference"
+msgstr "脚注参照に移動"
+
+#: source/common/modules/markdown-editor/statusbar/info-fields.ts:53
+#: source/tmp/win-main/PopoverDocInfo.vue.ts:53
+#: source/tmp/win-main/App.vue.ts:227
+#: source/tmp/win-main/file-manager/util/PopoverDirProps.vue.ts:140
+#: source/tmp/win-main/file-manager/util/PopoverFileProps.vue.ts:56
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:124
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:187
+#, javascript-format
+msgid "%s words"
+msgstr "%s単語"
+
+#: source/common/modules/markdown-editor/statusbar/info-fields.ts:72
+#: source/tmp/win-main/PopoverDocInfo.vue.ts:51
+#: source/tmp/win-main/App.vue.ts:226
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:122
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:185
+#, javascript-format
+msgid "%s characters"
+msgstr "%s文字"
+
+#: source/common/modules/markdown-editor/statusbar/language-tool.ts:146
+msgid "Detect automatically"
+msgstr "自動検出"
+
+#: source/common/modules/markdown-editor/statusbar/diagnostics.ts:46
+msgid "Open diagnostics panel"
+msgstr "診断パネルを開く"
+
+#: source/common/modules/markdown-editor/statusbar/magic-quotes.ts:131
+msgid "Disabled"
+msgstr "無効"
+
+#: source/common/modules/markdown-editor/statusbar/magic-quotes.ts:138
+msgid "Custom"
+msgstr "カスタム"
+
+#: source/common/modules/markdown-editor/context-menu/equation-menu.ts:31
 msgid "Copy equation code"
 msgstr "数式をコピー"
-
-#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:72
-msgid "Open Link"
-msgstr "リンクを開く"
-
-#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:81
-msgid "Copy Mail Address"
-msgstr "メールアドレスをコピー"
-
-#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:81
-msgid "Copy Link"
-msgstr "リンクをコピー"
-
-#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:90
-msgid "Copy image to clipboard"
-msgstr "画像をクリップボードにコピー"
-
-#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:96
-msgid "Open in browser"
-msgstr "ブラウザーで開く"
-
-#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:102
-msgid "Show file"
-msgstr "ファイルを表示"
 
 #: source/common/modules/markdown-editor/context-menu/default-menu.ts:133
 msgid "No suggestions"
@@ -572,6 +1529,13 @@ msgstr "候補はありません"
 #: source/common/modules/markdown-editor/context-menu/default-menu.ts:142
 msgid "Add to dictionary"
 msgstr "辞書に追加"
+
+#: source/common/modules/markdown-editor/context-menu/default-menu.ts:152
+#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:42
+#: source/win-preferences/schema/editor.ts:126
+#: source/win-preferences/schema/editor.ts:127
+msgid "Bold"
+msgstr "太字"
 
 #: source/common/modules/markdown-editor/context-menu/default-menu.ts:159
 msgid "Italic"
@@ -598,1072 +1562,496 @@ msgid "Blockquote"
 msgstr "引用"
 
 #: source/common/modules/markdown-editor/context-menu/default-menu.ts:201
+#: source/tmp/win-main/App.vue.ts:355
 msgid "Insert Table"
 msgstr "表を挿入"
 
-#: source/common/modules/markdown-editor/context-menu/default-menu.ts:224
-#: source/app/service-providers/menu/menu.darwin.ts:348
-#: source/app/service-providers/menu/menu.win32.ts:349
-msgid "Copy as HTML"
-msgstr "HTMLとしてコピー"
+#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:80
+msgid "Open Link"
+msgstr "リンクを開く"
 
-#: source/common/modules/markdown-editor/context-menu/default-menu.ts:238
-#: source/app/service-providers/menu/menu.darwin.ts:362
-#: source/app/service-providers/menu/menu.win32.ts:363
-msgid "Paste without style"
-msgstr "プレーンテキストとして貼り付け"
+#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:89
+msgid "Copy Mail Address"
+msgstr "メールアドレスをコピー"
 
-#: source/common/modules/markdown-editor/statusbar/language-tool.ts:146
-msgid "Detect automatically"
-msgstr "自動検出"
+#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:89
+msgid "Copy Link"
+msgstr "リンクをコピー"
 
-#: source/common/modules/markdown-editor/statusbar/info-fields.ts:53
-#: source/tmp/file-item.vue.ts:134 source/tmp/file-item.vue.ts:207
-#: source/tmp/PopoverFileProps.vue.ts:130 source/tmp/PopoverDocInfo.vue.ts:71
-#: source/tmp/PopoverDirProps.vue.ts:159 source/tmp/PopoverDirProps.vue.ts:167
-#, javascript-format
-msgid "%s words"
-msgstr "%s単語"
+#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:99
+msgid "Copy image to clipboard"
+msgstr "画像をクリップボードにコピー"
 
-#: source/common/modules/markdown-editor/statusbar/info-fields.ts:72
-#: source/tmp/file-item.vue.ts:132 source/tmp/file-item.vue.ts:205
-#: source/tmp/PopoverDocInfo.vue.ts:69
-#, javascript-format
-msgid "%s characters"
-msgstr "%s文字"
-
-#: source/common/modules/markdown-editor/statusbar/magic-quotes.ts:128
-msgid "Disabled"
-msgstr "無効"
-
-#: source/common/modules/markdown-editor/statusbar/magic-quotes.ts:135
-msgid "Custom"
-msgstr "カスタム"
-
-#: source/common/modules/markdown-editor/statusbar/diagnostics.ts:46
-msgid "Open diagnostics panel"
-msgstr "診断パネルを開く"
-
-#: source/common/modules/markdown-editor/renderers/render-mermaid.ts:54
-msgid "Rendering mermaid graph …"
-msgstr "Mermaidをレンダリング中 …"
-
-#: source/common/modules/markdown-editor/renderers/render-mermaid.ts:59
+#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:105
 #, fuzzy
-msgid "Could not render Graph:"
-msgstr "レンダリングできませんでした。"
-
-#: source/common/modules/markdown-editor/renderers/render-images.ts:98
-#, javascript-format
-msgid "Image not found: %s"
-msgstr "画像が見つかりません: %s"
-
-#: source/common/modules/markdown-editor/renderers/readability.ts:39
-#, javascript-format
-msgid "Readability mode (%s)"
-msgstr "可読性モード (%s)"
-
-#: source/app/service-providers/tray/index.ts:160
-msgid "Show Zettlr"
-msgstr "Zettlrを表示する"
-
-#: source/app/service-providers/tray/index.ts:166
-#: source/app/service-providers/menu/menu.darwin.ts:104
-#: source/app/service-providers/menu/menu.win32.ts:308
-msgid "Quit"
-msgstr "終了"
-
-#: source/app/service-providers/tray/index.ts:173
-msgid "Zettlr"
-msgstr "Zettlr"
-
-#: source/app/service-providers/documents/index.ts:973
-#, fuzzy
-msgid "File changed on disk"
-msgstr "ファイルマネージャーモード"
-
-#: source/app/service-providers/documents/index.ts:974
-#, javascript-format
-msgid "%s changed on disk"
-msgstr ""
-
-#: source/app/service-providers/documents/index.ts:976
-#, javascript-format
-msgid ""
-"%s has changed on disk, but the editor contains unsaved changes. Do you want "
-"to keep the current editor contents or load the file from disk?"
-msgstr ""
-
-#: source/app/service-providers/documents/index.ts:977
-msgid ""
-"Do you want to keep the current editor contents or load the file from disk?"
-msgstr ""
-
-#: source/app/service-providers/documents/index.ts:980
-msgid "Keep editor contents"
-msgstr ""
-
-#: source/app/service-providers/documents/index.ts:981
-msgid "Load changes from disk"
-msgstr ""
-
-#: source/app/service-providers/documents/index.ts:984
-msgid ""
-"Always load changes from disk if there are no unsaved changes in the editor"
-msgstr ""
-
-#: source/app/service-providers/citeproc/index.ts:248
-#: source/app/service-providers/citeproc/index.ts:455
-msgid "The citation database could not be loaded"
-msgstr "参考文献データベースを読み込めませんでした"
-
-#: source/app/service-providers/citeproc/index.ts:443
-msgid "Changes to the library file detected. Reloading …"
-msgstr "ライブラリ ファイルの更新が検出されました。再読み込み中です…"
-
-#: source/app/service-providers/commands/language-tool.ts:187
-msgid "Document too long"
-msgstr "ドキュメントが長すぎます"
-
-#: source/app/service-providers/commands/language-tool.ts:192
-msgid "offline"
-msgstr "オフライン"
-
-#: source/app/service-providers/commands/file-duplicate.ts:43
-#: source/app/service-providers/commands/file-duplicate.ts:59
-#: source/app/service-providers/commands/file-new.ts:156
-msgid "Could not create file"
-msgstr "ファイルを作成できません"
-
-#. We need to generate our own filename. First, attempt to just use 'copy of'
-#: source/app/service-providers/commands/file-duplicate.ts:71
-#, javascript-format
-msgid "Copy of %s"
-msgstr "%s をコピー"
-
-#: source/app/service-providers/commands/save-image-from-clipboard.ts:38
-msgid "The requested file was not found."
-msgstr "要求されたファイルが見つかりません。"
-
-#: source/app/service-providers/commands/save-image-from-clipboard.ts:55
-msgid "The provided name did not contain any allowed letters."
-msgstr "提供された名前は使用可能な文字を含んでいません。"
-
-#: source/app/service-providers/commands/save-image-from-clipboard.ts:76
-#: source/app/service-providers/commands/set-open-directory.ts:41
-msgid "The requested directory was not found."
-msgstr "要求されたディレクトリが見つかりません。"
-
-#: source/app/service-providers/commands/save-image-from-clipboard.ts:87
-msgid "Could not save image"
-msgstr "画像を保存できませんでした"
-
-#: source/app/service-providers/commands/rename-tag.ts:44
-#: source/app/service-providers/commands/file-rename.ts:93
-#: source/app/service-providers/config/index.ts:431
-msgid "Confirm"
-msgstr "確認"
-
-#: source/app/service-providers/commands/rename-tag.ts:45
-#, fuzzy, javascript-format
-msgid "Replace tag \"%s\" with \"%s\" across %s files?"
-msgstr "タグ \"%s\" を \"%s\" に置き換えますか？ 対象：%s ファイル"
-
-#: source/app/service-providers/commands/rename-tag.ts:47
-#: source/app/service-providers/commands/file-rename.ts:96
-#: source/app/service-providers/windows/dialog/ask-save-changes.ts:32
-msgid "Yes"
-msgstr "はい"
-
-#. 1: Omit all changes
-#: source/app/service-providers/commands/rename-tag.ts:48
-#: source/app/service-providers/menu/menu.darwin.ts:712
-#: source/app/service-providers/menu/menu.win32.ts:685
-#: source/app/service-providers/windows/dialog/ask-save-changes.ts:34
-#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:32
-#: source/app/service-providers/windows/dialog/should-replace-file.ts:36
-#: source/app/service-providers/windows/dialog/confirm-remove.ts:35
-#: source/tmp/CustomCSS.vue.ts:49
-msgid "Cancel"
-msgstr "キャンセル"
-
-#. Better error message
-#: source/app/service-providers/commands/open-attachment.ts:113
-#, javascript-format
-msgid "The reference with key %s does not appear to have attachments."
-msgstr "キー%sの参照には添付ファイルがないようです。"
-
-#: source/app/service-providers/commands/open-attachment.ts:118
-msgid "Could not open attachment. Is Zotero running?"
-msgstr ""
-"添付ファイルを開けませんでした。Zoteroが起動していることを確認してください。"
-
-#: source/app/service-providers/commands/import-lang-file.ts:60
-#, javascript-format
-msgid "Language file imported: %s"
-msgstr "言語ファイルがインポートされました：%s"
-
-#: source/app/service-providers/commands/import-lang-file.ts:62
-#: source/app/service-providers/commands/import-lang-file.ts:65
-#, javascript-format
-msgid "Could not import language file %s!"
-msgstr "言語ファイル%sをインポートできませんでした。"
-
-#: source/app/service-providers/commands/request-move.ts:60
-msgid "Cannot move directory"
-msgstr "ディレクトリを移動できません"
-
-#: source/app/service-providers/commands/request-move.ts:61
-msgid "You cannot move a directory into one of its subdirectories."
-msgstr "ディレクトリをサブディレクトリに移動できません。"
-
-#: source/app/service-providers/commands/request-move.ts:70
-msgid "Cannot move directory or file"
-msgstr "ディレクトリまたはファイルを移動できません"
-
-#: source/app/service-providers/commands/request-move.ts:71
-#, javascript-format
-msgid "The file/directory %s already exists in target."
-msgstr "%s という名称のファイルまたはディレクトリは既に存在します。"
-
-#: source/app/service-providers/commands/import.ts:36
-msgid "You have to select a directory to import to."
-msgstr "インポート先のディレクトリを指定する必要があります。"
-
-#. Prepare the list of file filters
-#. The "All Files" filter should be at the top
-#: source/app/service-providers/commands/import.ts:42
-#: source/app/service-providers/windows/dialog/ask-file.ts:47
-msgid "All Files"
-msgstr "すべてのファイル"
-
-#. Now import.
-#: source/app/service-providers/commands/import.ts:59
-msgid "Importing. Please wait …"
-msgstr "インポート中。しばらくお待ちください…"
-
-#. This callback gets called whenever there is an error while running pandoc.
-#: source/app/service-providers/commands/import.ts:64
-#, javascript-format
-msgid "Couldn't import %s."
-msgstr "%sをインポートできませんでした。"
-
-#. And this on each success!
-#: source/app/service-providers/commands/import.ts:67
-#, javascript-format
-msgid "%s imported successfully."
-msgstr "%s は正常にインポートされました。"
-
-#. Some files failed to import.
-#: source/app/service-providers/commands/import.ts:72
-#: source/app/service-providers/commands/import.ts:78
-#, javascript-format
-msgid ""
-"The following %s files could not be imported, because their filetype is "
-"unknown: %s"
-msgstr "次の%sファイルはファイル種別が不明なためインポートできませんでした：%s"
-
-#: source/app/service-providers/commands/exporter/default-exporter.ts:33
-#: source/app/service-providers/commands/exporter/pdf-exporter.ts:37
-#: source/app/service-providers/commands/importer/index.ts:47
-msgid ""
-"Pandoc has not been found on this system. Please install Pandoc prior to "
-"exporting or importing files."
-msgstr ""
-"システム上にPandocが見つかりませんでした。ファイルをエクスポートまたはイン"
-"ポートする前にPandocをインストールしてください。"
-
-#: source/app/service-providers/commands/set-open-directory.ts:40
-msgid "Directory not found"
-msgstr "ディレクトリが見つかりません"
-
-#: source/app/service-providers/commands/importer/index.ts:104
-#: source/app/service-providers/commands/importer/index.ts:105
-msgid "Select import profile"
-msgstr ""
-
-#: source/app/service-providers/commands/importer/index.ts:106
-#, javascript-format
-msgid "There are multiple profiles that can import %s. Please choose one."
-msgstr ""
-
-#: source/app/service-providers/commands/importer/import-textbundle.ts:63
-#: source/app/service-providers/commands/importer/import-textbundle.ts:69
-#, javascript-format
-msgid "Malformed Textbundle: %s"
-msgstr "不正な形式のTextbundleです：%s"
-
-#: source/app/service-providers/commands/dir-new.ts:36
-#: source/app/service-providers/commands/dir-new.ts:37
-#: source/app/service-providers/commands/dir-new.ts:48
-#: source/app/service-providers/commands/dir-new.ts:49
-#: source/app/service-providers/commands/dir-new.ts:59
-msgid "Could not create directory"
-msgstr "ディレクトリを作成できませんでした"
-
-#. Else standard val for new dirs.
-#: source/app/service-providers/commands/dir-new.ts:42
-#: source/tmp/tree-item.vue.ts:250
-msgid "Untitled"
-msgstr "無題"
-
-#: source/app/service-providers/commands/dir-project-export.ts:74
-msgid "Cannot export project"
-msgstr "プロジェクトをエクスポートできません"
-
-#: source/app/service-providers/commands/dir-project-export.ts:75
-msgid ""
-"After applying your glob-filters, no files remained to export. Please adjust "
-"them in the project settings."
-msgstr ""
-"globを適用した結果、エクスポートするファイルが残りませんでした。プロジェクト"
-"設定で調整してください。"
-
-#: source/app/service-providers/commands/dir-project-export.ts:147
-#, fuzzy, javascript-format
-msgid "Project \"%s\" successfully exported. Click to show."
-msgstr "プロジェクトは正常にエクスポートされました。クリックして表示します。"
-
-#: source/app/service-providers/commands/dir-project-export.ts:148
-#, fuzzy
-msgid "Project Export"
-msgstr "Export"
-
-#: source/app/service-providers/commands/root-open.ts:61
-#: source/tmp/file-item.vue.ts:119 source/tmp/file-tree.vue.ts:26
-#: source/tmp/PopoverDirProps.vue.ts:179
-msgid "Files"
-msgstr "ファイル"
-
-#. TODO: Move this to a command
-#. The user wants to open another file or directory.
-#: source/app/service-providers/commands/root-open.ts:74
-#: source/app/service-providers/windows/index.ts:222
-msgid "Open project folder"
-msgstr "プロジェクトフォルダを開く"
-
-#: source/app/service-providers/commands/root-open.ts:84
-msgid "Cannot open directory"
-msgstr "ディレクトリを開けません"
-
-#: source/app/service-providers/commands/root-open.ts:85
-#, javascript-format
-msgid "Directory &quot;%s&quot; cannot be opened by Zettlr."
-msgstr "ディレクトリ&quot;%s&quot;をZettlrで開けません。"
-
-#: source/app/service-providers/commands/root-open.ts:137
-#, javascript-format
-msgid "Opening new root %s …"
-msgstr "新しいルートディレクトリ %s を開いています…"
-
-#: source/app/service-providers/commands/root-open.ts:148
-#, javascript-format
-msgid "%s has been loaded."
-msgstr "%s が読み込まれました。"
-
-#: source/app/service-providers/commands/root-open.ts:160
-#, javascript-format
-msgid "Could not open workspace %s."
-msgstr "%s のワークスペースを開けません。"
-
-#: source/app/service-providers/commands/export.ts:56
-#: source/app/service-providers/commands/export.ts:156
-msgid "Export failed"
-msgstr "エクスポート失敗"
-
-#: source/app/service-providers/commands/export.ts:57
-#, fuzzy, javascript-format
-msgid "An error occurred during export: %s"
-msgstr "エクスポート中にエラーが発生しました：%s"
-
-#: source/app/service-providers/commands/export.ts:113
-msgid "Choose export destination"
-msgstr "保存先を選択"
-
-#: source/app/service-providers/commands/export.ts:113
-#: source/app/service-providers/menu/menu.darwin.ts:197
-#: source/app/service-providers/menu/menu.win32.ts:162
-#: source/tmp/SnippetsTab.vue.ts:47 source/tmp/CustomCSS.vue.ts:42
-#: source/tmp/CustomCSS.vue.ts:56 source/tmp/Defaults.vue.ts:112
-msgid "Save"
-msgstr "保存"
-
-#: source/app/service-providers/commands/export.ts:144
-#, javascript-format
-msgid "Exporting to %s"
-msgstr "%sにエクスポートします"
-
-#: source/app/service-providers/commands/export.ts:157
-#, javascript-format
-msgid "An error occurred on export: %s"
-msgstr "エクスポート中にエラーが発生しました：%s"
-
-#: source/app/service-providers/commands/file-rename.ts:94
-#, javascript-format
-msgid "Update %s internal links to file %s?"
-msgstr "%s 箇所の内部リンクを「%s」に更新しますか?"
-
-#. 0: Save all changes
-#: source/app/service-providers/commands/file-rename.ts:97
-#: source/app/service-providers/windows/dialog/ask-save-changes.ts:33
-msgid "No"
-msgstr "いいえ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:46
-#: source/app/service-providers/menu/menu.darwin.ts:641
-#: source/app/service-providers/menu/menu.win32.ts:614
-msgid "About Zettlr"
-msgstr "Zettlrについて"
-
-#: source/app/service-providers/menu/menu.darwin.ts:51
-#: source/app/service-providers/menu/menu.win32.ts:222
-#: source/app/service-providers/menu/menu.win32.ts:226
-msgid "Preferences…"
-msgstr "設定…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:59
-#: source/app/service-providers/menu/menu.win32.ts:234
-msgid "Assets Manager"
-msgstr "アセットマネージャ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:67
-#: source/app/service-providers/menu/menu.win32.ts:242
-msgid "Manage Tags…"
-msgstr "タグ管理…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:77
-msgid "Services"
-msgstr "サービス"
-
-#: source/app/service-providers/menu/menu.darwin.ts:86
-msgid "Hide"
-msgstr "隠す"
-
-#: source/app/service-providers/menu/menu.darwin.ts:91
-msgid "Hide others"
-msgstr "その他を隠す"
-
-#: source/app/service-providers/menu/menu.darwin.ts:96
-msgid "Show"
-msgstr "表示"
-
-#: source/app/service-providers/menu/menu.darwin.ts:113
-#: source/app/service-providers/menu/menu.win32.ts:87
-msgid "File"
-msgstr "ファイル"
-
-#: source/app/service-providers/menu/menu.darwin.ts:116
-#: source/app/service-providers/menu/menu.win32.ts:90
-#: source/win-main/file-manager/util/dir-item-context.ts:38
-msgid "New File…"
-msgstr "新規ファイル…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:155
-#: source/app/service-providers/menu/menu.win32.ts:129
-#: source/win-main/file-manager/util/dir-item-context.ts:44
-msgid "New directory…"
-msgstr "新規ディレクトリ…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:175
-#: source/app/service-providers/menu/menu.win32.ts:149
-msgid "Open Workspace …"
-msgstr "ワークスペースを開く…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:184
-#: source/app/service-providers/menu/menu.win32.ts:44
-#: source/app/service-providers/menu/menu.win32.ts:56
-msgid "Recent documents"
-msgstr "最近使ったドキュメント"
-
-#: source/app/service-providers/menu/menu.darwin.ts:188
-#: source/app/service-providers/menu/menu.win32.ts:48
-#: source/app/service-providers/menu/menu.win32.ts:60
-msgid "Empty"
-msgstr "Empty"
-
-#: source/app/service-providers/menu/menu.darwin.ts:208
-#: source/app/service-providers/menu/menu.win32.ts:173
-msgid "Previous file"
-msgstr "前のファイル"
-
-#: source/app/service-providers/menu/menu.darwin.ts:219
-#: source/app/service-providers/menu/menu.win32.ts:184
-msgid "Next file"
-msgstr "次のファイル"
-
-#: source/app/service-providers/menu/menu.darwin.ts:233
-#: source/app/service-providers/menu/menu.win32.ts:198
-msgid "Import files…"
-msgstr "ファイルをインポート…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:241
-#: source/app/service-providers/menu/menu.win32.ts:206
-msgid "Export…"
-msgstr "エクスポート…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:249
-#: source/app/service-providers/menu/menu.win32.ts:214
-msgid "Print…"
-msgstr "印刷…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:260
-#: source/app/service-providers/menu/menu.win32.ts:254
-msgid "Import translation…"
-msgstr "翻訳をインポート…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:268
-#: source/app/service-providers/menu/menu.win32.ts:262
-msgid "Import dictionary…"
-msgstr "辞書をインポート…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:287
-#: source/app/service-providers/menu/menu.win32.ts:281
-#: source/tmp/Defaults.vue.ts:76
-#: source/win-main/file-manager/util/file-item-context.ts:44
-msgid "Rename file"
-msgstr "ファイル名を変更"
-
-#: source/app/service-providers/menu/menu.darwin.ts:298
-#: source/app/service-providers/menu/menu.win32.ts:292
-#: source/win-main/file-manager/util/file-item-context.ts:51
-msgid "Delete file"
-msgstr "ファイルを削除"
-
-#: source/app/service-providers/menu/menu.darwin.ts:306
-#: source/app/service-providers/menu/menu.win32.ts:299
-#: source/win-main/file-manager/util/dir-item-context.ts:59
-msgid "Delete directory"
-msgstr "ディレクトリを削除"
-
-#: source/app/service-providers/menu/menu.darwin.ts:322
-#: source/app/service-providers/menu/menu.win32.ts:323
-msgid "Undo"
-msgstr "元に戻す"
-
-#: source/app/service-providers/menu/menu.darwin.ts:328
-#: source/app/service-providers/menu/menu.win32.ts:329
-msgid "Redo"
-msgstr "やり直し"
-
-#: source/app/service-providers/menu/menu.darwin.ts:379
-#: source/app/service-providers/menu/menu.win32.ts:380
-msgid "Find in file"
-msgstr "ファイルを検索"
-
-#: source/app/service-providers/menu/menu.darwin.ts:387
-#: source/app/service-providers/menu/menu.win32.ts:388
-msgid "Find in directory"
-msgstr "ディレクトリを検索"
-
-#: source/app/service-providers/menu/menu.darwin.ts:395
-#: source/app/service-providers/menu/menu.win32.ts:396
-msgid "Filter files"
-msgstr "ファイルの条件指定"
-
-#: source/app/service-providers/menu/menu.darwin.ts:406
-#: source/app/service-providers/menu/menu.win32.ts:407
-msgid "Generate new ID"
-msgstr "新規IDを生成"
-
-#: source/app/service-providers/menu/menu.darwin.ts:414
-#: source/app/service-providers/menu/menu.win32.ts:415
-#: source/win-main/tabs-context.ts:80
-#: source/win-main/file-manager/util/file-item-context.ts:79
-msgid "Copy ID"
-msgstr "IDをコピー"
-
-#: source/app/service-providers/menu/menu.darwin.ts:425
-msgid "Speech"
-msgstr "読み上げ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:429
-msgid "Start speaking"
-msgstr "読み上げ開始"
-
-#: source/app/service-providers/menu/menu.darwin.ts:434
-msgid "Stop speaking"
-msgstr "読み上げ停止"
-
-#: source/app/service-providers/menu/menu.darwin.ts:444
-#: source/app/service-providers/menu/menu.win32.ts:426
-msgid "View"
-msgstr "表示"
-
-#: source/app/service-providers/menu/menu.darwin.ts:448
-#: source/app/service-providers/menu/menu.win32.ts:430
-#: source/win-preferences/schema/general.ts:32
-msgid "Dark mode"
-msgstr "ダークモード"
-
-#: source/app/service-providers/menu/menu.darwin.ts:458
-#: source/app/service-providers/menu/menu.win32.ts:440
-msgid "Additional Information"
-msgstr "追加情報"
-
-#: source/app/service-providers/menu/menu.darwin.ts:468
-#: source/app/service-providers/menu/menu.win32.ts:450
-msgid "Distraction free mode"
-msgstr "集中モード"
-
-#: source/app/service-providers/menu/menu.darwin.ts:476
-#: source/app/service-providers/menu/menu.win32.ts:458
-msgid "Typewriter Mode"
-msgstr "タイプライターモード"
-
-#: source/app/service-providers/menu/menu.darwin.ts:487
-#: source/app/service-providers/menu/menu.win32.ts:469
-msgid "Toggle file manager"
-msgstr "ファイルマネージャーの切り替え"
-
-#: source/app/service-providers/menu/menu.darwin.ts:495
-#: source/app/service-providers/menu/menu.win32.ts:477
-msgid "Toggle Sidebar"
-msgstr "サイドバー表示の切り替え"
-
-#: source/app/service-providers/menu/menu.darwin.ts:509
-#: source/app/service-providers/menu/menu.win32.ts:488
-msgid "Reset zoom"
-msgstr "ズームをリセット"
-
-#: source/app/service-providers/menu/menu.darwin.ts:518
-#: source/app/service-providers/menu/menu.win32.ts:497
-msgid "Zoom in"
-msgstr "拡大"
-
-#: source/app/service-providers/menu/menu.darwin.ts:525
-#: source/app/service-providers/menu/menu.win32.ts:504
-msgid "Zoom out"
-msgstr "縮小"
-
-#: source/app/service-providers/menu/menu.darwin.ts:535
-#: source/app/service-providers/menu/menu.win32.ts:514
-msgid "Toggle fullscreen"
-msgstr "フルスクリーンの切り替え"
-
-#: source/app/service-providers/menu/menu.darwin.ts:543
-#: source/app/service-providers/menu/menu.win32.ts:523
-msgid "Develop"
-msgstr "開発"
-
-#: source/app/service-providers/menu/menu.darwin.ts:547
-#: source/app/service-providers/menu/menu.win32.ts:527
-msgid "Reload"
-msgstr "再読み込み"
-
-#: source/app/service-providers/menu/menu.darwin.ts:555
-#: source/app/service-providers/menu/menu.win32.ts:535
-msgid "Toggle developer tools"
-msgstr "開発者ツール表示の切り替え"
-
-#: source/app/service-providers/menu/menu.darwin.ts:563
-#: source/app/service-providers/menu/menu.win32.ts:543
-msgid "Open Logs"
-msgstr "ログを開く"
-
-#: source/app/service-providers/menu/menu.darwin.ts:574
-#: source/app/service-providers/menu/menu.win32.ts:554
-msgid "Window"
-msgstr "ウィンドウ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:579
-#: source/app/service-providers/menu/menu.win32.ts:559
-msgid "Minimize"
-msgstr "最小化"
-
-#: source/app/service-providers/menu/menu.darwin.ts:587
-#: source/app/service-providers/menu/menu.win32.ts:565
-msgid "Close"
-msgstr "閉じる"
-
-#: source/app/service-providers/menu/menu.darwin.ts:593
-msgid "Bring All to Front"
-msgstr "すべて前面に移動"
-
-#: source/app/service-providers/menu/menu.darwin.ts:601
-#: source/app/service-providers/menu/menu.win32.ts:574
-#: source/win-main/tabs-context.ts:38
-msgid "Close Tab"
-msgstr "タブを閉じる"
-
-#: source/app/service-providers/menu/menu.darwin.ts:609
-#: source/app/service-providers/menu/menu.win32.ts:582
-msgid "Previous Tab"
-msgstr "前のタブ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:617
-#: source/app/service-providers/menu/menu.win32.ts:590
-msgid "Next Tab"
-msgstr "次のタブ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:625
-#: source/app/service-providers/menu/menu.win32.ts:598
-#, fuzzy
-msgid "New window"
-msgstr "ウィンドウ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:636
-#: source/app/service-providers/menu/menu.win32.ts:609
-msgid "Help"
-msgstr "ヘルプ"
-
-#: source/app/service-providers/menu/menu.darwin.ts:648
-#: source/app/service-providers/menu/menu.win32.ts:621 source/tmp/App.vue.ts:94
-msgid "Check for updates"
-msgstr "アップデートの確認"
-
-#: source/app/service-providers/menu/menu.darwin.ts:660
-#: source/app/service-providers/menu/menu.win32.ts:633
-msgid "Support Zettlr"
-msgstr "Zettlrを支援する"
-
-#: source/app/service-providers/menu/menu.darwin.ts:670
-#: source/app/service-providers/menu/menu.win32.ts:643
-#, fuzzy
-msgid "Visit website"
-msgstr "ウェブサイトへ移動"
-
-#: source/app/service-providers/menu/menu.darwin.ts:680
-#: source/app/service-providers/menu/menu.win32.ts:653
-msgid "Open user manual"
-msgstr "ユーザマニュアルを開く"
-
-#: source/app/service-providers/menu/menu.darwin.ts:694
-#: source/app/service-providers/menu/menu.win32.ts:667
-msgid "Open Tutorial"
-msgstr "チュートリアルを開く"
-
-#: source/app/service-providers/menu/menu.darwin.ts:702
-#: source/app/service-providers/menu/menu.win32.ts:675
-msgid "Clear FSAL cache …"
-msgstr "FSALキャッシュをクリアする…"
-
-#: source/app/service-providers/menu/menu.darwin.ts:706
-#: source/app/service-providers/menu/menu.win32.ts:679
-#, fuzzy
-msgid "Clear FSAL Cache"
-msgstr "FSALキャッシュをクリアする"
-
-#: source/app/service-providers/menu/menu.darwin.ts:707
-#: source/app/service-providers/menu/menu.win32.ts:680
-msgid "Clearing the FSAL cache requires a restart."
-msgstr "FSALキャッシュをクリアするには再起動が必要です。"
-
-#: source/app/service-providers/menu/menu.darwin.ts:708
-#: source/app/service-providers/menu/menu.win32.ts:681
-msgid ""
-"After the restart, Zettlr will recreate the entire cache, which may take a "
-"few moments, depending on the amount of files you have loaded and the speed "
-"of your disk. The window(s) will show afterward."
-msgstr ""
-"再起動後、Zettlr はキャッシュ全体を再作成します。ロードしたファイルの量とディ"
-"スクの速度によっては、少し時間がかかる場合があります。その後ウィンドウが表示"
-"されます。"
-
-#: source/app/service-providers/menu/menu.darwin.ts:711
-#: source/app/service-providers/menu/menu.win32.ts:684
-#: source/app/service-providers/config/index.ts:426
-#, fuzzy
-msgid "Restart now"
-msgstr "今すぐ再起動"
-
-#: source/app/service-providers/config/config-validation.ts:280
-#, javascript-format
-msgid "Option %s has to be of type %s."
-msgstr "オプション%sは%s型である必要があります。"
-
-#: source/app/service-providers/config/config-validation.ts:283
-#, fuzzy, javascript-format
-msgid "Option %s must be one of: %s."
-msgstr "オプション%sは次から設定する必要があります。：%s"
-
-#: source/app/service-providers/config/config-validation.ts:286
-#, javascript-format
-msgid "Option %s must be between %s and %s (characters long)."
-msgstr "オプション%sは%s文字から%s文字の間である必要があります。"
-
-#: source/app/service-providers/config/config-validation.ts:289
-#, javascript-format
-msgid "Option %s may not exceed %s (characters)."
-msgstr "オプション%sは%s文字以下である必要があります。"
-
-#: source/app/service-providers/config/config-validation.ts:292
-#, javascript-format
-msgid "Option %s must be at least %s (characters long)."
-msgstr "オプション%sは%s文字以上である必要があります。"
-
-#: source/app/service-providers/config/config-validation.ts:295
-#, javascript-format
-msgid "Option %s is required."
-msgstr "オプション%sは必須です。"
-
-#: source/app/service-providers/config/index.ts:423
-msgid "Changing this option requires a restart to take effect."
-msgstr "このオプションを有効にするには再起動が必要です。"
-
-#: source/app/service-providers/config/index.ts:427
-msgid "Restart later"
-msgstr "あとで再起動"
-
-#: source/app/service-providers/updates/index.ts:294
-#, javascript-format
-msgid "Could not check for updates: Server Error (Status code: %s)"
-msgstr ""
-"アップデートの確認ができませんでした：サーバ エラー(ステータス コード：%s)"
-
-#: source/app/service-providers/updates/index.ts:296
-#, javascript-format
-msgid "Could not check for updates: Client Error (Status code: %s)"
-msgstr ""
-"アップデートの確認ができませんでした：クライアント エラー(ステータス コード："
-"%s)"
-
-#: source/app/service-providers/updates/index.ts:298
-#, javascript-format
-msgid ""
-"Could not check for updates: The server tried to redirect (Status code: %s)"
-msgstr ""
-"アップデートの確認ができませんでした：サーバーがリダイレクトしようとしました"
-"(ステータス コード：%s)"
-
-#. getaddrinfo has reported that the host has not been found.
-#. This normally only happens if the networking interface is
-#. offline.
-#: source/app/service-providers/updates/index.ts:303
-msgid "Could not check for updates: Could not establish connection"
-msgstr "アップデートの確認ができませんでした：接続の確立に失敗しました"
-
-#. Something else has occurred. GotError objects have a name property.
-#: source/app/service-providers/updates/index.ts:306
-#, javascript-format
-msgid "Could not check for updates. %s: %s"
-msgstr "アップデートを確認できませんでした。%s: %s"
-
-#: source/app/service-providers/updates/index.ts:322
-msgid "Could not check for updates: Server hasn't sent any data"
-msgstr ""
-"アップデートの確認ができませんでした：サーバからデータを受信できませんでした"
-
-#: source/app/service-providers/updates/index.ts:579
-#, javascript-format
-msgid "An update to version %s is available!"
-msgstr "バージョン%sへのアップデートが利用可能です！"
-
-#: source/app/service-providers/fsal/index.ts:141
-#, fuzzy, javascript-format
-msgid "Loading workspace %s"
-msgstr "%s ワークスペースを読み込んでいます"
-
-#: source/app/service-providers/windows/dialog/prompt.ts:32
-#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:33
-#: source/app/service-providers/windows/dialog/should-replace-file.ts:37
-#: source/app/service-providers/windows/dialog/confirm-remove.ts:35
-msgid "Ok"
-msgstr "OK"
-
-#. If the user cancels, do not omit (the default) but actually cancel
-#: source/app/service-providers/windows/dialog/ask-save-changes.ts:38
-#: source/tmp/SnippetsTab.vue.ts:65 source/tmp/CustomCSS.vue.ts:65
-#: source/tmp/Defaults.vue.ts:130
-msgid "Unsaved changes"
-msgstr "未保存の変更"
-
-#: source/app/service-providers/windows/dialog/ask-save-changes.ts:39
-msgid "There are unsaved changes. Do you want to save them first?"
-msgstr "現在のファイルには未保存の変更があります。閉じる前に保存しますか？"
-
-#: source/app/service-providers/windows/dialog/ask-file.ts:54
-msgid "Open file"
+msgid "Open image"
 msgstr "ファイルを開く"
 
-#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:29
-msgid "Overwrite existing file"
-msgstr "既存のファイルを上書き"
-
-#: source/app/service-providers/windows/dialog/should-overwrite-file.ts:30
-#, javascript-format
-msgid "The file %s already exists in this directory. Overwrite?"
-msgstr "%s はディレクトリに既に存在します。上書きしますか？"
-
-#: source/app/service-providers/windows/dialog/save-dialog.ts:58
-msgid "Save file"
-msgstr "ファイルを保存"
-
-#: source/app/service-providers/windows/dialog/should-replace-file.ts:31
-msgid "Replace file"
-msgstr "ファイルの再読み込み"
-
-#: source/app/service-providers/windows/dialog/should-replace-file.ts:32
-#, javascript-format
-msgid ""
-"File %s has been modified remotely. Replace the loaded version with the "
-"newer one from disk?"
-msgstr ""
-"ファイル%sが別の場所で編集されました。ファイルを読み込みなおして、現在表示中"
-"の内容を置き換えますか？"
-
-#: source/app/service-providers/windows/dialog/should-replace-file.ts:33
-#: source/win-preferences/schema/general.ts:42
-msgid "Always load remote changes to the current file"
-msgstr "現在のファイルに対する外部での変更を常に読み込む"
-
-#: source/app/service-providers/windows/dialog/confirm-remove.ts:38
-msgid "Really delete?"
-msgstr "本当に削除しますか？"
-
-#: source/app/service-providers/windows/dialog/confirm-remove.ts:39
-#, javascript-format
-msgid "Do you really want to remove %s?"
-msgstr "本当に%sを削除してもよろしいですか？"
-
-#: source/tmp/PopoverExport.vue.ts:6
+#: source/common/modules/markdown-editor/context-menu/link-image-menu.ts:111
 #, fuzzy
-msgid "Exporting…"
-msgstr "Exporting…"
+msgid "Open in File Browser"
+msgstr "File Browserで表示"
 
-#: source/tmp/PopoverExport.vue.ts:6
-msgid "Export"
-msgstr "Export"
+#: source/common/modules/markdown-editor/linters/spellcheck.ts:149
+msgid "Spelling mistake"
+msgstr "スペルミス"
 
-#: source/tmp/PopoverExport.vue.ts:27
-msgid "command"
-msgstr "コマンド"
+#: source/common/modules/markdown-editor/tooltips/footnotes.ts:91
+msgid "No footnote text found."
+msgstr "脚注テキストが見つかりません。"
 
-#: source/tmp/OtherFilesTab.vue.ts:13 source/tmp/MainSidebar.vue.ts:72
-msgid "Other files"
-msgstr "その他のファイル"
+#: source/common/modules/markdown-editor/tooltips/hyperlinks.ts:62
+msgid "Fetching link preview…"
+msgstr ""
 
-#: source/tmp/OtherFilesTab.vue.ts:16
-msgid "Open directory"
-msgstr "ディレクトリを開く"
+#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:47
+#: source/win-preferences/schema/editor.ts:134
+#: source/win-preferences/schema/editor.ts:135
+msgid "Italics"
+msgstr "斜体"
 
-#: source/tmp/OtherFilesTab.vue.ts:19
-msgid "No other files"
-msgstr "その他のファイルはありません"
+#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:52
+#: source/tmp/win-main/App.vue.ts:334
+msgid "Link"
+msgstr "リンク"
 
-#: source/tmp/SnippetsTab.vue.ts:50
+#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:57
+#: source/tmp/win-main/App.vue.ts:341
+msgid "Image"
+msgstr "画像"
+
+#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:62
+#: source/tmp/win-main/App.vue.ts:327
+msgid "Comment"
+msgstr "コメント"
+
+#: source/common/modules/markdown-editor/tooltips/formatting-toolbar.ts:67
+#: source/win-preferences/schema/spellchecking.ts:167
+msgid "Code"
+msgstr "コード"
+
+#: source/common/modules/markdown-editor/tooltips/file-preview.ts:65
+#, javascript-format
+msgid "File %s does not exist."
+msgstr "ファイル %s は存在しません。"
+
+#: source/common/modules/markdown-editor/tooltips/file-preview.ts:106
+msgid "Word count"
+msgstr "単語数"
+
+#: source/common/modules/markdown-editor/tooltips/file-preview.ts:108
+#: source/tmp/win-main/file-manager/util/PopoverDirProps.vue.ts:30
+#: source/tmp/win-main/file-manager/util/PopoverFileProps.vue.ts:36
+msgid "Modified"
+msgstr "更新日時"
+
+#: source/common/modules/markdown-utils/plain-link-highlighter.ts:25
+msgid "Cmd/Ctrl-click to follow this link"
+msgstr "Cmd/Ctrl キーを押しながらクリックして、このリンクをたどります"
+
+#: source/tmp/win-assets/DefaultsTab.vue.ts:56
+msgid ""
+"This profile is protected. This means that it will be restored when you "
+"remove or rename it."
+msgstr ""
+"このプロファイルは保護されています。ファイルを削除またはリネームすると元の内"
+"容が復元されます。"
+
+#: source/tmp/win-assets/DefaultsTab.vue.ts:57
+msgid ""
+"This profile is invalid. It may contain errors, or it may be missing the "
+"writer or reader property."
+msgstr ""
+"このプロファイルは無効です。エラーが含まれているか、ライターまたはリーダーの"
+"プロパティが欠落している可能性があります。"
+
+#: source/tmp/win-assets/DefaultsTab.vue.ts:59
+msgid "Open defaults folder"
+msgstr ""
+
+#: source/tmp/win-assets/DefaultsTab.vue.ts:60
+msgid "Edit the default settings for imports or exports here."
+msgstr "インポートまたはエクスポートのデフォルト設定を変更できます。"
+
+#: source/tmp/win-assets/DefaultsTab.vue.ts:177
+#: source/tmp/win-assets/SnippetsTab.vue.ts:105
+#: source/tmp/win-assets/CustomCSS.vue.ts:56
+msgid "Saving …"
+msgstr "保存中…"
+
+#: source/tmp/win-assets/DefaultsTab.vue.ts:187
+#: source/tmp/win-assets/SnippetsTab.vue.ts:115
+msgid "Saved!"
+msgstr "保存しました。"
+
+#: source/tmp/win-assets/App.vue.ts:21
+msgid "Exporting"
+msgstr ""
+
+#: source/tmp/win-assets/App.vue.ts:27
+msgid "Importing"
+msgstr ""
+
+#: source/tmp/win-assets/App.vue.ts:33
+#: source/win-preferences/schema/appearance.ts:219
+msgid "Custom CSS"
+msgstr "カスタムCSS"
+
+#: source/tmp/win-assets/App.vue.ts:39
+#: source/tmp/win-preferences/App.vue.ts:174
+#: source/win-preferences/schema/snippets.ts:24
+msgid "Snippets"
+msgstr ""
+
+#: source/tmp/win-assets/SnippetsTab.vue.ts:28
 msgid "Rename snippet"
 msgstr "スニペット名の変更"
 
-#: source/tmp/SnippetsTab.vue.ts:53
+#: source/tmp/win-assets/SnippetsTab.vue.ts:29
 msgid "Snippets let you define reusable pieces of text with variables."
 msgstr ""
 "スニペットを利用すると、変数を利用して再利用可能な文字列を定義することができ"
 "ます。"
 
-#: source/tmp/SnippetsTab.vue.ts:124 source/tmp/CustomCSS.vue.ts:88
-#: source/tmp/Defaults.vue.ts:192
-msgid "Saving …"
-msgstr "保存中…"
+#: source/tmp/win-assets/SnippetsTab.vue.ts:30
+msgid "Open snippets folder"
+msgstr ""
 
-#: source/tmp/SnippetsTab.vue.ts:134 source/tmp/Defaults.vue.ts:201
-msgid "Saved!"
-msgstr "保存しました。"
+#: source/tmp/win-assets/CustomCSS.vue.ts:23
+msgid ""
+"Here you can override the styles of Zettlr to customise it even further. "
+"<strong>Attention: This file overrides all CSS directives! Never alter the "
+"geometry of elements, otherwise the app may expose unwanted behaviour!</"
+"strong>"
+msgstr ""
+"ここで、Zettlrのスタイルをオーバーライドすることで、さらにカスタマイズを行う"
+"ことができます。<strong>注意：このファイルはすべてのCSSディレクティブをオー"
+"バーライドします。アプリケーションが予期せぬ動作をする可能性があるため、要素"
+"の形状を変更しないでください。</strong>"
 
-#: source/tmp/PopoverPomodoro.vue.ts:110
-msgid "Start"
-msgstr "開始"
+#: source/tmp/win-assets/CustomCSS.vue.ts:66
+msgid "Saving failed"
+msgstr "保存できませんでした"
 
-#: source/tmp/PopoverPomodoro.vue.ts:113
-msgid "Stop"
-msgstr "停止"
+#: source/tmp/win-main/sidebar/RelatedFilesTab.vue.ts:33
+#: source/tmp/win-main/sidebar/MainSidebar.vue.ts:51
+msgid "Related files"
+msgstr "関連ファイル"
 
-#: source/tmp/PopoverPomodoro.vue.ts:116
-msgid "Work"
-msgstr "作業"
+#: source/tmp/win-main/sidebar/RelatedFilesTab.vue.ts:34
+msgid "No related files"
+msgstr "関連ファイルがありません"
 
-#: source/tmp/PopoverPomodoro.vue.ts:119
-msgid "Short break"
-msgstr "小休憩"
+#: source/tmp/win-main/sidebar/RelatedFilesTab.vue.ts:35
+msgid "This relation is based on a bidirectional link."
+msgstr "このリレーションは双方向リンクです。"
 
-#: source/tmp/PopoverPomodoro.vue.ts:122
-msgid "Break"
-msgstr "大休憩"
+#: source/tmp/win-main/sidebar/RelatedFilesTab.vue.ts:36
+msgid "This relation is based on an outbound link."
+msgstr "このリレーションはアウトバウンドリンクです。"
 
-#: source/tmp/PopoverPomodoro.vue.ts:125
-msgid "Sound Effect"
-msgstr "効果音"
+#: source/tmp/win-main/sidebar/RelatedFilesTab.vue.ts:37
+msgid "This relation is based on a backlink."
+msgstr "このリレーションはバックリンクです。"
 
-#: source/tmp/PopoverPomodoro.vue.ts:128
-msgid "Volume"
-msgstr "ボリューム"
+#: source/tmp/win-main/sidebar/RelatedFilesTab.vue.ts:221
+#, javascript-format
+msgid "This relation is based on %s shared tags: %s"
+msgstr "このリレーションは%s個のタグを共有しています：%s"
 
-#: source/tmp/File.vue.ts:60 source/tmp/Color.vue.ts:51
-#: source/tmp/PopoverFileProps.vue.ts:112 source/tmp/Number.vue.ts:60
-#: source/tmp/ShortcutChooser.vue.ts:61
-msgid "Reset"
-msgstr "リセット"
+#: source/tmp/win-main/sidebar/MainSidebar.vue.ts:39
+#: source/tmp/win-main/sidebar/ToCTab.vue.ts:36
+#: source/tmp/win-main/sidebar/ToCTab.vue.ts:44
+msgid "Table of Contents"
+msgstr "目次"
 
-#: source/tmp/PopoverTags.vue.ts:42
-#: source/win-preferences/schema/spellchecking.ts:82
+#: source/tmp/win-main/sidebar/MainSidebar.vue.ts:45
+#: source/tmp/win-main/sidebar/ReferencesTab.vue.ts:32
+msgid "References"
+msgstr "参考文献"
+
+#: source/tmp/win-main/sidebar/MainSidebar.vue.ts:57
+#: source/tmp/win-main/sidebar/OtherFilesTab.vue.ts:13
+msgid "Other files"
+msgstr "その他のファイル"
+
+#: source/tmp/win-main/sidebar/OtherFilesTab.vue.ts:14
+msgid "Open directory"
+msgstr "ディレクトリを開く"
+
+#: source/tmp/win-main/sidebar/OtherFilesTab.vue.ts:15
+msgid "No other files"
+msgstr "その他のファイルはありません"
+
+#: source/tmp/win-main/sidebar/ReferencesTab.vue.ts:42
+msgid "There are no citations in this document."
+msgstr "このドキュメントには参考文献が存在しません。"
+
+#: source/tmp/win-main/PopoverTags.vue.ts:39
 msgid "Name"
 msgstr "名称"
 
-#: source/tmp/PopoverTags.vue.ts:43
+#: source/tmp/win-main/PopoverTags.vue.ts:40
+#: source/tmp/win-tag-manager/App.vue.ts:31
 msgid "Count"
 msgstr "カウント"
 
-#: source/tmp/PopoverTags.vue.ts:61
+#: source/tmp/win-main/PopoverTags.vue.ts:47
+#: source/tmp/win-tag-manager/App.vue.ts:35
 msgid "Filter tags…"
 msgstr "タグを絞り込む…"
 
-#: source/tmp/PopoverTags.vue.ts:64
+#: source/tmp/win-main/PopoverTags.vue.ts:48
 msgid "Tag Cloud"
 msgstr "タグ クラウド"
 
-#: source/tmp/PopoverTags.vue.ts:67
-msgid "Suggested tags for the current file"
-msgstr "現在のファイルに提案されたタグ"
+#: source/tmp/win-main/PopoverExport.vue.ts:61
+#, fuzzy
+msgid "Exporting…"
+msgstr "Exporting…"
 
-#: source/tmp/PopoverTags.vue.ts:70
-msgid "Add to file"
-msgstr "ファイルに追加"
+#: source/tmp/win-main/PopoverExport.vue.ts:61
+msgid "Export"
+msgstr "Export"
 
-#: source/tmp/GlobalSearch.vue.ts:117
+#: source/tmp/win-main/PopoverExport.vue.ts:74
+msgid "command"
+msgstr "コマンド"
+
+#: source/tmp/win-main/PopoverDocInfo.vue.ts:21
+msgid "words"
+msgstr "単語"
+
+#: source/tmp/win-main/PopoverDocInfo.vue.ts:22
+msgid "characters"
+msgstr "文字"
+
+#: source/tmp/win-main/PopoverDocInfo.vue.ts:23
+msgid "No open document"
+msgstr "開いているドキュメントはありません"
+
+#: source/tmp/win-main/PopoverTable.vue.ts:30
+#, javascript-format
+msgid "Table size: %s &times; %s"
+msgstr ""
+
+#: source/tmp/win-main/PopoverStats.vue.ts:28
+msgid "words last month"
+msgstr "単語(直近1カ月)"
+
+#: source/tmp/win-main/PopoverStats.vue.ts:29
+msgid "daily average"
+msgstr "一日当たりの平均値"
+
+#: source/tmp/win-main/PopoverStats.vue.ts:30
+msgid "words today"
+msgstr "単語(本日)"
+
+#: source/tmp/win-main/PopoverStats.vue.ts:31
+msgid "🔥 You're on fire!"
+msgstr "🔥燃えてますね！"
+
+#: source/tmp/win-main/PopoverStats.vue.ts:32
+msgid "💪 You're close to hitting your daily average!"
+msgstr "💪もう少しで一日当たりの平均値に到達します！"
+
+#: source/tmp/win-main/PopoverStats.vue.ts:33
+msgid "✍🏼 Get writing to surpass your daily average."
+msgstr "✍🏼一日当たりの平均値を超えました。"
+
+#: source/tmp/win-main/PopoverStats.vue.ts:34
+msgid "More statistics …"
+msgstr "統計情報の詳細…"
+
+#: source/tmp/win-main/App.vue.ts:212
+#, javascript-format
+msgid "%s selected"
+msgstr ""
+
+#. Multiple selections --> indicate
+#: source/tmp/win-main/App.vue.ts:221
+#, javascript-format
+msgid "%s selections"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:242
+msgid "File manager"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:247
+msgid "Global search"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:261
+msgid "View stats"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:267
+msgid "Tags"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:274
+msgid "Open the settings dialog"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:309
+msgid "Export the current file"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:315
+msgid "Toggle readability mode"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:348
+msgid "Tasklist"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:362
+msgid "Footnote"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:380
+msgid "Pomodoro-Timer"
+msgstr ""
+
+#: source/tmp/win-main/App.vue.ts:396
+msgid "Update available"
+msgstr ""
+
+#: source/tmp/win-main/GlobalSearch.vue.ts:34
 msgid "Full-Text Search"
 msgstr "全文検索"
 
-#: source/tmp/GlobalSearch.vue.ts:120
-#, javascript-format
-msgid "%s matches"
-msgstr "%s件一致"
-
-#: source/tmp/GlobalSearch.vue.ts:123
+#: source/tmp/win-main/GlobalSearch.vue.ts:35
 msgid "Enter your search terms below"
 msgstr "検索文字列を入力してください"
 
-#: source/tmp/GlobalSearch.vue.ts:126
+#: source/tmp/win-main/GlobalSearch.vue.ts:36
 msgid "Find …"
 msgstr "検索…"
 
-#: source/tmp/GlobalSearch.vue.ts:129
+#: source/tmp/win-main/GlobalSearch.vue.ts:37
+#: source/tmp/win-main/file-manager/FileManager.vue.ts:46
 msgid "Filter …"
 msgstr "フィルタ…"
 
-#: source/tmp/GlobalSearch.vue.ts:132
+#: source/tmp/win-main/GlobalSearch.vue.ts:38
 msgid "Filter search results"
 msgstr "検索結果をフィルタ"
 
-#: source/tmp/GlobalSearch.vue.ts:135
+#: source/tmp/win-main/GlobalSearch.vue.ts:39
 msgid "Restrict search to directory"
 msgstr "検索対象のディレクトリ"
 
-#: source/tmp/GlobalSearch.vue.ts:138
+#: source/tmp/win-main/GlobalSearch.vue.ts:40
 msgid "Restrict to directory …"
 msgstr "ディレクトリ…"
 
-#: source/tmp/GlobalSearch.vue.ts:141
+#: source/tmp/win-main/GlobalSearch.vue.ts:41
 msgid "Search"
 msgstr "検索"
 
-#: source/tmp/GlobalSearch.vue.ts:144
+#: source/tmp/win-main/GlobalSearch.vue.ts:42
 msgid "Clear search"
 msgstr "検索をクリア"
 
-#: source/tmp/GlobalSearch.vue.ts:147
+#: source/tmp/win-main/GlobalSearch.vue.ts:43
 msgid "Toggle results"
 msgstr "結果を切り替え"
 
-#: source/tmp/General-Tab.vue.ts:23
+#: source/tmp/win-main/GlobalSearch.vue.ts:112
+#, javascript-format
+msgid "%s matches across %s files"
+msgstr ""
+
+#: source/tmp/win-main/PopoverPomodoro.vue.ts:24
+#: source/win-preferences/schema/appearance.ts:52
+msgid "Start"
+msgstr "開始"
+
+#: source/tmp/win-main/PopoverPomodoro.vue.ts:25
+msgid "Stop"
+msgstr "停止"
+
+#: source/tmp/win-main/PopoverPomodoro.vue.ts:26
+msgid "Work"
+msgstr "作業"
+
+#: source/tmp/win-main/PopoverPomodoro.vue.ts:27
+msgid "Short break"
+msgstr "小休憩"
+
+#: source/tmp/win-main/PopoverPomodoro.vue.ts:28
+msgid "Break"
+msgstr "大休憩"
+
+#: source/tmp/win-main/PopoverPomodoro.vue.ts:29
+msgid "Sound Effect"
+msgstr "効果音"
+
+#: source/tmp/win-main/PopoverPomodoro.vue.ts:30
+msgid "Volume"
+msgstr "ボリューム"
+
+#: source/tmp/win-main/file-manager/util/PopoverDirProps.vue.ts:29
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:99
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:101
+msgid "Directories"
+msgstr "ディレクトリ"
+
+#: source/tmp/win-main/file-manager/util/PopoverDirProps.vue.ts:31
+#: source/tmp/win-main/file-manager/util/PopoverFileProps.vue.ts:35
+msgid "Created"
+msgstr "作成"
+
+#: source/tmp/win-main/file-manager/util/PopoverDirProps.vue.ts:33
+msgid "Project Settings…"
+msgstr "プロジェクト設定…"
+
+#: source/tmp/win-main/file-manager/util/PopoverFileProps.vue.ts:34
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:174
+msgid "Words"
+msgstr "単語"
+
+#: source/tmp/win-main/file-manager/util/PopoverFileProps.vue.ts:37
+#: source/tmp/common/vue/form/elements/NumberControl.vue.ts:40
+#: source/tmp/common/vue/form/elements/TextControl.vue.ts:47
+#: source/tmp/common/vue/form/elements/ShortcutChooser.vue.ts:61
+#: source/tmp/common/vue/form/elements/ColorControl.vue.ts:35
+msgid "Reset"
+msgstr "リセット"
+
+#: source/tmp/win-main/file-manager/util/PopoverFileProps.vue.ts:38
+msgid "Set writing target…"
+msgstr "執筆目標を設定…"
+
+#: source/tmp/win-main/file-manager/util/PopoverFileProps.vue.ts:39
+#: source/tmp/win-main/file-manager/FileItem.vue.ts:172
+msgid "Characters"
+msgstr "文字"
+
+#: source/tmp/win-main/file-manager/FileTree.vue.ts:76
+msgid "Workspaces"
+msgstr "ワークスペース"
+
+#: source/tmp/win-main/file-manager/FileTree.vue.ts:77
+msgid "No open files or folders"
+msgstr "開いているファイルまたはディレクトリはありません"
+
+#: source/tmp/win-main/file-manager/FileTree.vue.ts:78
+#: source/tmp/win-main/file-manager/FileList.vue.ts:46
+msgid "No results"
+msgstr "検索結果なし"
+
+#: source/tmp/win-main/file-manager/FileList.vue.ts:47
+msgid "No directory selected"
+msgstr "ディレクトリが選択されていません"
+
+#: source/tmp/win-main/file-manager/FileList.vue.ts:48
+msgid "Empty directory"
+msgstr "空のディレクトリ"
+
+#: source/tmp/win-about/General-Tab.vue.ts:21
 msgid ""
 "Zettlr is a project by Hendrik Erz, licensed under the GNU GPL v3 license. "
 "It is Open Source, free of charge and based upon the Electron framework. "
@@ -1677,7 +2065,7 @@ msgstr ""
 "の成果に感謝します。これら無しに、Zettlrは存在できなかったでしょう。以下に、"
 "Zettlrが利用しているすべてのプロジェクトを示します。"
 
-#: source/tmp/General-Tab.vue.ts:24
+#: source/tmp/win-about/General-Tab.vue.ts:22
 msgid ""
 "Zettlr makes use of citeproc to display citations directly in the editor. To "
 "this end, Zettlr uses the CitationStyleLanguage (CSL) language and style "
@@ -1689,7 +2077,7 @@ msgstr ""
 "ています。これらのファイルはauthorメタデータを変更せずに出荷されています。詳"
 "細："
 
-#: source/tmp/General-Tab.vue.ts:25
+#: source/tmp/win-about/General-Tab.vue.ts:23
 msgid ""
 "All logos and brand names are subject to their rightful owners. Besides "
 "using their code, Zettlr is in no way affiliated with any of these projects. "
@@ -1699,7 +2087,7 @@ msgstr ""
 "使用していることを除き、Zettlrはこれらのいずれのプロジェクトとも関連していま"
 "せん。Node.jsはJoyent, Inc.の商標です。"
 
-#: source/tmp/General-Tab.vue.ts:26
+#: source/tmp/win-about/General-Tab.vue.ts:24
 msgid ""
 "Zettlr offers an integration with LanguageTool.org, a service provided by "
 "LanguageTooler GmbH. Using this service requires an internet connection and "
@@ -1711,48 +2099,322 @@ msgstr ""
 "LanguageTooler GmbH または使用する対応するサーバーのプライバシーポリシーが適"
 "用されます。"
 
-#: source/tmp/MainSidebar.vue.ts:75 source/tmp/ReferencesTab.vue.ts:36
-msgid "References"
-msgstr "参考文献"
+#: source/tmp/win-about/App.vue.ts:41
+msgid "Other projects"
+msgstr ""
 
-#: source/tmp/MainSidebar.vue.ts:78 source/tmp/ToCTab.vue.ts:53
-msgid "Table of Contents"
-msgstr "目次"
+#: source/tmp/win-about/App.vue.ts:47
+msgid "Sponsors"
+msgstr ""
 
-#: source/tmp/MainSidebar.vue.ts:81 source/tmp/RelatedFilesTab.vue.ts:33
-msgid "Related files"
-msgstr "関連ファイル"
+#: source/tmp/win-about/App.vue.ts:53
+msgid "License"
+msgstr ""
 
-#: source/tmp/file-item.vue.ts:113 source/tmp/PopoverDirProps.vue.ts:170
-msgid "Directories"
-msgstr "ディレクトリ"
+#: source/tmp/win-about/Projects-Tab.vue.ts:19
+msgid "Zettlr also makes use of these projects:"
+msgstr "Zettlrは以下のプロジェクトを利用しています："
 
-#: source/tmp/file-item.vue.ts:193 source/tmp/PopoverFileProps.vue.ts:118
-msgid "Characters"
-msgstr "文字"
+#: source/tmp/win-splash-screen/App.vue.ts:22
+msgid "Loading…"
+msgstr ""
 
-#: source/tmp/file-item.vue.ts:195 source/tmp/PopoverFileProps.vue.ts:103
-msgid "Words"
-msgstr "単語"
+#: source/tmp/win-project-properties/App.vue.ts:37
+msgid "Export project to:"
+msgstr ""
 
-#: source/tmp/App.vue.ts:34
+#: source/tmp/win-project-properties/App.vue.ts:38
+msgid "Use"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:39
+msgid "Format"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:40
+msgid "Conversion"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:41
+msgid "Files to be included in the export"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:42
+msgid "Please select at least one profile to build this project."
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:43
+msgid "Project Title"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:44
+msgid "CSL Stylesheet"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:45
+msgid "LaTeX Template"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:46
+msgid "HTML Template"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:47
+msgid "Remove file from export"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:48
+msgid "Add file to export"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:49
+msgid "Move file up"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:50
+msgid "Move file down"
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:51
+msgid "You have not selected any files for export."
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:52
+msgid ""
+"Some files are selected for export but no longer exist in the directory."
+msgstr ""
+
+#: source/tmp/win-project-properties/App.vue.ts:73
+#: source/tmp/win-preferences/App.vue.ts:134
+msgid "General"
+msgstr ""
+
+#: source/tmp/common/vue/form/elements/ListControl.vue.ts:106
+msgid "Add"
+msgstr "追加"
+
+#: source/tmp/common/vue/form/elements/ListControl.vue.ts:107
+msgid "Actions"
+msgstr "アクション"
+
+#: source/tmp/common/vue/form/elements/ListControl.vue.ts:108
+msgid "Delete"
+msgstr "削除"
+
+#: source/tmp/common/vue/form/elements/FileControl.vue.ts:42
+#, fuzzy
+msgid "Select folder…"
+msgstr "プロジェクトフォルダを開く"
+
+#: source/tmp/common/vue/form/elements/FileControl.vue.ts:42
+#, fuzzy
+msgid "Select file…"
+msgstr "ファイルを削除"
+
+#. STATIC VARIABLES
+#: source/tmp/win-stats/CalendarView.vue.ts:26
+#: source/tmp/win-stats/App.vue.ts:27
+msgid "Calendar"
+msgstr "カレンダー"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:28
+msgid "January"
+msgstr "1月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:29
+msgid "February"
+msgstr "2月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:30
+msgid "March"
+msgstr "3月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:31
+msgid "April"
+msgstr "4月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:32
+msgid "May"
+msgstr "5月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:33
+msgid "June"
+msgstr "6月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:34
+msgid "July"
+msgstr "7月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:35
+msgid "August"
+msgstr "8月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:36
+msgid "September"
+msgstr "9月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:37
+msgid "October"
+msgstr "10月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:38
+msgid "November"
+msgstr "11月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:39
+msgid "December"
+msgstr "12月"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:41
+msgid "Below the monthly average"
+msgstr "月平均未満"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:42
+msgid "Over the monthly average"
+msgstr "月平均以上"
+
+#: source/tmp/win-stats/CalendarView.vue.ts:43
+msgid "More than twice the monthly average"
+msgstr "月平均の2倍以上"
+
+#. Static properties
+#: source/tmp/win-stats/App.vue.ts:33 source/tmp/win-stats/ChartView.vue.ts:39
+msgid "Charts"
+msgstr "図"
+
+#: source/tmp/win-stats/App.vue.ts:39
+msgid "FSAL Stats"
+msgstr ""
+
+#: source/tmp/win-stats/App.vue.ts:58
+msgid "Writing statistics"
+msgstr ""
+
+#: source/tmp/win-tag-manager/App.vue.ts:27
+msgid "Assign color"
+msgstr ""
+
+#: source/tmp/win-tag-manager/App.vue.ts:28
+msgid "Remove color"
+msgstr ""
+
+#: source/tmp/win-tag-manager/App.vue.ts:29
+msgid "Tag name"
+msgstr ""
+
+#: source/tmp/win-tag-manager/App.vue.ts:30
+msgid "Color"
+msgstr ""
+
+#: source/tmp/win-tag-manager/App.vue.ts:32
+msgid "A short description"
+msgstr ""
+
+#: source/tmp/win-tag-manager/App.vue.ts:33
+msgid ""
+"Here you can assign colors to different tags. If a tag is found in a file, "
+"its tile in the preview list will receive a colored indicator. The "
+"description will be shown on mouse hover."
+msgstr ""
+
+#: source/tmp/win-tag-manager/App.vue.ts:34
+msgid "Manage tags"
+msgstr ""
+
+#: source/tmp/win-paste-image/App.vue.ts:57
+msgid "Insert Image from Clipboard"
+msgstr ""
+
+#: source/tmp/win-paste-image/App.vue.ts:58
+#: source/win-preferences/schema/editor.ts:214
+#, fuzzy
+msgid "Image size"
+msgstr "画像"
+
+#: source/tmp/win-paste-image/App.vue.ts:59
+msgid "Retain aspect ratio"
+msgstr ""
+
+#: source/tmp/win-paste-image/App.vue.ts:60
+msgid "Resize image to"
+msgstr ""
+
+#: source/tmp/win-paste-image/App.vue.ts:61
+msgid "Filename"
+msgstr ""
+
+#: source/tmp/win-paste-image/App.vue.ts:62
+#: source/tmp/win-paste-image/App.vue.ts:63
+msgid "A unique filename"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:56
+#, javascript-format
+msgid "No results for \"%s\""
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:139
+#: source/win-preferences/schema/advanced.ts:51
+msgid "Appearance"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:144
+msgid "File Manager"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:149
+msgid "Editor"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:154
+#: source/win-preferences/schema/spellchecking.ts:158
+msgid "Spellchecking"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:159
+msgid "AutoCorrect"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:164
+#: source/win-preferences/schema/citations.ts:22
+#, fuzzy
+msgid "Citations"
+msgstr "引用を表示"
+
+#: source/tmp/win-preferences/App.vue.ts:169
+msgid "Zettelkasten"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:179
+msgid "Import and Export"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:184
+msgid "Advanced"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:193
+#, javascript-format
+msgid "Searching: %s"
+msgstr ""
+
+#: source/tmp/win-preferences/App.vue.ts:197
+msgid "Preferences"
+msgstr ""
+
+#: source/tmp/win-update/App.vue.ts:31
 msgid "Updater"
 msgstr "アップデート"
 
-#. True as soon as the update starts
-#: source/tmp/App.vue.ts:36
-msgid "Click to start update"
-msgstr "アップデートを開始する"
-
-#: source/tmp/App.vue.ts:76
+#: source/tmp/win-update/App.vue.ts:32
 msgid "New update available"
 msgstr "新しいバージョンが利用可能です"
 
-#: source/tmp/App.vue.ts:79
+#: source/tmp/win-update/App.vue.ts:33
 msgid "Your version"
 msgstr "現在のバージョン"
 
-#: source/tmp/App.vue.ts:82
+#: source/tmp/win-update/App.vue.ts:34
 msgid ""
 "There is a new version of Zettlr available to download. Please read the "
 "changelog below."
@@ -1760,758 +2422,579 @@ msgstr ""
 "新しいバージョンのZettlrがダウンロード可能です。以下の更新履歴を確認してくだ"
 "さい。"
 
-#: source/tmp/App.vue.ts:85
+#: source/tmp/win-update/App.vue.ts:35
 msgid "Downloading your update"
 msgstr "更新をダウンロード中"
 
-#: source/tmp/App.vue.ts:88
+#: source/tmp/win-update/App.vue.ts:36
 msgid "No update available. You have the most recent version."
 msgstr "アップデートはありません。最新バージョンを利用中です。"
 
-#: source/tmp/App.vue.ts:133
+#: source/tmp/win-update/App.vue.ts:42
+msgid "Click to start update"
+msgstr "アップデートを開始する"
+
+#: source/tmp/win-update/App.vue.ts:45
+msgid "never"
+msgstr ""
+
+#: source/tmp/win-update/App.vue.ts:45 source/tmp/win-update/App.vue.ts:48
+#, javascript-format
+msgid "Last checked: %s"
+msgstr ""
+
+#: source/tmp/win-update/App.vue.ts:124
 msgid "Starting update …"
 msgstr "アップデートを開始…"
 
-#: source/tmp/Theme.vue.ts:46
-msgid "selected"
-msgstr "選択中"
-
-#: source/tmp/Theme.vue.ts:49
-msgid "click to select"
-msgstr "クリックして選択"
-
-#: source/tmp/file-list.vue.ts:66 source/tmp/file-tree.vue.ts:35
-msgid "No results"
-msgstr "検索結果なし"
-
-#: source/tmp/file-list.vue.ts:69
-msgid "No directory selected"
-msgstr "ディレクトリが選択されていません"
-
-#: source/tmp/file-list.vue.ts:72
-msgid "Empty directory"
-msgstr "空のディレクトリ"
-
-#: source/tmp/file-tree.vue.ts:29
-msgid "Workspaces"
-msgstr "ワークスペース"
-
-#: source/tmp/file-tree.vue.ts:32
-msgid "No open files or folders"
-msgstr "開いているファイルまたはディレクトリはありません"
-
-#: source/tmp/PopoverStats.vue.ts:111
-msgid "words last month"
-msgstr "単語(直近1カ月)"
-
-#: source/tmp/PopoverStats.vue.ts:114
-msgid "daily average"
-msgstr "一日当たりの平均値"
-
-#: source/tmp/PopoverStats.vue.ts:117
-msgid "words today"
-msgstr "単語(本日)"
-
-#: source/tmp/PopoverStats.vue.ts:120
-msgid "🔥 You're on fire!"
-msgstr "🔥燃えてますね！"
-
-#: source/tmp/PopoverStats.vue.ts:123
-msgid "💪 You're close to hitting your daily average!"
-msgstr "💪もう少しで一日当たりの平均値に到達します！"
-
-#: source/tmp/PopoverStats.vue.ts:126
-msgid "✍🏼 Get writing to surpass your daily average."
-msgstr "✍🏼一日当たりの平均値を超えました。"
-
-#: source/tmp/PopoverStats.vue.ts:129
-msgid "More statistics …"
-msgstr "統計情報の詳細…"
-
-#: source/tmp/CustomCSS.vue.ts:31
-msgid "Custom CSS"
-msgstr "カスタムCSS"
-
-#: source/tmp/CustomCSS.vue.ts:32
-msgid ""
-"Here you can override the styles of Zettlr to customise it even further. "
-"<strong>Attention: This file overrides all CSS directives! Never alter the "
-"geometry of elements, otherwise the app may expose unwanted behaviour!</"
-"strong>"
-msgstr ""
-"ここで、Zettlrのスタイルをオーバーライドすることで、さらにカスタマイズを行う"
-"ことができます。<strong>注意：このファイルはすべてのCSSディレクティブをオー"
-"バーライドします。アプリケーションが予期せぬ動作をする可能性があるため、要素"
-"の形状を変更しないでください。</strong>"
-
-#: source/tmp/CustomCSS.vue.ts:97
-msgid "Saving failed"
-msgstr "保存できませんでした"
-
-#: source/tmp/PopoverFileProps.vue.ts:106 source/tmp/PopoverDirProps.vue.ts:176
-msgid "Created"
-msgstr "作成"
-
-#: source/tmp/PopoverFileProps.vue.ts:115
-msgid "Set writing target…"
-msgstr "執筆目標を設定…"
-
-#: source/tmp/PopoverDocInfo.vue.ts:43
-msgid "No open document"
-msgstr "開いているドキュメントはありません"
-
-#: source/tmp/PopoverDocInfo.vue.ts:46
-msgid "words"
-msgstr "単語"
-
-#: source/tmp/PopoverDocInfo.vue.ts:49
-msgid "characters"
-msgstr "文字"
-
-#: source/tmp/ReferencesTab.vue.ts:48
-msgid "There are no citations in this document."
-msgstr "このドキュメントには参考文献が存在しません。"
-
-#: source/tmp/CalendarView.vue.ts:59
-msgid "Calendar"
-msgstr "カレンダー"
-
-#: source/tmp/CalendarView.vue.ts:77
-msgid "January"
-msgstr "1月"
-
-#: source/tmp/CalendarView.vue.ts:78
-msgid "February"
-msgstr "2月"
-
-#: source/tmp/CalendarView.vue.ts:79
-msgid "March"
-msgstr "3月"
-
-#: source/tmp/CalendarView.vue.ts:80
-msgid "April"
-msgstr "4月"
-
-#: source/tmp/CalendarView.vue.ts:81
-msgid "May"
-msgstr "5月"
-
-#: source/tmp/CalendarView.vue.ts:82
-msgid "June"
-msgstr "6月"
-
-#: source/tmp/CalendarView.vue.ts:83
-msgid "July"
-msgstr "7月"
-
-#: source/tmp/CalendarView.vue.ts:84
-msgid "August"
-msgstr "8月"
-
-#: source/tmp/CalendarView.vue.ts:85
-msgid "September"
-msgstr "9月"
-
-#: source/tmp/CalendarView.vue.ts:86
-msgid "October"
-msgstr "10月"
-
-#: source/tmp/CalendarView.vue.ts:87
-msgid "November"
-msgstr "11月"
-
-#: source/tmp/CalendarView.vue.ts:88
-msgid "December"
-msgstr "12月"
-
-#: source/tmp/CalendarView.vue.ts:104
-msgid "Below the monthly average"
-msgstr "月平均未満"
-
-#: source/tmp/CalendarView.vue.ts:107
-msgid "Over the monthly average"
-msgstr "月平均以上"
-
-#: source/tmp/CalendarView.vue.ts:110
-msgid "More than twice the monthly average"
-msgstr "月平均の2倍以上"
-
-#: source/tmp/ChartView.vue.ts:60
-msgid "Charts"
-msgstr "図"
-
-#: source/tmp/PopoverDirProps.vue.ts:185
-msgid "Project Settings…"
-msgstr "プロジェクト設定…"
-
-#: source/tmp/Defaults.vue.ts:70
-msgid ""
-"This profile is protected. This means that it will be restored when you "
-"remove or rename it."
-msgstr ""
-"このプロファイルは保護されています。ファイルを削除またはリネームすると元の内"
-"容が復元されます。"
-
-#: source/tmp/Defaults.vue.ts:73
-msgid ""
-"This profile is invalid. It may contain errors, or it may be missing the "
-"writer or reader property."
-msgstr ""
-"このプロファイルは無効です。エラーが含まれているか、ライターまたはリーダーの"
-"プロパティが欠落している可能性があります。"
-
-#: source/tmp/Defaults.vue.ts:109
-msgid "Edit the default settings for imports or exports here."
-msgstr "インポートまたはエクスポートのデフォルト設定を変更できます。"
-
-#: source/tmp/Projects-Tab.vue.ts:24
-msgid "Zettlr also makes use of these projects:"
-msgstr "Zettlrは以下のプロジェクトを利用しています："
-
-#: source/tmp/ListControl.vue.ts:81
-msgid "Add"
-msgstr "追加"
-
-#: source/tmp/ListControl.vue.ts:82
-msgid "Actions"
-msgstr "アクション"
-
-#: source/tmp/ListControl.vue.ts:83
-msgid "Delete"
-msgstr "削除"
-
-#: source/tmp/RelatedFilesTab.vue.ts:36
-msgid "No related files"
-msgstr "関連ファイルがありません"
-
-#: source/tmp/RelatedFilesTab.vue.ts:39
-msgid "This relation is based on a bidirectional link."
-msgstr "このリレーションは双方向リンクです。"
-
-#: source/tmp/RelatedFilesTab.vue.ts:42
-msgid "This relation is based on an outbound link."
-msgstr "このリレーションはアウトバウンドリンクです。"
-
-#: source/tmp/RelatedFilesTab.vue.ts:45
-msgid "This relation is based on a backlink."
-msgstr "このリレーションはバックリンクです。"
-
-#: source/tmp/RelatedFilesTab.vue.ts:235
-#, javascript-format
-msgid "This relation is based on %s shared tags: %s"
-msgstr "このリレーションは%s個のタグを共有しています：%s"
-
-#: source/win-preferences/schema/toolbar.ts:24
-msgid "Display \"Open Preferences\" button"
-msgstr "「設定ダイアログを開く」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:29
-msgid "Display \"New File\" button"
-msgstr "「新規ファイル」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:34
-msgid "Display \"Previous File\" button"
-msgstr "「前のファイル」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:39
-msgid "Display \"Next File\" button"
-msgstr "「次のファイル」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:46
-msgid "Display readability button"
-msgstr "可読性モードボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:51
-msgid "Display \"Insert Comment\" button"
-msgstr "「コメント」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:56
-msgid "Display link button"
-msgstr "「リンク」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:61
-msgid "Display image button"
-msgstr "「画像」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:66
-msgid "Display task list button"
-msgstr "「タスクリスト」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:71
-msgid "Display \"Insert Table\" button"
-msgstr "「表を挿入」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:76
-msgid "Display \"Insert Footnote\" button"
-msgstr "「脚注」ボタンを表示"
-
-#: source/win-preferences/schema/toolbar.ts:83
-msgid "Display document info"
-msgstr "ドキュメントの情報を表示"
-
-#: source/win-preferences/schema/toolbar.ts:88
-msgid "Display Pomodoro-timer"
-msgstr "ポモドーロタイマーを表示"
-
-#: source/win-preferences/schema/general.ts:24
-msgid "Application language"
-msgstr "アプリケーション言語"
-
-#: source/win-preferences/schema/general.ts:37
-msgid "Show file information"
-msgstr "ファイル情報を表示"
-
-#: source/win-preferences/schema/general.ts:47
-msgid "Avoid opening files in new tabs if possible"
-msgstr "ファイルを新しいタブで開くことを可能な限り避ける"
-
-#: source/win-preferences/schema/general.ts:54
-msgid "Automatically switch to dark mode"
-msgstr "自動的にダークモードに切り替える"
-
-#: source/win-preferences/schema/general.ts:57
-#: source/win-preferences/schema/editor.ts:46
-msgid "Off"
-msgstr "オフ"
-
-#: source/win-preferences/schema/general.ts:58
+#: source/win-preferences/schema/appearance.ts:37
 msgid "Schedule"
 msgstr "スケジュール"
 
-#: source/win-preferences/schema/general.ts:59
-msgid "Follow Operating System"
+#: source/win-preferences/schema/appearance.ts:41
+#: source/win-preferences/schema/general.ts:47
+msgid "Off"
+msgstr "オフ"
+
+#: source/win-preferences/schema/appearance.ts:42
+#, fuzzy
+msgid "Follow system"
 msgstr "OSの設定に従う"
 
-#: source/win-preferences/schema/general.ts:64
-msgid "Start dark mode at"
-msgstr "ダークモード開始時刻"
-
-#: source/win-preferences/schema/general.ts:70
-msgid "End dark mode at"
-msgstr "ダークモード終了時刻"
-
-#: source/win-preferences/schema/general.ts:78
-msgid "File manager mode"
-msgstr "ファイルマネージャーモード"
-
-#: source/win-preferences/schema/general.ts:81
-msgid "Thin &mdash; show either file tree or file list"
-msgstr "Thin &mdash; ファイルツリーとファイルリストのいずれかを表示する"
-
-#: source/win-preferences/schema/general.ts:82
-msgid "Expanded &mdash; show both file tree and file list"
-msgstr "Expanded &mdash; ファイルツリーとファイルリストを両方表示する"
-
-#: source/win-preferences/schema/general.ts:83
-msgid "Combined &mdash; show files and directories in the file tree"
-msgstr "Combined &mdash; ファイルツリーにファイルとディレクトリを表示する"
-
-#: source/win-preferences/schema/general.ts:88
-msgid "Display files using"
-msgstr "ファイルの表示方法"
-
-#: source/win-preferences/schema/general.ts:91
-msgid "Filename only"
-msgstr "ファイル名のみ"
-
-#: source/win-preferences/schema/general.ts:92
-msgid "Title if applicable"
-msgstr "タイトル(存在する場合)"
-
-#: source/win-preferences/schema/general.ts:93
-msgid "First heading level 1 if applicable"
-msgstr "最初のレベル1の見出し(存在する場合)"
-
-#: source/win-preferences/schema/general.ts:94
-msgid "Title or first heading level 1 if applicable"
-msgstr "タイトルまたは最初のレベル1の見出し(存在する場合)"
-
-#: source/win-preferences/schema/general.ts:99
-msgid "Display Markdown file extensions"
-msgstr "Markdownファイルの拡張子を表示する"
-
-#: source/win-preferences/schema/general.ts:107
-msgid "Sorting order for files (used for sorting by name)"
-msgstr "ファイルの並び順(名前で並べ替える際に使用)"
-
-#: source/win-preferences/schema/general.ts:110
-msgid "Natural order (10 after 2)"
-msgstr "数値順(2→10の順番)"
-
-#: source/win-preferences/schema/general.ts:111
-msgid "ASCII order (2 after 10)"
-msgstr "ASCII順(10→2の順番)"
-
-#: source/win-preferences/schema/general.ts:118
-msgid "Show folders above files"
-msgstr "フォルダをファイルより上に表示する"
-
-#: source/win-preferences/schema/general.ts:125
-msgid "When sorting by time, sort by"
-msgstr "時刻で並べ替える際に使用する項目"
-
-#: source/win-preferences/schema/general.ts:128
-#: source/win-preferences/schema/general.ts:137
-msgid "Last modification time"
-msgstr "最終更新日時"
-
-#: source/win-preferences/schema/general.ts:129
-#: source/win-preferences/schema/general.ts:138
-msgid "File creation time"
-msgstr "ファイル作成日時"
-
-#: source/win-preferences/schema/general.ts:134
-msgid "In the file metadata display"
-msgstr "ファイルメタデータの表示に使用する日時"
-
-#: source/win-preferences/schema/editor.ts:24
-msgid ""
-"Choose the formatting characters that the bold/emphasis commands should use"
-msgstr "太字および強調コマンドで使用するフォーマット文字を選択してください"
-
-#: source/win-preferences/schema/editor.ts:43
-msgid "Autosave"
-msgstr "自動保存"
-
-#: source/win-preferences/schema/editor.ts:47
-msgid "Immediately"
-msgstr "即時"
-
-#: source/win-preferences/schema/editor.ts:48
-msgid "After a short delay"
-msgstr "遅延有り"
-
-#: source/win-preferences/schema/editor.ts:55
-msgid "Default image path (relative or absolute)"
-msgstr "既定の画像パス(相対もしくは絶対)"
-
-#: source/win-preferences/schema/editor.ts:60
-msgid "Indent by the following number of spaces"
-msgstr "インデントに使用する空白の数"
-
-#: source/win-preferences/schema/editor.ts:65
-msgid "Indent using tabs"
-msgstr "インデントにタブ文字を使用"
-
-#: source/win-preferences/schema/editor.ts:70
-msgid "Editor font size"
-msgstr "エディタのフォントサイズ"
-
-#: source/win-preferences/schema/editor.ts:75
-msgid "Algorithm to use for the readability mode"
-msgstr "可読性モードで使用するアルゴリズム"
-
-#: source/win-preferences/schema/editor.ts:86
-msgid "Editor input mode"
-msgstr "エディタ入力モード"
-
-#: source/win-preferences/schema/editor.ts:98
-msgid "Check Markdown for style issues"
-msgstr "Markdown記法の問題をチェック"
-
-#: source/win-preferences/schema/editor.ts:103
-msgid "Show statusbar"
-msgstr "ステータスバーを表示する"
-
-#: source/win-preferences/schema/editor.ts:110
-msgid "Mute non-focused lines in distraction-free mode"
-msgstr "集中モード時にフォーカスされていない行の表示を薄くする"
-
-#: source/win-preferences/schema/editor.ts:115
-msgid "Automatically close matching character pairs"
-msgstr "対応する括弧を自動的に入力する"
-
-#: source/win-preferences/schema/editor.ts:120
-msgid "Accept spaces during autocompletion"
-msgstr "補完中に空白を受け付ける"
-
-#: source/win-preferences/schema/editor.ts:125
-msgid "Enable Table Editor"
-msgstr "テーブルエディタを有効化"
-
-#: source/win-preferences/schema/editor.ts:130
-msgid "Show link previews"
-msgstr "リンク先のプレビューを表示する"
-
-#: source/win-preferences/schema/editor.ts:135
-msgid "Count characters instead of words (e.g., for Chinese)"
-msgstr "単語の代わりに文字を数える"
-
-#: source/win-preferences/schema/citations.ts:24
-msgid "How would you like autocomplete to insert your citations?"
-msgstr "オートコンプリートで引用を挿入する方法を選択してください"
-
-#: source/win-preferences/schema/citations.ts:36
-msgid "Citation Database (CSL JSON or BibTex)"
-msgstr "参考文献データベース(CSL JSON または BibTeX)"
-
-#: source/win-preferences/schema/citations.ts:47
-msgid "CSL-Style (optional)"
-msgstr "CSLスタイル(オプション)"
-
-#: source/win-preferences/schema/autocorrect.ts:24
-msgid "Turn on AutoCorrect"
-msgstr "オートコレクトを有効化"
-
-#: source/win-preferences/schema/autocorrect.ts:33
-msgid "Primary Magic Quotes"
-msgstr "一次マジッククォート"
-
-#: source/win-preferences/schema/autocorrect.ts:36
-#: source/win-preferences/schema/autocorrect.ts:57
-msgid "Disable Magic Quotes"
-msgstr "マジッククォートを無効にする"
-
-#: source/win-preferences/schema/autocorrect.ts:54
-msgid "Secondary Magic Quotes"
-msgstr "二次マジッククォート"
-
-#: source/win-preferences/schema/autocorrect.ts:80
-msgid "Match whole words"
-msgstr "単語全体と一致する"
-
-#: source/win-preferences/schema/autocorrect.ts:81
-msgid "When checked, AutoCorrect will never replace parts of words"
-msgstr "チェックすると、オートコレクトは単語の一部を置換しません"
-
-#: source/win-preferences/schema/autocorrect.ts:90
-msgid "String"
-msgstr "元の文字列"
-
-#: source/win-preferences/schema/autocorrect.ts:90
-#, fuzzy
-msgid "Replacement"
-msgstr "置き換え後"
-
-#: source/win-preferences/schema/autocorrect.ts:91
-msgid ""
-"Here you can define certain strings that will be replaced when AutoCorrect "
-"is on. The characters on the left side will be replaced with whatever comes "
-"on the right."
+#: source/win-preferences/schema/appearance.ts:43
+msgid "On"
 msgstr ""
-"オートコレクトが有効な場合に置き換える文字列を定義します。左側の文字列が右側"
-"の文字列に置き換わります。"
 
-#: source/win-preferences/schema/spellchecking.ts:25
-msgid "Use LanguageTool"
-msgstr "LanguageToolを使用する"
+#: source/win-preferences/schema/appearance.ts:59
+msgid "End"
+msgstr ""
 
-#: source/win-preferences/schema/spellchecking.ts:30
-msgid "Strictness"
-msgstr "厳密性"
+#: source/win-preferences/schema/appearance.ts:69
+msgid "Theme"
+msgstr ""
 
-#: source/win-preferences/schema/spellchecking.ts:32
-#, fuzzy
-msgid "Standard"
-msgstr "通常"
-
-#: source/win-preferences/schema/spellchecking.ts:33
-#, fuzzy
-msgid "Picky"
-msgstr "より厳密"
-
-#: source/win-preferences/schema/spellchecking.ts:40
-msgid "Mother tongue"
-msgstr "母国語"
-
-#: source/win-preferences/schema/spellchecking.ts:42
-msgid "Not set"
-msgstr "設定しない"
-
-#: source/win-preferences/schema/spellchecking.ts:49
-msgid "LanguageTool Provider"
-msgstr "LanguageToolプロバイダー"
-
-#: source/win-preferences/schema/spellchecking.ts:52
-#: source/win-preferences/schema/spellchecking.ts:59
-msgid "Custom server"
-msgstr "カスタムサーバー"
-
-#: source/win-preferences/schema/spellchecking.ts:66
-msgid "LanguageTool Username"
-msgstr "LanguageTool ユーザー名"
-
-#: source/win-preferences/schema/spellchecking.ts:72
-msgid "LanguageTool API key"
-msgstr "LanguageTool APIキー"
-
-#: source/win-preferences/schema/spellchecking.ts:82
-#, fuzzy
-msgid "Active"
-msgstr "有効"
-
-#: source/win-preferences/schema/spellchecking.ts:82
-msgid "Language Code"
-msgstr "言語コード"
-
-#: source/win-preferences/schema/spellchecking.ts:83
-msgid ""
-"Select the languages for which you want to enable automatic spell checking."
-msgstr "自動スペルチェックを有効にする言語を選択。"
-
-#: source/win-preferences/schema/spellchecking.ts:88
-#, fuzzy
-msgid "Search for dictionaries…"
-msgstr "辞書を検索..."
-
-#: source/win-preferences/schema/spellchecking.ts:94
-msgid "User dictionary. Remove words by clicking them."
-msgstr "ユーザ辞書。クリックで単語を削除します。"
-
-#: source/win-preferences/schema/spellchecking.ts:96
-msgid "Dictionary entry"
-msgstr "辞書エントリ"
-
-#: source/win-preferences/schema/spellchecking.ts:99
-#: source/win-preferences/schema/advanced.ts:104
-msgid "Search for entries …"
-msgstr "エントリーを検索…"
-
-#: source/win-preferences/schema/display.ts:24
-msgid "Render Citations"
-msgstr "引用を表示"
-
-#: source/win-preferences/schema/display.ts:29
-msgid "Render Iframes"
-msgstr "iframeを表示"
-
-#: source/win-preferences/schema/display.ts:34
-msgid "Render Images"
-msgstr "画像を表示"
-
-#: source/win-preferences/schema/display.ts:39
-msgid "Render Links"
-msgstr "リンクを表示"
-
-#: source/win-preferences/schema/display.ts:44
-msgid "Render Formulae"
-msgstr "数式を表示"
-
-#: source/win-preferences/schema/display.ts:49
-msgid "Render Tasks"
-msgstr "タスクを表示"
-
-#: source/win-preferences/schema/display.ts:54
-msgid "Hide heading characters"
-msgstr "見出し文字を隠す"
-
-#: source/win-preferences/schema/display.ts:59
-msgid "Render emphasis"
-msgstr "強調を表示"
-
-#: source/win-preferences/schema/display.ts:67
+#: source/win-preferences/schema/appearance.ts:76
 msgid "Here you can choose the theme for the app."
 msgstr "アプリケーションのテーマを選択します。"
 
-#: source/win-preferences/schema/display.ts:110
+#: source/win-preferences/schema/appearance.ts:118
+msgid "Toolbar options"
+msgstr ""
+
+#: source/win-preferences/schema/appearance.ts:125
+msgid "Left section buttons"
+msgstr ""
+
+#: source/win-preferences/schema/appearance.ts:129
+msgid "Display \"Open Preferences\" button"
+msgstr "「設定ダイアログを開く」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:134
+msgid "Display \"New File\" button"
+msgstr "「新規ファイル」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:139
+msgid "Display \"Previous File\" button"
+msgstr "「前のファイル」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:144
+msgid "Display \"Next File\" button"
+msgstr "「次のファイル」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:151
+msgid "Center section buttons"
+msgstr ""
+
+#: source/win-preferences/schema/appearance.ts:155
+msgid "Display readability button"
+msgstr "可読性モードボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:160
+msgid "Display \"Insert Comment\" button"
+msgstr "「コメント」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:165
+msgid "Display link button"
+msgstr "「リンク」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:170
+msgid "Display image button"
+msgstr "「画像」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:175
+msgid "Display task list button"
+msgstr "「タスクリスト」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:180
+msgid "Display \"Insert Table\" button"
+msgstr "「表を挿入」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:185
+msgid "Display \"Insert Footnote\" button"
+msgstr "「脚注」ボタンを表示"
+
+#: source/win-preferences/schema/appearance.ts:192
+msgid "Right section buttons"
+msgstr ""
+
+#: source/win-preferences/schema/appearance.ts:196
+msgid "Display document info"
+msgstr "ドキュメントの情報を表示"
+
+#: source/win-preferences/schema/appearance.ts:201
+msgid "Display Pomodoro-timer"
+msgstr "ポモドーロタイマーを表示"
+
+#: source/win-preferences/schema/appearance.ts:207
+#, fuzzy
+msgid "Status bar"
+msgstr "ステータスバーを表示する"
+
+#: source/win-preferences/schema/appearance.ts:213
+msgid "Show statusbar"
+msgstr "ステータスバーを表示する"
+
+#: source/win-preferences/schema/appearance.ts:224
+#, fuzzy
+msgid "Open CSS editor"
+msgstr "ディレクトリを開く"
+
+#: source/win-preferences/schema/general.ts:22
+msgid "Application language"
+msgstr "アプリケーション言語"
+
+#: source/win-preferences/schema/general.ts:33
+msgid "Autosave"
+msgstr "自動保存"
+
+#: source/win-preferences/schema/general.ts:43
+#, fuzzy
+msgid "Save modifications"
+msgstr "最終更新日時"
+
+#: source/win-preferences/schema/general.ts:48
+msgid "Immediately"
+msgstr "即時"
+
+#: source/win-preferences/schema/general.ts:49
+msgid "After a short delay"
+msgstr "遅延有り"
+
+#: source/win-preferences/schema/general.ts:55
+msgid "Default image folder"
+msgstr ""
+
+#: source/win-preferences/schema/general.ts:67
+msgid ""
+"Click \"Select folder…\" or type an absolute or relative path directly into "
+"the input field."
+msgstr ""
+
+#: source/win-preferences/schema/general.ts:72
+#, fuzzy
+msgid "Behavior"
+msgstr "ズーム操作"
+
+#: source/win-preferences/schema/general.ts:83
+msgid "Avoid opening files in new tabs if possible"
+msgstr "ファイルを新しいタブで開くことを可能な限り避ける"
+
+#: source/win-preferences/schema/general.ts:89
+#, fuzzy
+msgid "Updates"
+msgstr "アップデート"
+
+#: source/win-preferences/schema/general.ts:95
+msgid "Automatically check for updates"
+msgstr "更新を自動的にチェックする"
+
+#: source/win-preferences/schema/file-manager.ts:23
+#, fuzzy
+msgid "Display mode"
+msgstr "表示名"
+
+#: source/win-preferences/schema/file-manager.ts:32
+msgid "Thin"
+msgstr ""
+
+#: source/win-preferences/schema/file-manager.ts:33
+msgid "Expanded"
+msgstr ""
+
+#: source/win-preferences/schema/file-manager.ts:34
+msgid "Combined"
+msgstr ""
+
+#: source/win-preferences/schema/file-manager.ts:40
+msgid ""
+"The Thin mode shows your directories and files separately. Select a "
+"directory to have its contents displayed in the file list. Switch between "
+"file list and directory tree by clicking on directories or the arrow button "
+"which appears at the top left corner of the file list."
+msgstr ""
+
+#: source/win-preferences/schema/file-manager.ts:45
+msgid "Show file information"
+msgstr "ファイル情報を表示"
+
+#: source/win-preferences/schema/file-manager.ts:50
+msgid "Show folders above files"
+msgstr "フォルダをファイルより上に表示する"
+
+#: source/win-preferences/schema/file-manager.ts:56
+msgid "Markdown document name display"
+msgstr ""
+
+#: source/win-preferences/schema/file-manager.ts:64
+msgid "Filename only"
+msgstr "ファイル名のみ"
+
+#: source/win-preferences/schema/file-manager.ts:65
+msgid "Title if applicable"
+msgstr "タイトル(存在する場合)"
+
+#: source/win-preferences/schema/file-manager.ts:66
+msgid "First heading level 1 if applicable"
+msgstr "最初のレベル1の見出し(存在する場合)"
+
+#: source/win-preferences/schema/file-manager.ts:67
+msgid "Title or first heading level 1 if applicable"
+msgstr "タイトルまたは最初のレベル1の見出し(存在する場合)"
+
+#: source/win-preferences/schema/file-manager.ts:73
+msgid "Display Markdown file extensions"
+msgstr "Markdownファイルの拡張子を表示する"
+
+#: source/win-preferences/schema/file-manager.ts:80
+msgid "Time display"
+msgstr ""
+
+#: source/win-preferences/schema/file-manager.ts:88
+msgid "Last modification time"
+msgstr "最終更新日時"
+
+#: source/win-preferences/schema/file-manager.ts:89
+msgid "File creation time"
+msgstr "ファイル作成日時"
+
+#: source/win-preferences/schema/file-manager.ts:95
+#, fuzzy
+msgid "Sorting"
+msgstr "Exporting…"
+
+#: source/win-preferences/schema/file-manager.ts:101
+#, fuzzy
+msgid "When sorting documents…"
+msgstr "最近使ったドキュメント"
+
+#: source/win-preferences/schema/file-manager.ts:104
+#, fuzzy
+msgid "Use natural order (2 comes before 10)"
+msgstr "数値順(2→10の順番)"
+
+#: source/win-preferences/schema/file-manager.ts:105
+#, fuzzy
+msgid "Use ASCII order (2 comes after 10)"
+msgstr "ASCII順(10→2の順番)"
+
+#: source/win-preferences/schema/editor.ts:23
+#, fuzzy
+msgid "Input mode"
+msgstr "エディタ入力モード"
+
+#: source/win-preferences/schema/editor.ts:39
+msgid ""
+"The input mode determines how you interact with the editor. We recommend "
+"keeping this setting at \"Normal\". Only choose \"Vim\" or \"Emacs\" if you "
+"know what this implies."
+msgstr ""
+
+#: source/win-preferences/schema/editor.ts:44
+#, fuzzy
+msgid "Writing direction"
+msgstr "ディレクトリを検索"
+
+#: source/win-preferences/schema/editor.ts:57
+msgid "Markdown rendering"
+msgstr ""
+
+#: source/win-preferences/schema/editor.ts:64
+msgid ""
+"Check to enable live rendering of various Markdown elements to formatted "
+"appearance. This hides formatting characters (such as **text**) or renders "
+"images instead of their link."
+msgstr ""
+
+#: source/win-preferences/schema/editor.ts:72
+msgid "Render Citations"
+msgstr "引用を表示"
+
+#: source/win-preferences/schema/editor.ts:77
+msgid "Render Iframes"
+msgstr "iframeを表示"
+
+#: source/win-preferences/schema/editor.ts:82
+msgid "Render Images"
+msgstr "画像を表示"
+
+#: source/win-preferences/schema/editor.ts:87
+msgid "Render Links"
+msgstr "リンクを表示"
+
+#: source/win-preferences/schema/editor.ts:92
+msgid "Render Formulae"
+msgstr "数式を表示"
+
+#: source/win-preferences/schema/editor.ts:97
+msgid "Render Tasks"
+msgstr "タスクを表示"
+
+#: source/win-preferences/schema/editor.ts:102
+msgid "Hide heading characters"
+msgstr "見出し文字を隠す"
+
+#: source/win-preferences/schema/editor.ts:107
+msgid "Render emphasis"
+msgstr "強調を表示"
+
+#: source/win-preferences/schema/editor.ts:116
+msgid "Formatting characters for bold and italic"
+msgstr ""
+
+#: source/win-preferences/schema/editor.ts:143
+msgid "Check Markdown for style issues"
+msgstr "Markdown記法の問題をチェック"
+
+#: source/win-preferences/schema/editor.ts:149
+#, fuzzy
+msgid "Table Editor"
+msgstr "テーブルエディタを有効化"
+
+#: source/win-preferences/schema/editor.ts:160
+msgid ""
+"The Table Editor is an interactive interface that simplifies creation and "
+"editing of tables. It provides buttons for common functionality, and takes "
+"care of Markdown formatting."
+msgstr ""
+
+#: source/win-preferences/schema/editor.ts:165
+#, fuzzy
+msgid "Distraction-free mode"
+msgstr "集中モード"
+
+#: source/win-preferences/schema/editor.ts:171
+msgid "Mute non-focused lines in distraction-free mode"
+msgstr "集中モード時にフォーカスされていない行の表示を薄くする"
+
+#: source/win-preferences/schema/editor.ts:176
 msgid "Hide toolbar in distraction free mode"
 msgstr "集中モードでツールバーを隠す"
 
-#: source/win-preferences/schema/display.ts:117
-msgid "Maximum width of images (percent)"
+#: source/win-preferences/schema/editor.ts:182
+#, fuzzy
+msgid "Word counter"
+msgstr "単語数"
+
+#: source/win-preferences/schema/editor.ts:189
+msgid "Count characters instead of words (e.g., for Chinese)"
+msgstr "単語の代わりに文字を数える"
+
+#: source/win-preferences/schema/editor.ts:195
+#, fuzzy
+msgid "Readability mode"
+msgstr "可読性モード (%s)"
+
+#: source/win-preferences/schema/editor.ts:202
+msgid "Algorithm"
+msgstr ""
+
+#: source/win-preferences/schema/editor.ts:220
+#, fuzzy
+msgid "Maximum width of images (%s %)"
 msgstr "画像の最大幅（パーセント）"
 
-#: source/win-preferences/schema/display.ts:124
-msgid "Maximum height of images (percent)"
+#: source/win-preferences/schema/editor.ts:227
+#, fuzzy
+msgid "Maximum height of images (%s %)"
 msgstr "画像の最大高さ（パーセント）"
 
-#: source/win-preferences/schema/zettelkasten.ts:24
-msgid "ID regular expression"
-msgstr "IDの正規表現"
-
-#: source/win-preferences/schema/zettelkasten.ts:30
-msgid "Pattern used to generate new IDs"
-msgstr "新規IDを生成するためのパターン"
-
-#: source/win-preferences/schema/zettelkasten.ts:39
+#: source/win-preferences/schema/editor.ts:235
 #, fuzzy
-msgid "Link with filename only"
-msgstr "ファイル名のみ"
+msgid "Other settings"
+msgstr "その他のファイル"
 
-#: source/win-preferences/schema/zettelkasten.ts:44
+#: source/win-preferences/schema/editor.ts:241
 #, fuzzy
-msgid "When linking files, add the display name …"
-msgstr "ファイルをリンクする際にファイル名を追加するかどうか"
+msgid "Font size"
+msgstr "エディタのフォントサイズ"
 
-#: source/win-preferences/schema/zettelkasten.ts:47
-msgid "always"
-msgstr "常にする"
+#: source/win-preferences/schema/editor.ts:248
+#, fuzzy
+msgid "Indentation size (number of spaces)"
+msgstr "インデントに使用する空白の数"
 
-#: source/win-preferences/schema/zettelkasten.ts:48
-msgid "only when linking using the ID"
-msgstr "IDを使ってリンクした場合のみ"
+#: source/win-preferences/schema/editor.ts:255
+#, fuzzy
+msgid "Indent using tabs instead of spaces"
+msgstr "インデントにタブ文字を使用"
 
-#: source/win-preferences/schema/zettelkasten.ts:49
-msgid "never"
-msgstr "常にしない"
-
-#: source/win-preferences/schema/zettelkasten.ts:57
-msgid "Start a search when following Zettelkasten-links"
-msgstr "Zettelkastenリンクで検索を開始できるようにする"
-
-#: source/win-preferences/schema/zettelkasten.ts:62
-msgid "Automatically create non-existing files when following internal links"
-msgstr "内部リンクを開く際にファイルが存在しなければ自動的に作成する"
-
-#: source/win-preferences/schema/zettelkasten.ts:67
-msgid "Put auto-created files into this directory (must be loaded in Zettlr)"
+#: source/win-preferences/schema/editor.ts:261
+msgid "Highlight whitespace"
 msgstr ""
-"自動的に作られたファイルの格納先ディレクトリ（Zettlrに読み込まれている必要が"
-"あります）"
 
-#: source/win-preferences/schema/export.ts:24
-msgid "Use the internal Pandoc for exports"
+#: source/win-preferences/schema/editor.ts:267
+#, fuzzy
+msgid "Suggest emojis during autocompletion"
+msgstr "補完中に空白を受け付ける"
+
+#: source/win-preferences/schema/editor.ts:272
+msgid "Show link previews"
+msgstr "リンク先のプレビューを表示する"
+
+#: source/win-preferences/schema/editor.ts:278
+msgid "Automatically close matching character pairs"
+msgstr "対応する括弧を自動的に入力する"
+
+#: source/win-preferences/schema/autocorrect.ts:22
+#, fuzzy
+msgid "Autocorrect"
+msgstr "オートコレクトを有効化"
+
+#: source/win-preferences/schema/autocorrect.ts:32
+msgid "Smart quotes"
+msgstr ""
+
+#: source/win-preferences/schema/autocorrect.ts:45
+#, fuzzy
+msgid "Double Quotes"
+msgstr "マジッククォートを無効にする"
+
+#: source/win-preferences/schema/autocorrect.ts:48
+#: source/win-preferences/schema/autocorrect.ts:70
+msgid "Disable Magic Quotes"
+msgstr "マジッククォートを無効にする"
+
+#: source/win-preferences/schema/autocorrect.ts:67
+#, fuzzy
+msgid "Single Quotes"
+msgstr "マジッククォートを無効にする"
+
+#: source/win-preferences/schema/autocorrect.ts:95
+msgid "Text-replacement patterns"
+msgstr ""
+
+#: source/win-preferences/schema/autocorrect.ts:99
+msgid "Match whole words"
+msgstr "単語全体と一致する"
+
+#: source/win-preferences/schema/autocorrect.ts:100
+msgid "When checked, AutoCorrect will never replace parts of words"
+msgstr "チェックすると、オートコレクトは単語の一部を置換しません"
+
+#: source/win-preferences/schema/autocorrect.ts:107
+#, fuzzy
+msgid "Replace"
+msgstr "置き換え後"
+
+#: source/win-preferences/schema/autocorrect.ts:107
+msgid "With"
+msgstr ""
+
+#: source/win-preferences/schema/autocorrect.ts:112
+#: source/win-preferences/schema/spellchecking.ts:173
+#: source/win-preferences/schema/advanced.ts:115
+#, fuzzy
+msgid "Filter"
+msgstr "フィルタ…"
+
+#: source/win-preferences/schema/snippets.ts:30
+msgid "Open snippets editor"
+msgstr ""
+
+#: source/win-preferences/schema/import-export.ts:24
+msgid "Import and export profiles"
+msgstr ""
+
+#: source/win-preferences/schema/import-export.ts:30
+msgid "Open import profiles editor"
+msgstr ""
+
+#: source/win-preferences/schema/import-export.ts:44
+msgid "Open export profiles editor"
+msgstr ""
+
+#: source/win-preferences/schema/import-export.ts:59
+#, fuzzy
+msgid "Export settings"
+msgstr "%sにエクスポートします"
+
+#. TODO: Must be radio; second option "Use system-wide Pandoc for exports"
+#: source/win-preferences/schema/import-export.ts:65
+#, fuzzy
+msgid "Use Zettlr's internal Pandoc for exports"
 msgstr "内蔵のPandocを使用してエクスポートする"
 
-#: source/win-preferences/schema/export.ts:31
-msgid "Remove tags from files"
+#: source/win-preferences/schema/import-export.ts:71
+#, fuzzy
+msgid "Remove tags from files when exporting"
 msgstr "ファイルからタグを取り除く"
 
-#: source/win-preferences/schema/export.ts:41
+#: source/win-preferences/schema/import-export.ts:77
+#: source/win-preferences/schema/zettelkasten.ts:44
+#, fuzzy
+msgid "Internal links"
+msgstr "内部リンクをリンク解除する"
+
+#: source/win-preferences/schema/import-export.ts:80
 msgid "Remove internal links completely"
 msgstr "すべての内部リンクを取り除く"
 
-#: source/win-preferences/schema/export.ts:42
+#: source/win-preferences/schema/import-export.ts:81
 msgid "Unlink internal links"
 msgstr "内部リンクをリンク解除する"
 
-#: source/win-preferences/schema/export.ts:43
+#: source/win-preferences/schema/import-export.ts:82
 msgid "Don't touch internal links"
 msgstr "内部リンクを保持する"
 
-#: source/win-preferences/schema/export.ts:50
-msgid ""
-"Target directory for exported files. <em>Attention:</em> Selecting the "
-"current working directory will overwrite files without warning!"
+#: source/win-preferences/schema/import-export.ts:88
+msgid "Destination folder for exported files"
 msgstr ""
-"ファイルのエクスポート先ディレクトリ。<em>注意：現在の作業ディレクトリを指定"
-"すると、警告なしにファイルが上書きされます！</em>"
 
-#: source/win-preferences/schema/export.ts:53
-msgid "Temporary directory: is regularly expunged"
-msgstr "一時ディレクトリ：定期的に削除されます"
-
-#: source/win-preferences/schema/export.ts:54
-msgid ""
-"Current working directory: exported files will be saved into the currently "
-"selected directory."
+#. TODO: Add info-strings
+#: source/win-preferences/schema/import-export.ts:92
+msgid "Temporary folder"
 msgstr ""
-"現在の作業ディレクトリ：エクスポートされたファイルは現在選択中のディレクトリ"
-"に保存されます。"
 
-#: source/win-preferences/schema/export.ts:55
-msgid "Ask for directory"
-msgstr "ディレクトリを選択する"
+#: source/win-preferences/schema/import-export.ts:93
+#, fuzzy
+msgid "Same as file location"
+msgstr "ファイル情報を表示"
 
-#: source/win-preferences/schema/export.ts:64
+#: source/win-preferences/schema/import-export.ts:94
+msgid "Ask for folder when exporting"
+msgstr ""
+
+#: source/win-preferences/schema/import-export.ts:100
+msgid ""
+"Warning! Files in the temporary folder are regularly deleted. Choosing the "
+"same location as the file overwrites files with identical filenames if they "
+"already exist."
+msgstr ""
+
+#: source/win-preferences/schema/import-export.ts:105
+msgid "Custom export commands"
+msgstr ""
+
+#: source/win-preferences/schema/import-export.ts:113
 msgid "Display name"
 msgstr "表示名"
 
-#: source/win-preferences/schema/export.ts:64
+#: source/win-preferences/schema/import-export.ts:113
 msgid "Command"
 msgstr "コマンド"
 
-#: source/win-preferences/schema/export.ts:65
+#: source/win-preferences/schema/import-export.ts:114
 msgid ""
 "Enter custom commands to run the exporter with. Each command receives as its "
 "first argument the file or project folder to be exported."
@@ -2520,155 +3003,491 @@ msgstr ""
 "引数として、エクスポートするファイルまたはプロジェクトフォルダーを受け取りま"
 "す。"
 
-#: source/win-preferences/schema/advanced.ts:24
-msgid "Pattern for new filenames"
-msgstr "新規ファイル名のパターン"
+#: source/win-preferences/schema/zettelkasten.ts:23
+msgid "Zettelkasten IDs"
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:29
+#, fuzzy
+msgid "Pattern for Zettelkasten IDs"
+msgstr "新規IDを生成するためのパターン"
+
+#: source/win-preferences/schema/zettelkasten.ts:30
+#, fuzzy
+msgid "Uses ECMAScript regular expressions"
+msgstr "IDの正規表現"
+
+#: source/win-preferences/schema/zettelkasten.ts:36
+msgid "Pattern used to generate new IDs"
+msgstr "新規IDを生成するためのパターン"
+
+#: source/win-preferences/schema/zettelkasten.ts:39
+#, javascript-format
+msgid "Available Variables: %s"
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:50
+#, fuzzy
+msgid "Link with filename only"
+msgstr "ファイル名のみ"
+
+#: source/win-preferences/schema/zettelkasten.ts:55
+#, fuzzy
+msgid "When linking files, add the document name …"
+msgstr "ファイルをリンクする際にファイル名を追加するかどうか"
+
+#: source/win-preferences/schema/zettelkasten.ts:58
+#, fuzzy
+msgid "Always"
+msgstr "常にする"
+
+#: source/win-preferences/schema/zettelkasten.ts:59
+#, fuzzy
+msgid "Only when linking using the ID"
+msgstr "IDを使ってリンクした場合のみ"
+
+#: source/win-preferences/schema/zettelkasten.ts:60
+#, fuzzy
+msgid "Never"
+msgstr "常にしない"
+
+#: source/win-preferences/schema/zettelkasten.ts:68
+msgid "Link format"
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:73
+msgid ""
+"Internal links allow you to add an optional title, separated by a vertical "
+"bar character from the actual link target. Here you can define the ordering "
+"of the two."
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:79
+msgid "[[Link|Title]]: Link first (recommended)"
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:80
+msgid "[[Title|Link]]: Title first"
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:88
+#, fuzzy
+msgid "Start a full-text search when following internal links"
+msgstr "Zettelkastenリンクで検索を開始できるようにする"
+
+#: source/win-preferences/schema/zettelkasten.ts:89
+msgid "The search string will match the content between the brackets: [[ ]]."
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:96
+#, fuzzy
+msgid ""
+"Automatically create non-existing files in this folder when following "
+"internal links"
+msgstr "内部リンクを開く際にファイルが存在しなければ自動的に作成する"
+
+#: source/win-preferences/schema/zettelkasten.ts:101
+msgid "For this to work, the folder must be open as a Workspace in Zettlr."
+msgstr ""
+
+#: source/win-preferences/schema/zettelkasten.ts:106
+msgid "Path to folder"
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:24
+#, fuzzy
+msgid "LanguageTool"
+msgstr "LanguageToolを使用する"
+
+#: source/win-preferences/schema/spellchecking.ts:34
+msgid "Strictness"
+msgstr "厳密性"
+
+#: source/win-preferences/schema/spellchecking.ts:37
+#, fuzzy
+msgid "Standard"
+msgstr "通常"
+
+#: source/win-preferences/schema/spellchecking.ts:38
+#, fuzzy
+msgid "Picky"
+msgstr "より厳密"
+
+#: source/win-preferences/schema/spellchecking.ts:47
+#, fuzzy
+msgid "Mother language"
+msgstr "母国語"
+
+#: source/win-preferences/schema/spellchecking.ts:53
+msgid "Not set"
+msgstr "設定しない"
+
+#: source/win-preferences/schema/spellchecking.ts:61
+msgid "Preferred Variants"
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:66
+msgid ""
+"LanguageTool cannot distinguish certain language's variants. These settings "
+"will nudge LanguageTool to auto-detect your preferred variant of these "
+"languages."
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:71
+msgid "Interpret English as"
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:84
+msgid "Interpret German as"
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:94
+msgid "Interpret Portuguese as"
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:105
+msgid "Interpret Catalan as"
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:114
+msgid "LanguageTool Provider"
+msgstr "LanguageToolプロバイダー"
+
+#: source/win-preferences/schema/spellchecking.ts:118
+msgid "Custom server"
+msgstr "カスタムサーバー"
+
+#: source/win-preferences/schema/spellchecking.ts:125
+#, fuzzy
+msgid "Custom server address"
+msgstr "カスタムサーバー"
+
+#: source/win-preferences/schema/spellchecking.ts:134
+#, fuzzy
+msgid "LanguageTool Premium"
+msgstr "LanguageToolプロバイダー"
+
+#: source/win-preferences/schema/spellchecking.ts:139
+msgid ""
+"Zettlr will ignore the \"LanguageTool provider\" settings if you enter any "
+"credentials here."
+msgstr ""
+
+#: source/win-preferences/schema/spellchecking.ts:143
+msgid "LanguageTool Username"
+msgstr "LanguageTool ユーザー名"
+
+#: source/win-preferences/schema/spellchecking.ts:150
+msgid "LanguageTool API key"
+msgstr "LanguageTool APIキー"
+
+#: source/win-preferences/schema/spellchecking.ts:167
+#, fuzzy
+msgid "Active"
+msgstr "有効"
+
+#: source/win-preferences/schema/spellchecking.ts:167
+#, fuzzy
+msgid "Language"
+msgstr "言語コード"
+
+#: source/win-preferences/schema/spellchecking.ts:168
+msgid ""
+"Select the languages for which you want to enable automatic spell checking."
+msgstr "自動スペルチェックを有効にする言語を選択。"
+
+#: source/win-preferences/schema/spellchecking.ts:180
+msgid "User dictionary. Remove words by clicking them."
+msgstr "ユーザ辞書。クリックで単語を削除します。"
+
+#: source/win-preferences/schema/spellchecking.ts:182
+msgid "Dictionary entry"
+msgstr "辞書エントリ"
+
+#: source/win-preferences/schema/spellchecking.ts:185
+msgid "Search for entries …"
+msgstr "エントリーを検索…"
 
 #: source/win-preferences/schema/advanced.ts:30
+#, fuzzy
+msgid "Pattern for new file names"
+msgstr "新規ファイル名のパターン"
+
+#: source/win-preferences/schema/advanced.ts:36
+#, fuzzy
+msgid "Define a pattern for new file names"
+msgstr "新規ファイル名のパターン"
+
+#: source/win-preferences/schema/advanced.ts:38
+#, javascript-format
+msgid "Available variables: %s"
+msgstr ""
+
+#: source/win-preferences/schema/advanced.ts:44
 msgid "Do not prompt for filename when creating new files"
 msgstr "新規ファイル作成時にファイル名を確認しない"
 
-#: source/win-preferences/schema/advanced.ts:37
-msgid "Enable debug mode"
-msgstr "デバッグ モードを有効化"
-
-#: source/win-preferences/schema/advanced.ts:42
-msgid "Notify me about beta releases"
-msgstr "ベータ版のリリースを通知する"
-
-#: source/win-preferences/schema/advanced.ts:47
+#: source/win-preferences/schema/advanced.ts:57
 msgid "Use native window appearance"
 msgstr "ネイティブのウィンドウ外観を使用する"
 
-#: source/win-preferences/schema/advanced.ts:53
+#: source/win-preferences/schema/advanced.ts:58
+msgid "Only available on Linux; this is the default for macOS and Windows."
+msgstr ""
+
+#: source/win-preferences/schema/advanced.ts:64
 msgid "Enable window vibrancy"
 msgstr "ウィンドウのVibrancyを有効化"
 
-#: source/win-preferences/schema/advanced.ts:59
-msgid "Delete items irreversibly, if moving them to trash fails"
-msgstr "ゴミ箱への移動に失敗した場合は完全に削除する"
-
 #: source/win-preferences/schema/advanced.ts:65
+msgid "Only available on macOS; makes the window background opaque."
+msgstr ""
+
+#: source/win-preferences/schema/advanced.ts:72
 msgid "Show app in the notification area"
 msgstr "通知領域にアプリケーションを表示する"
 
-#: source/win-preferences/schema/advanced.ts:66
+#: source/win-preferences/schema/advanced.ts:73
 msgid "Leave app running in the notification area"
 msgstr "通知領域にアプリケーションを残す"
 
-#: source/win-preferences/schema/advanced.ts:73
-msgid "Automatically check for updates"
-msgstr "更新を自動的にチェックする"
-
-#: source/win-preferences/schema/advanced.ts:80
-msgid ""
-"Enter all file extensions that you want to see in your attachment sidebar. "
-"Separate them with a comma. Changes are recognised after a restart."
-msgstr ""
-"添付ファイル サイドバーに表示するファイルの拡張子を、カンマ区切りで入力してく"
-"ださい。変更は再起動後に反映されます。"
-
-#: source/win-preferences/schema/advanced.ts:88
+#: source/win-preferences/schema/advanced.ts:82
 msgid "Zoom behavior"
 msgstr "ズーム操作"
 
-#: source/win-preferences/schema/advanced.ts:90
-msgid "Zoom resizes the whole GUI"
+#: source/win-preferences/schema/advanced.ts:85
+#, fuzzy
+msgid "Resizes the whole GUI"
 msgstr "ズームでGUI全体の拡大率を変更する"
 
-#: source/win-preferences/schema/advanced.ts:91
-msgid "Zoom changes the editor font size"
+#: source/win-preferences/schema/advanced.ts:86
+#, fuzzy
+msgid "Changes the editor font size"
 msgstr "ズームでエディタのフォントサイズを変更する"
 
-#: source/win-preferences/schema/advanced.ts:99
-msgid "iFrame rendering whitelist"
+#: source/win-preferences/schema/advanced.ts:92
+msgid "Attachments sidebar"
+msgstr ""
+
+#: source/win-preferences/schema/advanced.ts:98
+msgid "File extensions to be visible in the Attachments sidebar"
+msgstr ""
+
+#: source/win-preferences/schema/advanced.ts:104
+#, fuzzy
+msgid "Iframe rendering whitelist"
 msgstr "iframe描画ホワイトリスト"
 
-#: source/win-preferences/schema/advanced.ts:102
+#: source/win-preferences/schema/advanced.ts:113
 msgid "Hostname"
 msgstr "ホスト名"
 
-#: source/win-preferences/schema/advanced.ts:110
+#: source/win-preferences/schema/advanced.ts:120
+#, fuzzy
+msgid "Watchdog polling"
+msgstr "ウォッチドッグ監視を有効化する"
+
+#: source/win-preferences/schema/advanced.ts:126
 msgid "Activate Watchdog polling"
 msgstr "ウォッチドッグ監視を有効化する"
 
-#: source/win-preferences/schema/advanced.ts:115
+#: source/win-preferences/schema/advanced.ts:131
 msgid "Time to wait before writing a file is considered done (in ms)"
 msgstr "ファイルの書き込みが完了したとみなせるまでの待機時間（ミリ秒）"
 
-#: source/win-main/tabs-context.ts:44
-msgid "Close other tabs"
-msgstr "他のタブを閉じる"
+#: source/win-preferences/schema/advanced.ts:138
+#, fuzzy
+msgid "Deleting items"
+msgstr "ファイルを削除"
 
-#: source/win-main/tabs-context.ts:50
-msgid "Close all tabs"
-msgstr "すべてのタブを閉じる"
+#: source/win-preferences/schema/advanced.ts:144
+msgid "Delete items irreversibly, if moving them to trash fails"
+msgstr "ゴミ箱への移動に失敗した場合は完全に削除する"
 
-#: source/win-main/tabs-context.ts:59
-msgid "Unpin tab"
-msgstr "タブ固定を解除"
+#: source/win-preferences/schema/advanced.ts:150
+#, fuzzy
+msgid "Debug mode"
+msgstr "デバッグ モードを有効化"
 
-#: source/win-main/tabs-context.ts:59
-msgid "Pin tab"
-msgstr "タブを固定"
+#: source/win-preferences/schema/advanced.ts:156
+msgid "Enable debug mode"
+msgstr "デバッグ モードを有効化"
 
-#: source/win-main/tabs-context.ts:68
-#: source/win-main/file-manager/util/file-item-context.ts:73
-msgid "Copy filename"
-msgstr "ファイル名をコピー"
+#: source/win-preferences/schema/advanced.ts:163
+msgid "Beta releases"
+msgstr ""
 
-#: source/win-main/tabs-context.ts:74
-msgid "Copy full path"
-msgstr "フルパスをコピー"
+#: source/win-preferences/schema/advanced.ts:169
+msgid "Notify me about beta releases"
+msgstr "ベータ版のリリースを通知する"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:29
-#: source/win-main/file-manager/util/file-item-context.ts:35
-msgid "Properties"
-msgstr "プロパティ"
+#: source/win-preferences/schema/citations.ts:28
+msgid "How would you like autocomplete to insert your citations?"
+msgstr "オートコンプリートで引用を挿入する方法を選択してください"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:53
-msgid "Rename directory"
-msgstr "ディレクトリ名を変更"
+#: source/win-preferences/schema/citations.ts:39
+msgid "Citation Database (CSL JSON or BibTex)"
+msgstr "参考文献データベース(CSL JSON または BibTeX)"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:68
-#: source/win-main/file-manager/util/file-item-context.ts:67
-msgid "Copy path"
-msgstr "フルパスをコピー"
+#: source/win-preferences/schema/citations.ts:41
+#: source/win-preferences/schema/citations.ts:53
+#, fuzzy
+msgid "Path to file"
+msgstr "ファイルに追加"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:77
-#: source/win-main/file-manager/util/file-item-context.ts:88
-msgid "Reveal in Finder"
-msgstr "Finderで表示"
+#: source/win-preferences/schema/citations.ts:51
+msgid "CSL-Style (optional)"
+msgstr "CSLスタイル(オプション)"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:77
-#: source/win-main/file-manager/util/file-item-context.ts:88
-msgid "Reveal in Explorer"
-msgstr "エクスプローラーで表示"
+#~ msgid ""
+#~ "Pandoc has not been found on this system. Please install Pandoc prior to "
+#~ "exporting or importing files."
+#~ msgstr ""
+#~ "システム上にPandocが見つかりませんでした。ファイルをエクスポートまたはイン"
+#~ "ポートする前にPandocをインストールしてください。"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:77
-#: source/win-main/file-manager/util/file-item-context.ts:88
-msgid "Reveal in File Browser"
-msgstr "File Browserで表示"
+#~ msgid ""
+#~ "After applying your glob-filters, no files remained to export. Please "
+#~ "adjust them in the project settings."
+#~ msgstr ""
+#~ "globを適用した結果、エクスポートするファイルが残りませんでした。プロジェク"
+#~ "ト設定で調整してください。"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:88
-msgid "Check for directory …"
-msgstr "ディレクトリをチェック…"
+#, javascript-format
+#~ msgid "%s matches"
+#~ msgstr "%s件一致"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:105
-msgid "Export Project"
-msgstr "プロジェクトをエクスポート"
+#~ msgid "Suggested tags for the current file"
+#~ msgstr "現在のファイルに提案されたタグ"
 
-#: source/win-main/file-manager/util/dir-item-context.ts:117
-msgid "Close Workspace"
-msgstr "ワークスペースを閉じる"
+#~ msgid "Add to file"
+#~ msgstr "ファイルに追加"
 
-#: source/win-main/file-manager/util/file-item-context.ts:58
-msgid "Duplicate file"
-msgstr "ファイルを複製"
+#~ msgid "Open in browser"
+#~ msgstr "ブラウザーで開く"
 
-#: source/win-main/file-manager/util/file-item-context.ts:101
-msgid "Close file"
-msgstr "ファイルを閉じる"
+#~ msgid "Show file"
+#~ msgstr "ファイルを表示"
+
+#~ msgid "Directory not found"
+#~ msgstr "ディレクトリが見つかりません"
+
+#, javascript-format
+#~ msgid "Opening new root %s …"
+#~ msgstr "新しいルートディレクトリ %s を開いています…"
+
+#, javascript-format
+#~ msgid "%s has been loaded."
+#~ msgstr "%s が読み込まれました。"
+
+#, javascript-format
+#~ msgid "Could not open workspace %s."
+#~ msgstr "%s のワークスペースを開けません。"
+
+#~ msgid "selected"
+#~ msgstr "選択中"
+
+#~ msgid "click to select"
+#~ msgstr "クリックして選択"
+
+#~ msgid "Automatically switch to dark mode"
+#~ msgstr "自動的にダークモードに切り替える"
+
+#~ msgid "Start dark mode at"
+#~ msgstr "ダークモード開始時刻"
+
+#~ msgid "End dark mode at"
+#~ msgstr "ダークモード終了時刻"
+
+#~ msgid "File manager mode"
+#~ msgstr "ファイルマネージャーモード"
+
+#~ msgid "Thin &mdash; show either file tree or file list"
+#~ msgstr "Thin &mdash; ファイルツリーとファイルリストのいずれかを表示する"
+
+#~ msgid "Expanded &mdash; show both file tree and file list"
+#~ msgstr "Expanded &mdash; ファイルツリーとファイルリストを両方表示する"
+
+#~ msgid "Combined &mdash; show files and directories in the file tree"
+#~ msgstr "Combined &mdash; ファイルツリーにファイルとディレクトリを表示する"
+
+#~ msgid "Display files using"
+#~ msgstr "ファイルの表示方法"
+
+#~ msgid "Sorting order for files (used for sorting by name)"
+#~ msgstr "ファイルの並び順(名前で並べ替える際に使用)"
+
+#~ msgid "When sorting by time, sort by"
+#~ msgstr "時刻で並べ替える際に使用する項目"
+
+#~ msgid "In the file metadata display"
+#~ msgstr "ファイルメタデータの表示に使用する日時"
+
+#~ msgid ""
+#~ "Choose the formatting characters that the bold/emphasis commands should "
+#~ "use"
+#~ msgstr "太字および強調コマンドで使用するフォーマット文字を選択してください"
+
+#~ msgid "Default image path (relative or absolute)"
+#~ msgstr "既定の画像パス(相対もしくは絶対)"
+
+#~ msgid "Algorithm to use for the readability mode"
+#~ msgstr "可読性モードで使用するアルゴリズム"
+
+#~ msgid "Primary Magic Quotes"
+#~ msgstr "一次マジッククォート"
+
+#~ msgid "Secondary Magic Quotes"
+#~ msgstr "二次マジッククォート"
+
+#~ msgid "String"
+#~ msgstr "元の文字列"
+
+#~ msgid ""
+#~ "Here you can define certain strings that will be replaced when "
+#~ "AutoCorrect is on. The characters on the left side will be replaced with "
+#~ "whatever comes on the right."
+#~ msgstr ""
+#~ "オートコレクトが有効な場合に置き換える文字列を定義します。左側の文字列が右"
+#~ "側の文字列に置き換わります。"
+
+#, fuzzy
+#~ msgid "Search for dictionaries…"
+#~ msgstr "辞書を検索..."
+
+#~ msgid ""
+#~ "Put auto-created files into this directory (must be loaded in Zettlr)"
+#~ msgstr ""
+#~ "自動的に作られたファイルの格納先ディレクトリ（Zettlrに読み込まれている必要"
+#~ "があります）"
+
+#~ msgid ""
+#~ "Target directory for exported files. <em>Attention:</em> Selecting the "
+#~ "current working directory will overwrite files without warning!"
+#~ msgstr ""
+#~ "ファイルのエクスポート先ディレクトリ。<em>注意：現在の作業ディレクトリを指"
+#~ "定すると、警告なしにファイルが上書きされます！</em>"
+
+#~ msgid "Temporary directory: is regularly expunged"
+#~ msgstr "一時ディレクトリ：定期的に削除されます"
+
+#~ msgid ""
+#~ "Current working directory: exported files will be saved into the "
+#~ "currently selected directory."
+#~ msgstr ""
+#~ "現在の作業ディレクトリ：エクスポートされたファイルは現在選択中のディレクト"
+#~ "リに保存されます。"
+
+#~ msgid "Ask for directory"
+#~ msgstr "ディレクトリを選択する"
+
+#~ msgid ""
+#~ "Enter all file extensions that you want to see in your attachment "
+#~ "sidebar. Separate them with a comma. Changes are recognised after a "
+#~ "restart."
+#~ msgstr ""
+#~ "添付ファイル サイドバーに表示するファイルの拡張子を、カンマ区切りで入力し"
+#~ "てください。変更は再起動後に反映されます。"
 
 #~ msgid "Use the operating system's accent colour instead of the theme colour"
 #~ msgstr "テーマの色の代わりにOSのアクセントカラーを使用する"

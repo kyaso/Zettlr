@@ -57,14 +57,7 @@ export interface AutocompletePlugin {
 }
 
 const forbiddenTokens = [
-  'YAMLFrontmatterKey',
-  'YAMLFrontmatterString',
-  'YAMLFrontmatterBoolean',
-  'YAMLFrontmatterNumber',
-  'YAMLFrontmatterPlain',
-  'YAMLFrontmatterMap',
-  'YAMLFrontmatterSeq',
-  'YAMLFrontmatterPair',
+  'YAMLFrontmatter',
   'YAMLFrontmatterStart',
   'YAMLFrontmatterEnd',
   'MathEquation'
@@ -100,6 +93,8 @@ const autocompleteSource: CompletionSource = function (ctx): CompletionResult|nu
       filter: true,
       update: (current, from, to, ctx) => {
         current.options = (plugin as AutocompletePlugin).entries(ctx, '')
+        // const query = ctx.state.doc.sliceString(from, to).toLowerCase()
+        // current.options = plugin!.entries(ctx, query)
         return current
       }
     }

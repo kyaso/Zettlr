@@ -45,7 +45,6 @@ export interface ConfigOptions {
   fileMetaTime: 'modtime'|'creationtime'
   sorting: 'natural'|'ascii'
   sortFoldersFirst: boolean
-  sortingTime: 'modtime'|'creationtime'
   muteLines: boolean
   fileManagerMode: 'thin'|'combined'|'expanded'
   fileNameDisplay: 'filename'|'title'|'heading'|'title+heading'
@@ -67,7 +66,7 @@ export interface ConfigOptions {
     idGen: string
     linkFilenameOnly: boolean
     linkWithFilename: 'always'|'never'|'withID'
-    autoCreateLinkedFiles: boolean
+    linkFormat: 'link|title'|'title|link'
     autoSearch: boolean
     customDirectory: string
     tooltipDelay: number
@@ -79,12 +78,14 @@ export interface ConfigOptions {
     }
   }
   editor: {
-    autocompleteAcceptSpace: boolean
+    autocompleteAcceptSpace: boolean // TODO: DEPRECATED
+    autocompleteSuggestEmojis: boolean
     autoSave: 'off'|'immediately'|'delayed'
     citeStyle: 'in-text'|'in-text-suffix'|'regular'
     autoCloseBrackets: boolean
     showLinkPreviews: boolean
     showStatusbar: boolean
+    showWhitespace: boolean
     defaultSaveImagePath: string
     enableTableHelper: boolean
     indentUnit: number
@@ -94,13 +95,19 @@ export interface ConfigOptions {
     inputMode: 'default'|'vim'|'emacs'
     boldFormatting: '**'|'__'
     italicFormatting: '_'|'*'
-    readabilityAlgorithm: string
+    readabilityAlgorithm: 'dale-chall'|'gunning-fog'|'coleman-liau'|'automated-readability'
     lint: {
       markdown: boolean
       languageTool: {
         active: boolean
         level: 'picky'|'default'
         motherTongue: string // e.g., en-US, de-DE
+        variants: {
+          en: string
+          de: string
+          pt: string
+          ca: string
+        }
         provider: 'official'|'custom'
         customServer: string
         username: string
@@ -247,7 +254,6 @@ export function getConfigTemplate (): ConfigOptions {
     fileMetaTime: 'modtime', // The time to be displayed in file meta
     sorting: 'natural', // Can be natural or based on ASCII values
     sortFoldersFirst: true, // should folders be shown first in combined fileview
-    sortingTime: 'modtime', // can be modtime or creationtime
     muteLines: true, // Should the editor mute lines in distraction free mode?
     fileManagerMode: 'combined', // thin = Preview or directories visible --- expanded = both visible --- combined = tree view displays also files
     fileNameDisplay: 'title+heading', // Controls what info is displayed as filenames
@@ -269,9 +275,8 @@ export function getConfigTemplate (): ConfigOptions {
       idRE: '(\\d{14})',
       idGen: '%Y%M%D%h%m%s',
       linkFilenameOnly: false,
-      linkWithFilename: 'always', // can be always|never|withID
-      // If true, create files that are not found, if forceOpen is called
-      autoCreateLinkedFiles: false,
+      linkWithFilename: 'never', // can be always|never|withID
+      linkFormat: 'link|title', // Determines what internal links ([[link|title]]) look like
       autoSearch: true, // Automatically start a search upon following a link?
       customDirectory: '', // If present, saves auto-created files here
       tooltipDelay: 250, // Tooltip popup delay (ms)
@@ -286,8 +291,10 @@ export function getConfigTemplate (): ConfigOptions {
     editor: {
       autoSave: 'off',
       autocompleteAcceptSpace: false, // Whether you can type spaces in autocorrect
+      autocompleteSuggestEmojis: true,
       autoCloseBrackets: true,
       showLinkPreviews: true, // Whether to fetch link previews in the editor
+      showWhitespace: false,
       defaultSaveImagePath: '',
       citeStyle: 'regular', // Determines how autocomplete will complete citations
       enableTableHelper: true, // Enable the table helper plugin
@@ -306,6 +313,13 @@ export function getConfigTemplate (): ConfigOptions {
           active: false, // Utilize languageTool?
           level: 'picky', // API: https://languagetool.org/http-api/#!/default/post_check
           motherTongue: '', // Optional motherTongue property
+          variants: {
+            // These defaults are taken from LT's extension
+            en: 'en-US',
+            de: 'de-DE',
+            pt: 'pt-PT',
+            ca: 'ca-ES'
+          },
           provider: 'official',
           customServer: '',
           username: '',
