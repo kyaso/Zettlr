@@ -125,7 +125,7 @@ export function getZettelkastenFields (config: ConfigOptions): PreferencesFields
         {
           type: 'checkbox',
           label: 'Automatically append root indication symbol when inserting custom ID',
-          model: 'zkn.blockIds.addRootIndicator',
+          model: 'zkn.blockIds.addRootIndicator'
         },
         {
           type: 'text',

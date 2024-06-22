@@ -552,7 +552,7 @@ export default class FSAL extends ProviderContract {
 
     const isRoot = this._config.get().openPaths.includes(absPath)
 
-    return await FSALDir.parse(absPath, this._cache, this.getMarkdownFileParser(), this._searchIndex,  this.getDirectorySorter(), isRoot, shallow)
+    return await FSALDir.parse(absPath, this._cache, this.getMarkdownFileParser(), this._searchIndex, this.getDirectorySorter(), isRoot, shallow)
   }
 
   /**

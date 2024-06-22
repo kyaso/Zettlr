@@ -312,7 +312,7 @@ if (windowId === null) {
 const hideBacklinks = ref<boolean>(true)
 const hideUnlinkedMentions = ref<boolean>(true)
 const hideOutboundLinks = ref<boolean>(true)
-const maxWeight = ref<Number>(0)
+const maxWeight = ref<number>(0)
 const toggleStateBacklinks = ref<boolean>(false)
 const toggleStateUnlinked = ref<boolean>(false)
 const toggleStateOutbound = ref<boolean>(false)
@@ -335,7 +335,7 @@ const numUnlinkedMentions = computed(() => {
   return sum
 })
 
-function getTitle(name: string, num: number): string {
+function getTitle (name: string, num: number): string {
   return name + ' (' + num + ')'
 }
 const numOutboundLinks = computed(() => outboundLinks.value.length)
@@ -410,9 +410,9 @@ async function recomputeBacklinksAndMentions (): Promise<void> {
 
     // Iterate over the lines of the current result set
     for (let j = x.result.length - 1; j >= 0; j--) {
-      const isBacklink: boolean = ( x.result[j].restext.includes(fileNameLink) ||
+      const isBacklink: boolean = (x.result[j].restext.includes(fileNameLink) ||
                                     x.result[j].restext.includes(fileNameLinkWithTitle)
-                                  )
+      )
       const isNegOne: boolean = x.result[j].line === -1
 
       if (isBacklink || isNegOne) {

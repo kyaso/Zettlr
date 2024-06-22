@@ -20,8 +20,6 @@ import type WorkspaceProvider from '@providers/workspaces'
 import { WORKSPACE_PROVIDER_EVENTS } from '@providers/workspaces'
 import path from 'path'
 
-import path from 'path'
-
 /**
  * This class manages the coloured tags of the app. It reads the tags on each
  * start of the app and writes them after they have been changed.
