@@ -316,9 +316,9 @@ const maxWeight = ref<number>(0)
 const toggleStateBacklinks = ref<boolean>(false)
 const toggleStateUnlinked = ref<boolean>(false)
 const toggleStateOutbound = ref<boolean>(false)
-const backlinks = ref<SearchResultWrapper>([])
-const unlinkedMentions = ref<SearchResultWrapper>([])
-const outboundLinks = ref<OutboundLink>([])
+const backlinks = ref<SearchResultWrapper[]>([])
+const unlinkedMentions = ref<SearchResultWrapper[]>([])
+const outboundLinks = ref<OutboundLink[]>([])
 
 const numBacklinks = computed(() => {
   let sum = 0
