@@ -345,6 +345,7 @@ const outboundLinksTitle = computed(() => getTitle('Outbound links', numOutbound
 
 const lastLeafId = computed(() => documentTreeStore.lastLeafId)
 const lastActiveFile = computed(() => documentTreeStore.lastLeafActiveFile)
+const roots = computed(() => workspacesStore.roots)
 const recentSearchQuery = computed(() => configStore.config.window.recentGlobalSearches)
 const fileTree = computed(() => workspacesStore.rootDescriptors)
 
@@ -353,15 +354,9 @@ watch(lastActiveFile, () => {
   recomputeOutboundLinks().catch(err => console.error('Could not recompute outbound links:', err))
 })
 
-onMounted(() => {
+watch(roots, () => {
   recomputeBacklinksAndMentions().catch(err => console.error('Could not recompute backlinks:', err))
   recomputeOutboundLinks().catch(err => console.error('Could not recompute outbound links:', err))
-  ipcRenderer.on('documents-update', (e, { event, context }) => {
-    if (event === DP_EVENTS.FILE_SAVED) {
-      recomputeBacklinksAndMentions().catch(err => console.error('Could not recompute backlinks:', err))
-      recomputeOutboundLinks().catch(err => console.error('Could not recompute outbound links:', err))
-    }
-  })
 })
 
 async function recomputeBacklinksAndMentions (): Promise<void> {
