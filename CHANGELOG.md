@@ -2,11 +2,15 @@
 
 ## GUI and Functionality
 
-(nothing here yet)
+- Zettlr now remembers the widths of file manager and sidebar
+- You can now reset the file manager and sidebar widths by double-clicking the
+  corresponding resizer
 
 ## Under the Hood
 
-(nothing here yet)
+- Update Electron to `v31.0.0`
+- Switched to ESLint v9.x, thereby replacing the "old" `.eslintrc.json` config
+  with what ESLint calls "flat" configs
 
 # 3.2.0
 
