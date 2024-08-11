@@ -5,10 +5,16 @@
 - Zettlr now remembers the widths of file manager and sidebar
 - You can now reset the file manager and sidebar widths by double-clicking the
   corresponding resizer
+- Copying plain links in the form `<http://www.example.com>` will now remove the
+  angled brackets (#5285)
+- Reverted a change from 3.1.0 which altered the process of creating new files
+  in such a way that the "open directory" was no longer considered; now Zettlr
+  will again use the open directory if present, allowing users to quickly create
+  new files by selecting a folder first in the file manager (#5141)
 
 ## Under the Hood
 
-- Update Electron to `v31.0.0`
+- Update Electron to `v30.3.1`
 - Switched to ESLint v9.x, thereby replacing the "old" `.eslintrc.json` config
   with what ESLint calls "flat" configs
 
