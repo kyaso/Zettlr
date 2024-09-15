@@ -1,4 +1,4 @@
-# Upcoming
+# 3.2.1
 
 ## GUI and Functionality
 
@@ -11,12 +11,19 @@
   in such a way that the "open directory" was no longer considered; now Zettlr
   will again use the open directory if present, allowing users to quickly create
   new files by selecting a folder first in the file manager (#5141)
+- Updated translations:
+  - `it-IT` (#5233)
+  - `zh-TW` (#5327)
+  - `nl-NL` (#5319)
+  - `ru-RU` (#5314)
 
 ## Under the Hood
 
-- Update Electron to `v30.3.1`
+- Update Electron to `v32.1.0`
+- Update Pandoc to `v3.4`
 - Switched to ESLint v9.x, thereby replacing the "old" `.eslintrc.json` config
   with what ESLint calls "flat" configs
+- Bumped various dependencies
 
 # 3.2.0
 
