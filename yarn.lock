@@ -16117,8 +16117,8 @@ __metadata:
     "@eslint/config-inspector": ^0.5.4
     "@lezer/common": ^1.2.1
     "@lezer/highlight": ^1.2.1
-    "@replit/codemirror-emacs": ^6.1.0
     "@orama/orama": ^2.0.20
+    "@replit/codemirror-emacs": ^6.1.0
     "@replit/codemirror-vim": ^6.2.1
     "@stylistic/eslint-plugin": ^2.8.0
     "@types/adm-zip": ^0.5.5
