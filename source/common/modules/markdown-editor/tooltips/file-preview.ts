@@ -23,11 +23,11 @@ import { hoverTooltip, EditorView, type Tooltip } from '@codemirror/view'
 import { getSearchButton, getCopyButton } from './common'
 import { type MDFileDescriptor } from '@dts/common/fsal'
 import { configField } from '../util/configuration'
+import type { FindFileAndReturnMetadataResult } from 'source/app/service-providers/commands/file-find-and-return-meta-data'
+import { pathDirname } from 'source/common/util/renderer-path-polyfill'
+import makeValidUri from 'source/common/util/make-valid-uri'
 
 const ipcRenderer = window.ipc
-
-// [ file.name, preview, file.wordCount, file.modtime ]
-// type IpcResult = undefined|[string, string, number, number]
 
 // Previews files with tooltips
 async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1): Promise<Tooltip|null> {
@@ -72,7 +72,7 @@ async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1):
  * @param   {MDFileDescriptor}  desc  A file descriptor
  * @param   {string}    linkContents  The link contents (used for navigation)
  *
- * @return  {Element}                 The wrapper element
+ * @return  {Element}                                        The wrapper element
  */
 // TODO: desc has different type now
 function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: string): HTMLDivElement {
