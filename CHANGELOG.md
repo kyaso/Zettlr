@@ -2,17 +2,36 @@
 
 ## GUI and Functionality
 
-* Fix highlight markers not appearing while the emphasis renderer is on when the
+- Fix highlight markers not appearing while the emphasis renderer is on when the
   user edits a highlighted span
-* Add pascal syntax highlighting to the code block autocomplete
-* Improved highlight detection around punctuation marks and other non-word
+- Add pascal syntax highlighting to the code block autocomplete
+- Improved highlight detection around punctuation marks and other non-word
   characters
-* Image previews now treat escaped quotes in image titles properly
+- Image previews now treat escaped quotes in image titles properly
   (`![alt](image.png "\"quoted\" title")`)
+- Fix an issue with image caption updating that may replace text surrounding the
+  image (#5021)
+- Too small images won't display the informational layers anymore (#3953)
+- Improve image copy and paste operations (#5408)
+- Improve dropping operations onto the main editor
+- Blockquote markers are now properly hidden with the emphasis renderer on and
+  the cursor not within the blockquote (#4667)
+- Fix ambiguous German unsaved-changes dialog (#5072)
+- Fixed an issue where some websites could make Zettlr freeze on loading a link
+  preview via catastrophic backtracking in a regular expression (#4883)
+- Make link preview generator more resilient
+- Updated German (`de-DE`) translation (#5399)
+- Fixed an issue where indented LaTeX math equations could crash the editor
+  instance due to the code marks including superfluous newlines (#4726)
+- Fixed missing code block background on YAML Frontmatters
+- Improved visual feedback during the update process
+- Zettlr now checks for new updates once an hour instead only during startup
+- New tags are now picked up by the app immediately (#5140)
 
 ## Under the Hood
 
 - Moved image preview styles into Codemirror plugin; simplified container
+- Bump Pandoc to version 3.5
 
 # 3.2.2
 
