@@ -2,6 +2,16 @@
 
 ## GUI and Functionality
 
+(nothing here)
+
+## Under the Hood
+
+(nothing here)
+
+# 3.2.3
+
+## GUI and Functionality
+
 - Fix highlight markers not appearing while the emphasis renderer is on when the
   user edits a highlighted span
 - Add pascal syntax highlighting to the code block autocomplete
@@ -27,11 +37,23 @@
 - Improved visual feedback during the update process
 - Zettlr now checks for new updates once an hour instead only during startup
 - New tags are now picked up by the app immediately (#5140)
+- Fixed a UI regression where clicking on the tag filter didn't focus the text
+  box (#5444)
+- Nightly releases are no longer considered older than the current stable
+  version (#5429)
+- Fixed file duplication (#5360)
+- Fixed a bug that would cause a saved window state to be lost due to an issue
+  with the active file not existing anymore
+- Zettlr now respects your chosen symbols for bold and italic formatting upon
+  converting HTML to Markdown (e.g., during paste; #5396)
 
 ## Under the Hood
 
 - Moved image preview styles into Codemirror plugin; simplified container
 - Bump Pandoc to version 3.5
+- Properly type document tree JSONs and make the logic more resilient to a lack
+  of an active file upon hydration
+- Properly type props for MainEditor Vue component
 
 # 3.2.2
 
