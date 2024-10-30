@@ -2,6 +2,8 @@
 
 ## GUI and Functionality
 
+- Prevent initial startup update-check if the setting is unchecked (context:
+  https://github.com/Zettlr/Zettlr/commit/812899#r148519528)
 - Fixed non-unique clipboard data paste filenames (#5449)
 
 ## Under the Hood
