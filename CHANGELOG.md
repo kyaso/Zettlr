@@ -2,7 +2,7 @@
 
 ## GUI and Functionality
 
-(nothing here)
+- Fixed non-unique clipboard data paste filenames (#5449)
 
 ## Under the Hood
 
