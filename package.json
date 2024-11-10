@@ -60,7 +60,7 @@
     "@codemirror/view": "^6.33.0",
     "@lezer/common": "^1.2.1",
     "@lezer/highlight": "^1.2.1",
-    "@orama/orama": "^2.0.20",
+    "@orama/orama": "^3.0.1",
     "@replit/codemirror-emacs": "^6.1.0",
     "@replit/codemirror-vim": "^6.2.1",
     "adm-zip": "^0.5.16",

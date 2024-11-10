@@ -1634,10 +1634,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@orama/orama@npm:^2.0.20":
-  version: 2.0.20
-  resolution: "@orama/orama@npm:2.0.20"
-  checksum: 3189563ae067a08ec3cb7938409a53d8fa1d7f8417059fb0fb499388b7a3adc8f8e990a6aa90cd61bd2eac9eb30fa3e045735b0610f66363439d82976b3be947
+"@orama/orama@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@orama/orama@npm:3.0.1"
+  checksum: eddbf89c6c4e07b7685af9e854121b65a8f090667335f7c7979de643177f5bda4c9dc3102c4ea5a51cfedb58c43cacf684117459b5d79ff695d2c51a7e2f04f5
   languageName: node
   linkType: hard
 
@@ -16137,7 +16137,7 @@ __metadata:
     "@eslint/config-inspector": ^0.5.4
     "@lezer/common": ^1.2.1
     "@lezer/highlight": ^1.2.1
-    "@orama/orama": ^2.0.20
+    "@orama/orama": ^3.0.1
     "@replit/codemirror-emacs": ^6.1.0
     "@replit/codemirror-vim": ^6.2.1
     "@stylistic/eslint-plugin": ^2.8.0

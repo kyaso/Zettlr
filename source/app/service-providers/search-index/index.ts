@@ -30,8 +30,8 @@ export default class SearchIndexProvider extends ProviderContract {
     await this.init()
   }
 
-  private async init (): Promise<any> {
-    this._db = await create({
+  private init () {
+    this._db = create({
       schema: {
         id: 'string',
         fileName: 'string',
@@ -40,32 +40,32 @@ export default class SearchIndexProvider extends ProviderContract {
     })
   }
 
-  public async insert (id: string, fileName: string, fileContent: string): Promise<any> {
+  public insert (id: string, fileName: string, fileContent: string) {
     this._logger.verbose(`SearchIndexProvider: Inserting ${id}...`)
-    await insert(this._db, {
+    insert(this._db, {
       id,
       fileName,
       fileContent
     })
   }
 
-  public async update (id: string, fileName: string, fileContent: string): Promise<any> {
+  public update (id: string, fileName: string, fileContent: string) {
     this._logger.verbose(`SearchIndexProvider: Updating ${id}...`)
-    await update(this._db, id, {
+    update(this._db, id, {
       id,
       fileName,
       fileContent
     })
   }
 
-  public async search (query: string): Promise<any> {
+  public search (query: string) {
     this._logger.verbose(`SearchIndexProvider: Searching for ${query}...`)
-    const result = await search(this._db, {
+    const result = search(this._db, {
       term: query,
       properties: [ 'fileName', 'fileContent' ],
       // By default, orama only returns 10 results, hence we increase the limit
       // to the number of indexed files
-      limit: await count(this._db)
+      limit: count(this._db)
     })
     // console.log(`Search took ${result.elapsed.formatted}`)
     // console.log(`Search result: ${JSON.stringify(result, undefined, 2)}`)
@@ -75,8 +75,8 @@ export default class SearchIndexProvider extends ProviderContract {
     return fileList
   }
 
-  public async contains (id: string): Promise<boolean> {
-    const ret = await getByID(this._db, id)
+  public contains (id: string) {
+    const ret = getByID(this._db, id)
     return (ret !== undefined)
   }
 
