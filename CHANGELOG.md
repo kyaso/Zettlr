@@ -1,5 +1,16 @@
 # Upcoming
 
+## Please Backup Your Writing Statistics
+
+This update includes a change in the writing statistics. While we extensively
+tested it, we would like you to backup your personal writing statistics. You can
+do so by going into Zettlr's data directory and simply make a copy of the file
+`stats.json` before launching the update. Your data directory is located at
+`C:\Users\<your username>\AppData\Roaming\Zettlr` (Windows),
+`/Users/<your username>/Library/Application support/Zettlr` (macOS), or
+`/home/<your username>/.config/Zettlr` (Linux). Then, check if your writing
+statistics still look proper. If not, please report this. Thanks!
+
 ## GUI and Functionality
 
 - **New Feature**: Images in the "other files" tab do now contain a small
@@ -11,21 +22,29 @@
   project files to reside in the top folder; included project files in
   subfolders will not be affected
 - The formatting toolbar can now be toggled on or off in the preferences (#5207)
-- Mapped Vim's write and quit commands to saving and closing actions (#4720,
-  #5463):
-  - `w`: Executes a save command for the current file
-  - `q`: Executes a close-file command for the current file
-  - `wq`: Attempts to save the current file and then close it
-  - Note that the `!` argument for supressing the "Omit unsaved changes" dialog
-    will not work, as the editor does not have the authority to tell main to
-    simply omit work (this is a security feature)
+- Vim mode improvements:
+  - Mapped Vim's write and quit commands to saving and closing actions (#4720,
+    #5463):
+    - `w`: Executes a save command for the current file
+    - `q`: Executes a close-file command for the current file
+    - `wq`: Attempts to save the current file and then close it
+    - Note that the `!` argument for supressing the "Omit unsaved changes"
+      dialog will not work, as the editor does not have the authority to tell
+      main to simply omit work (this is a security feature)
+  - Movement keys (`j`/`k`) now account for line wrapping for a smoother
+    navigation experience
+  - Default Shortcuts Restored: Unmapped `C-f`, `C-t`, and `C-c` in specific
+    modes to re-enable default editor behaviors like search and task item
+    shortcuts
 - Columns in the preferences window are now properly aligned (#5410)
+- Fix color scheme in readability mode (#5478)
 - Prevent initial startup update-check if the setting is unchecked (context:
   https://github.com/Zettlr/Zettlr/commit/812899#r148519528)
-- Fix errors in German translation (`de-DE`)
+- Fix errors in, and update, German translation (`de-DE`)
 - Update Turkish translation (`tr-TR`) (#5461)
 - Fix "dancing list items" (#4602)
 - Allow three-digit ordinal day of the year in IDs and filenames (`%o`; #5424)
+- Zettlr finally counts and remembers character counts
 - The link preview and force-open workflows now expect internal/wiki-links that
   link to headings within the file (`[[filename#heading-id]]`) and can handle
   such links appropriately; the editors will not yet jump to the corresponding
@@ -45,6 +64,8 @@
 - Fixed drag & drop behavior of open-able files onto the editor from the file
   browser; dropping any supported file onto the app will now attempt to open it
   (#5344)
+- Fixed export menu not remembering last selected custom commands (#5163)
+- Provide default reset-to-sizes for various split views
 
 ## Under the Hood
 
@@ -54,14 +75,19 @@
 - Update various other dependencies
 - The `PersistentDataContainer` now uses proper data types, making usage more
   type-safe
+- Completely refactor the Statistics provider as well as the statistics display
 - Replace the deprecated `registerFileProtocol` call with the new recommended
   `handle` call for handling `safe-file://` calls
 - Re-introduce linter rules; all of these are part of the common style we
   already use, but they got lost in one of the past ESLint upgrades:
   - enforce single quotes across the codebase
   - enforce proper object property spacing
+  - enforce type imports
 - Moved all keymaps to a centralized space, enabling us to customize them
   further in the future and streamlining the available keybindings
+- The document provider is now more strict when loading persisted window
+  arrangements from disk on startup
+- Made many additional strings in the GUI translatable
 
 # 3.2.3
 

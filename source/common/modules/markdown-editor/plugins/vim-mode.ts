@@ -16,8 +16,8 @@
  * END HEADER
  */
 
-import { Extension } from '@codemirror/state'
-import { vim, Vim, CodeMirror } from '@replit/codemirror-vim'
+import type { Extension } from '@codemirror/state'
+import { vim, Vim, type CodeMirror } from '@replit/codemirror-vim'
 import { configField } from '../util/configuration'
 import { editorMetadataFacet } from './editor-metadata'
 
@@ -109,10 +109,11 @@ Vim.defineEx('wq', 'wq', (cm: CodeMirror, params: VimParams) => {
   })
 })
 
-// Vim custom keymaps
-Vim.map('jk', '<Esc>', 'insert')
+Vim.map('jk', '<Esc>', 'insert') // custom
+// Remap movement keys
 Vim.map('j', 'gj') // Account for line wraps when moving down
 Vim.map('k', 'gk') // Account for line wraps when moving up
+
 // Unmap bindings to restore default editor behavior
 Vim.unmap('<C-f>') // Allow invoking Ctrl+F search from all modes
 Vim.unmap('<C-t>', 'insert') // Allow task item shortcut in Insert mode
