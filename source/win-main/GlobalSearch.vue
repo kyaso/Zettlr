@@ -149,7 +149,7 @@ import type { FileSearchDescriptor, SearchResult, SearchResultWrapper } from '@d
 import showPopupMenu from '@common/modules/window-register/application-menu-helper'
 import { type AnyMenuItem } from '@dts/renderer/context'
 // import { markText } from './shared'
-import { hasMdOrCodeExt } from '@providers/fsal/util/is-md-or-code-file'
+import { hasMdOrCodeExt } from '@common/util/file-extention-checks'
 import { useConfigStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
 import type { MaybeRootDescriptor } from 'source/types/common/fsal'
 

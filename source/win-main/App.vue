@@ -170,6 +170,7 @@ import { type ToolbarControl } from '@common/vue/window/WindowToolbar.vue'
 import { useConfigStore, useDocumentTreeStore, useWindowStateStore } from 'source/pinia'
 import type { ConfigOptions } from 'source/app/service-providers/config/get-config-template'
 import { type AnyDescriptor } from 'source/types/common/fsal'
+import type { DocumentManagerIPCAPI } from 'source/app/service-providers/documents'
 
 const ipcRenderer = window.ipc
 
@@ -661,7 +662,7 @@ onMounted(() => {
           windowId,
           leafId: lastLeafId.value
         }
-      }).catch(err => console.error(err))
+      } as DocumentManagerIPCAPI).catch(err => console.error(err))
     } else if (shortcut === 'navigate-forward') {
       ipcRenderer.invoke('documents-provider', {
         command: 'navigate-forward',
@@ -669,7 +670,7 @@ onMounted(() => {
           windowId,
           leafId: lastLeafId.value
         }
-      }).catch(err => console.error(err))
+      } as DocumentManagerIPCAPI).catch(err => console.error(err))
     }
   })
 
@@ -762,7 +763,7 @@ function jtl (filePath: string, lineNumber: number, newTab: boolean): void {
     ipcRenderer.invoke('documents-provider', {
       command: 'open-file',
       payload: { path: filePath, windowId, leafId: containingLeaf.id }
-    })
+    } as DocumentManagerIPCAPI)
       .then(() => {
         // Re-execute the jtl command
         setTimeout(() => jtl(filePath, lineNumber, newTab), WAIT_TIME)
@@ -782,7 +783,7 @@ function jtl (filePath: string, lineNumber: number, newTab: boolean): void {
       leafId: lastLeafId.value,
       newTab
     }
-  })
+  } as DocumentManagerIPCAPI)
     .then(() => {
       // Re-execute the jtl command
       setTimeout(() => jtl(filePath, lineNumber, newTab), WAIT_TIME)
@@ -805,6 +806,7 @@ function startGlobalSearch (terms: string): void {
     .catch(err => console.error(err))
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function toggleFileList (): void {
   // This event can be used by various components to ask the file manager to
   // toggle its file list visibility
@@ -830,7 +832,7 @@ function handleClick (clickedID?: string): void {
         windowId,
         leafId: lastLeafId.value
       }
-    }).catch(err => console.error(err))
+    } as DocumentManagerIPCAPI).catch(err => console.error(err))
   } else if (clickedID === 'next-file') {
     ipcRenderer.invoke('documents-provider', {
       command: 'navigate-forward',
@@ -838,7 +840,7 @@ function handleClick (clickedID?: string): void {
         windowId,
         leafId: lastLeafId.value
       }
-    }).catch(err => console.error(err))
+    } as DocumentManagerIPCAPI).catch(err => console.error(err))
   } else if (clickedID === 'export') {
     showExportPopover.value = !showExportPopover.value
   } else if (clickedID === 'show-stats') {

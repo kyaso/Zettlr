@@ -60,7 +60,7 @@ async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1):
     pos: nodeAt.from,
     end: nodeAt.to,
     above: true,
-    create (view) {
+    create (_view) {
       return { dom: getPreviewElement(desc, fileToDisplay) }
     }
   }
