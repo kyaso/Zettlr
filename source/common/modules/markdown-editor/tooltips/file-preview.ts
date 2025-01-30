@@ -22,7 +22,6 @@ import { hoverTooltip, EditorView, type Tooltip } from '@codemirror/view'
 // import sanitizeHtml from 'sanitize-html'
 import { getSearchButton, getCopyButton } from './common'
 import { type MDFileDescriptor } from '@dts/common/fsal'
-import { configField } from '../util/configuration'
 import type { ForceOpenAPI } from 'source/app/service-providers/commands/force-open'
 
 const ipcRenderer = window.ipc

@@ -33,18 +33,17 @@ import { DateTime } from 'luxon'
 import { v4 as uuid } from 'uuid'
 import generateId from '@common/util/generate-id'
 import { configField } from '../util/configuration'
-import { gemoji } from 'gemoji'
 import { pathBasename, pathDirname, pathExtname } from '@common/util/renderer-path-polyfill'
 
 /**
  * This utility function inserts an emoji
  */
-const applyEmoji = function (view: EditorView, completion: Completion, from: number, to: number): void {
-  view.dispatch({
-    changes: [{ from: from - 1, to, insert: completion.label }],
-    selection: { anchor: from - 1 + completion.label.length }
-  })
-}
+// const applyEmoji = function (view: EditorView, completion: Completion, from: number, to: number): void {
+//   view.dispatch({
+//     changes: [{ from: from - 1, to, insert: completion.label }],
+//     selection: { anchor: from - 1 + completion.label.length }
+//   })
+// }
 
 // const emojis: Completion[] = gemoji.map(g => {
 //   return {
