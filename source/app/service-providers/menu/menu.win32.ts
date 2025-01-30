@@ -61,7 +61,7 @@ export default function getMenu (
           id: 'menu.fav_docs.file' + idStr,
           label: config.get('custom.ctrlNum.file' + idStr),
           accelerator: 'Ctrl+' + idStr,
-          click: function (menuitem, focusedWindow) {
+          click: function () {
             const file: string = config.get('custom.ctrlNum.file' + idStr)
             commands.run('open-file', {
               path: file,

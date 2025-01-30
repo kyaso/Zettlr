@@ -23,9 +23,6 @@ import { hoverTooltip, EditorView, type Tooltip } from '@codemirror/view'
 import { getSearchButton, getCopyButton } from './common'
 import { type MDFileDescriptor } from '@dts/common/fsal'
 import { configField } from '../util/configuration'
-import type { FindFileAndReturnMetadataResult } from 'source/app/service-providers/commands/file-find-and-return-meta-data'
-import { pathDirname } from 'source/common/util/renderer-path-polyfill'
-import makeValidUri from 'source/common/util/make-valid-uri'
 import type { ForceOpenAPI } from 'source/app/service-providers/commands/force-open'
 
 const ipcRenderer = window.ipc
@@ -51,8 +48,6 @@ async function filePreviewTooltip (view: EditorView, pos: number, side: 1 | -1):
     'application',
     { command: 'find-exact', payload: fileToDisplay }
   )
-
-  const { zknLinkFormat } = view.state.field(configField)
 
   // By annotating a range (providing `end`) the hover tooltip will stay as long
   // as the user is somewhere over the links

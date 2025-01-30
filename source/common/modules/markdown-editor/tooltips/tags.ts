@@ -17,7 +17,7 @@ import { syntaxTree } from '@codemirror/language'
 import { type EditorView, hoverTooltip, type Tooltip } from '@codemirror/view'
 import { getSearchButton, getCopyButton } from './common'
 
-async function tagTooltip (view: EditorView, pos: number, side: 1 | -1): Promise<Tooltip|null> {
+async function tagTooltip (view: EditorView, pos: number): Promise<Tooltip|null> {
   const nodeAt = syntaxTree(view.state).resolve(pos, 0)
 
   if (nodeAt.type.name !== 'ZknTagContent') {
@@ -30,7 +30,7 @@ async function tagTooltip (view: EditorView, pos: number, side: 1 | -1): Promise
     pos: nodeAt.from,
     end: nodeAt.to,
     above: true,
-    create (view) {
+    create () {
       return { dom: getTooltipElement(tagContents) }
     }
   }

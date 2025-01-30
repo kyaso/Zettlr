@@ -72,7 +72,7 @@ export const tags: AutocompletePlugin = {
 
     return false
   },
-  entries (ctx, query) {
+  entries (ctx) {
     return ctx.state.field(tagsUpdateField)
   },
   fields: [tagsUpdateField]

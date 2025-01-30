@@ -115,7 +115,7 @@ export const codeBlocks: AutocompletePlugin = {
       return false
     }
   },
-  entries (ctx, query) {
+  entries () {
     return getEntries()
   }
 }

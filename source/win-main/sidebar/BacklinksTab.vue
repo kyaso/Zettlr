@@ -276,11 +276,10 @@ import { type SearchResult, type SearchResultWrapper, type SearchTerm } from '@d
 // import { defineComponent } from '@vue/runtime-core'
 import { markText as markTextShared } from '../shared'
 import { copyZknLink } from '@common/util/clipboard'
-import { DP_EVENTS, OpenDocument } from '@dts/common/documents'
 import objectToArray from '@common/util/object-to-array'
 import compileSearchTerms from '@common/util/compile-search-terms'
 import { type MDFileDescriptor } from '@dts/common/fsal'
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useConfigStore, useDocumentTreeStore, useWorkspacesStore } from 'source/pinia'
 import { pathBasename } from '@common/util/renderer-path-polyfill'
 

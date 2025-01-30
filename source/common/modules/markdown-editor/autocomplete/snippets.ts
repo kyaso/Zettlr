@@ -46,15 +46,15 @@ const applyEmoji = function (view: EditorView, completion: Completion, from: num
   })
 }
 
-const emojis: Completion[] = gemoji.map(g => {
-  return {
-    label: g.emoji,
-    detail: g.names.join(', '),
-    section: g.category,
-    info: g.tags.join(', '),
-    apply: applyEmoji
-  }
-})
+// const emojis: Completion[] = gemoji.map(g => {
+//   return {
+//     label: g.emoji,
+//     detail: g.names.join(', '),
+//     section: g.category,
+//     info: g.tags.join(', '),
+//     apply: applyEmoji
+//   }
+// })
 
 // Define a class to highlight active tabstops
 const tabstopDeco = Decoration.mark({ class: 'tabstop' })
@@ -361,7 +361,7 @@ export const snippets: AutocompletePlugin = {
 
     return false
   },
-  entries (ctx, query) {
+  entries (ctx) {
     return ctx.state.field(snippetsUpdateField).availableSnippets
   },
   fields: [snippetsUpdateField]

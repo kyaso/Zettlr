@@ -1,7 +1,6 @@
 import { copyZknLink } from '@common/util/clipboard'
 
 const ipcRenderer = window.ipc
-const clipboard = window.clipboard
 const config = window.config
 
 /**

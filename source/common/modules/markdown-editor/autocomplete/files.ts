@@ -94,7 +94,7 @@ export const files: AutocompletePlugin = {
       return false
     }
   },
-  entries (ctx, query) {
+  entries (ctx) {
     return ctx.state.field(filesUpdateField)
   },
   fields: [filesUpdateField]
