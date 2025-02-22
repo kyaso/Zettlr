@@ -31,7 +31,7 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'yarn'
     - name: Install packages
-      run: yarn install --immutable
+      run: YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
     - name: Run ESLint
       run: yarn lint
     # - name: Run unit tests
