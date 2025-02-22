@@ -325,7 +325,6 @@ jobs:
       npm_config_arch: x64
       CC: zig cc -target x86_64-linux-gnu
       CXX: zig c++ -target x86_64-linux-gnu
-      YARN_CHECKSUM_BEHAVIOR: reset
     needs: [preflight, verify_version]
     runs-on: ubuntu-20.04
     steps:
@@ -346,7 +345,7 @@ jobs:
       - name: Install Zig
         uses: goto-bus-stop/setup-zig@v2
       - name: Set up build environment
-        run: yarn install --immutable
+        run: YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
       - name: Retrieve tag version
         id: ref
         run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
