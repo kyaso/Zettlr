@@ -191,8 +191,8 @@ jobs:
       - name: Retrieve code signing certificate
         run: ./scripts/add-osx-cert.sh
         env:
-          MACOS_CERT: ${{ secrets.MACOS_CERT }}
-          MACOS_CERT_PASS: ${{ secrets.MACOS_CERT_PASS }}
+          MACOS_CERT: ${{ secrets.MACOS_CERT_2030_01_14 }}
+          MACOS_CERT_PASS: ${{ secrets.MACOS_CERT_PASS_2030_01_14 }}
       - name: Package
         run: yarn package:mac-x64
         env:
@@ -238,8 +238,8 @@ jobs:
       - name: Retrieve code signing certificate
         run: ./scripts/add-osx-cert.sh
         env:
-          MACOS_CERT: ${{ secrets.MACOS_CERT }}
-          MACOS_CERT_PASS: ${{ secrets.MACOS_CERT_PASS }}
+          MACOS_CERT: ${{ secrets.MACOS_CERT_2030_01_14 }}
+          MACOS_CERT_PASS: ${{ secrets.MACOS_CERT_PASS_2030_01_14 }}
       - name: Package
         run: yarn package:mac-arm
         env:
@@ -264,6 +264,8 @@ jobs:
     name: Linux (x86_64)
     env:
       npm_config_arch: x64
+      CC: zig cc -target x86_64-linux-gnu
+      CXX: zig c++ -target x86_64-linux-gnu
     needs: [preflight, verify_version]
     runs-on: ubuntu-20.04
     steps:
@@ -277,6 +279,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
+      # Replicate PR #4910 on the x86_64 runner as this compiler appears
+      # still to be supported by node-gyp even after the most recent update.
+      # (NOTE: See added CC/CCX variables, found from output under 'zig targets'
+      # here: https://andrewkelley.me/post/zig-cc-powerful-drop-in-replacement-gcc-clang.html)
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
       - name: Set up build environment
         run: yarn install --immutable
       - name: Set tag version to nightly
