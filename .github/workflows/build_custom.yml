@@ -132,7 +132,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
       - name: Set up build environment
-        run: yarn install --immutable
+        run: YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
       - name: Retrieve tag version
         id: ref
         run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
@@ -427,7 +427,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
       - name: Set up build environment
-        run: yarn install --immutable
+        run: YARN_CHECKSUM_BEHAVIOR=reset yarn install --immutable
       - name: Retrieve tag version
         id: ref
         run: echo "version=$(cat package.json | jq -r '.version')" >> $GITHUB_ENV
