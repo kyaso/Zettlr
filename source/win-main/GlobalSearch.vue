@@ -407,10 +407,10 @@ async function singleSearchRun (): Promise<void> {
   const terms = compileSearchTerms(query.value)
 
   // Query the index
-  let res: SearchResult[] = []
+  let res: string[] = []
   // This array will hold all the NOT matches
   // It is later used to filter out the NOT matches
-  let notRes: SearchResult[] = []
+  let notRes: string[] = []
 
   // console.log('[GlobalSearch] Terms: '+terms)
 

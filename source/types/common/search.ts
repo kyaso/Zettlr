@@ -50,7 +50,6 @@ export interface FileSearchDescriptor {
   relativeDirectoryPath: string
   filename: string
   displayName: string
-  hash: number
 }
 
 /**

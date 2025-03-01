@@ -138,8 +138,6 @@ export default class CommandProvider extends ProviderContract {
       // TODO!!!
       return true
       // Switch to the previous file
-    } else if (command === 'switch-file') {
-      await this._app.documents.switch()
     } else if (command === 'copy-img-to-clipboard') {
       // We should copy the contents of an image file to clipboard. Payload
       // contains the image path. We can rely on the Electron framework here.

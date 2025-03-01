@@ -184,7 +184,7 @@ export default class LinkProvider extends ProviderContract {
     const nonFileLinks: string[] = []
 
     for (const link of dbLinks) {
-      const descriptor = this._fsal.findExact(link)
+      const descriptor = this._workspaces.findExact(link)
       if (descriptor === undefined) {
         // For some reason the database doesn't remove duplicates, so we do it manually here
         if (!nonFileLinks.includes(link)) {
