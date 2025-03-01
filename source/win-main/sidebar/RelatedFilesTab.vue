@@ -33,9 +33,10 @@
               'tags': item.props.tags.length > 0,
               'inbound': item.props.link === 'inbound',
               'outbound': item.props.link === 'outbound',
-              'bidirectional': item.props.link === 'bidirectional'
+              'bidirectional': item.props.link === 'bidirectional',
+              'non-file': item.props.link === 'non-file'
             }"
-            v-on:click.stop="requestFile($event, item.props.path)"
+            v-on:click.stop="requestFile($event, item.props.path, item.props.link, getRelatedFileName(item.props.path))"
             v-on:dragstart="beginDragRelatedFile($event, item.props.path)"
           >
             <span
@@ -65,6 +66,11 @@
                 shape="two-way-arrows"
                 v-bind:title="bidirectionalLinkLabel"
               ></cds-icon>
+              <cds-icon
+                v-else-if="item.props.link === 'non-file'"
+                shape="link"
+                v-bind:title="nonFileLinkLabel"
+              ></cds-icon>
             </span>
           </div>
         </RecycleScroller>
@@ -86,7 +92,7 @@ export interface RelatedFile {
   file: string
   path: string
   tags: string[]
-  link: 'inbound'|'outbound'|'bidirectional'|'none'
+  link: 'inbound'|'outbound'|'bidirectional'|'none'|'non-file'
 }
 
 const ipcRenderer = window.ipc
@@ -116,6 +122,7 @@ const noRelatedFilesMessage = trans('No related files')
 const bidirectionalLinkLabel = trans('This relation is based on a bidirectional link.')
 const outboundLinkLabel = trans('This relation is based on an outbound link.')
 const inboundLinkLabel = trans('This relation is based on a backlink.')
+const nonFileLinkLabel = trans('This relation is based on a non-file link.')
 
 /**
  * The Vue Virtual Scroller component expects an array of objects which
@@ -168,6 +175,8 @@ async function recomputeRelatedFiles (): Promise<void> {
     return
   }
 
+  console.log('Recomputing related files for', descriptor.path)
+
   const unreactiveList: RelatedFile[] = []
 
   // Then retrieve the inbound links first, since that is the most important
@@ -180,6 +189,9 @@ async function recomputeRelatedFiles (): Promise<void> {
   for (const absPath of [ ...inbound, ...outbound ]) {
     const found = unreactiveList.find(elem => elem.path === absPath)
     if (found !== undefined) {
+      continue
+    }
+    if (absPath === descriptor.path) {
       continue
     }
 
@@ -198,6 +210,22 @@ async function recomputeRelatedFiles (): Promise<void> {
       related.link = 'outbound'
     }
 
+    unreactiveList.push(related)
+  }
+
+  // Get non-file links
+  const { links } = await ipcRenderer.invoke('link-provider', {
+    command: 'get-non-file-links',
+    payload: { filePath: lastActiveFile.value.path }
+  }) as { links: string[] }
+
+  for (const link of links) {
+    const related: RelatedFile = {
+      file: link,
+      path: link,
+      tags: [],
+      link: 'non-file'
+    }
     unreactiveList.push(related)
   }
 
@@ -233,10 +261,25 @@ async function recomputeRelatedFiles (): Promise<void> {
   // 1. Backlinks that also share common tags
   // 2. Backlinks that do not share common tags
   // 3. Files that only share common tags
-  const backlinksAndTags = unreactiveList.filter(e => e.link !== 'none' && e.tags.length > 0)
+  const bidirectionalAndTags = unreactiveList.filter(e => e.link === 'bidirectional' && e.tags.length > 0)
+  bidirectionalAndTags.sort((a, b) => { return b.tags.length - a.tags.length })
+
+  const bidirectionalOnly = unreactiveList.filter(e => e.link === 'bidirectional' && e.tags.length === 0)
+  // No sorting necessary
+
+  const backlinksAndTags = unreactiveList.filter(e => (e.link === 'inbound') && e.tags.length > 0)
   backlinksAndTags.sort((a, b) => { return b.tags.length - a.tags.length })
 
-  const backlinksOnly = unreactiveList.filter(e => e.link !== 'none' && e.tags.length === 0)
+  const backlinksOnly = unreactiveList.filter(e => (e.link === 'inbound') && e.tags.length === 0)
+  // No sorting necessary
+
+  const outboundandTags = unreactiveList.filter(e => e.link === 'outbound' && e.tags.length > 0)
+  outboundandTags.sort((a, b) => { return b.tags.length - a.tags.length })
+
+  const outboundOnly = unreactiveList.filter(e => e.link === 'outbound' && e.tags.length === 0)
+  // No sorting necessary
+
+  const nonFile = unreactiveList.filter(e => e.link === 'non-file')
   // No sorting necessary
 
   const tagsOnly = unreactiveList.filter(e => e.link === 'none')
@@ -252,8 +295,13 @@ async function recomputeRelatedFiles (): Promise<void> {
   tagsOnly.sort((a, b) => b.tags.map(tag => idf[tag]).reduce((p, c) => p + c, 0) - a.tags.map(tag => idf[tag]).reduce((p, c) => p + c, 0))
 
   relatedFiles.value = [
+    ...bidirectionalAndTags,
+    ...bidirectionalOnly,
     ...backlinksAndTags,
     ...backlinksOnly,
+    ...outboundandTags,
+    ...outboundOnly,
+    ...nonFile,
     ...tagsOnly
   ]
 }
@@ -273,17 +321,25 @@ function beginDragRelatedFile (event: DragEvent, filePath: string): void {
   }))
 }
 
-function requestFile (event: MouseEvent, filePath: string): void {
-  ipcRenderer.invoke('documents-provider', {
-    command: 'open-file',
-    payload: {
-      path: filePath,
-      windowId,
-      leafId: lastLeafId.value,
-      newTab: event.type === 'mousedown' && event.button === 1
-    }
-  } as DocumentManagerIPCAPI)
-    .catch(e => console.error(e))
+function requestFile (event: MouseEvent, filePath: string, linkType: string, linkText: string): void {
+  if (linkType !== 'non-file') {
+    ipcRenderer.invoke('documents-provider', {
+      command: 'open-file',
+      payload: {
+        path: filePath,
+        windowId,
+        leafId: lastLeafId.value,
+        newTab: event.type === 'mousedown' && event.button === 1
+      }
+    } as DocumentManagerIPCAPI)
+      .catch(e => console.error(e))
+  }
+
+  ipcRenderer.invoke('application', {
+    command: 'start-global-search',
+    payload: linkText
+  })
+    .catch(err => console.error(err))
 }
 
 function getRelatedFileName (filePath: string): string {
