@@ -60,7 +60,7 @@ export default class SearchIndexProvider extends ProviderContract {
 
   public search (query: string) {
     this._logger.verbose(`SearchIndexProvider: Searching for ${query}...`)
-    const result = search(this._db, {
+    const result: any = search(this._db, {
       term: query,
       properties: [ 'fileName', 'fileContent' ],
       // By default, orama only returns 10 results, hence we increase the limit
@@ -70,7 +70,7 @@ export default class SearchIndexProvider extends ProviderContract {
     // console.log(`Search took ${result.elapsed.formatted}`)
     // console.log(`Search result: ${JSON.stringify(result, undefined, 2)}`)
     // console.log(`count = ${result.count}`)
-    const fileList: string[] = result.hits.map(hit => hit.document.fileName)
+    const fileList: string[] = result.hits.map((hit: any) => hit.document.fileName)
     // console.log(`File list: ${fileList} (${fileList.length})`)
     return fileList
   }

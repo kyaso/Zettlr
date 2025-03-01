@@ -1506,7 +1506,7 @@ current contents from the editor somewhere else, and restart the application.`
 
     try {
       if (doc.descriptor.type === 'file') {
-        await this._app.searchIndex.update(
+        this._app.searchIndex.update(
           doc.descriptor.path,
           doc.descriptor.path,
           content

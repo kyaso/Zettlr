@@ -129,9 +129,9 @@ export async function parse (
 
   // Add to index
   const id = file.path
-  if (!await searchIndex.contains(id)) {
+  if (!searchIndex.contains(id)) {
     // console.log(`fsal-file.ts: Inserting ${id}`)
-    await searchIndex.insert(id, file.path, content)
+    searchIndex.insert(id, file.path, content)
   }
 
   if (!hasCache) {
