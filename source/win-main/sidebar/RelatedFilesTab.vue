@@ -176,6 +176,7 @@ async function recomputeRelatedFiles (): Promise<void> {
   }
 
   console.log('Recomputing related files for', descriptor.path)
+  const startTime = performance.now()
 
   const unreactiveList: RelatedFile[] = []
 
@@ -304,6 +305,8 @@ async function recomputeRelatedFiles (): Promise<void> {
     ...nonFile,
     ...tagsOnly
   ]
+  const endTime = performance.now()
+  console.log('Recomputed related files in', endTime - startTime, 'ms')
 }
 
 function beginDragRelatedFile (event: DragEvent, filePath: string): void {
