@@ -15,11 +15,11 @@
       ></ToCTab>
       <!-- <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab> -->
       <!-- <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab> -->
-      <BacklinksTab
+      <!-- <BacklinksTab
         v-if="currentTab === 'mentions' || currentTab === 'toc'"
         v-bind:not-in-toc="currentTab==='mentions'"
         v-on:jtl="(filePath, lineNumber, newTab) => $emit('jtl', filePath, lineNumber, newTab)"
-      ></BacklinksTab>
+      ></BacklinksTab> -->
       <RelatedFilesTab
         v-if="currentTab === 'relatedFiles' || currentTab === 'toc'"
         v-bind:in-toc="currentTab==='toc'"
@@ -50,7 +50,7 @@ import ToCTab from './ToCTab.vue'
 // import ReferencesTab from './ReferencesTab.vue'
 import RelatedFilesTab from './RelatedFilesTab.vue'
 // import OtherFilesTab from './OtherFilesTab.vue'
-import BacklinksTab from './BacklinksTab.vue'
+// import BacklinksTab from './BacklinksTab.vue'
 import { useConfigStore } from 'source/pinia'
 
 const configStore = useConfigStore()
