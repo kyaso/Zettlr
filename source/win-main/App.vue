@@ -600,7 +600,7 @@ onMounted(() => {
   docInfoButton.value = document.querySelector('#toolbar-document-info')
   pomodoroButton.value = document.querySelector('#toolbar-pomodoro')
 
-  ipcRenderer.on('shortcut', (event, shortcut, base62) => {
+  ipcRenderer.on('shortcut', (event, shortcut, base62: boolean) => {
     if (shortcut === 'toggle-sidebar') {
       configStore.setConfigValue('window.sidebarVisible', !sidebarVisible.value)
     } else if (shortcut === 'insert-id') {
