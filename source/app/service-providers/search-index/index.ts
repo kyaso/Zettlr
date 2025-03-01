@@ -27,7 +27,7 @@ export default class SearchIndexProvider extends ProviderContract {
 
   public async boot (): Promise<void> {
     this._logger.verbose('SearchIndex booting up ...')
-    await this.init()
+    this.init()
   }
 
   private init () {
