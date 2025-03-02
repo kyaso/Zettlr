@@ -49,7 +49,7 @@ win:
   - nsis
   artifactName: "Zettlr-${version}-${arch}.${ext}"
   icon: "./resources/icons/icon.ico"
-  signToolOptions:
+  signtoolOptions:
     sign: null
 #
 # Generic Linux options
