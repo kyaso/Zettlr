@@ -81,7 +81,7 @@ const titleOrTocLabel = computed(() => {
     activeFileDescriptor.value.type !== 'file' ||
     activeFileDescriptor.value.frontmatter == null
   ) {
-    return trans('Table of Contents')
+    return trans('Table of contents')
   }
 
   const frontmatter = activeFileDescriptor.value.frontmatter
@@ -89,7 +89,7 @@ const titleOrTocLabel = computed(() => {
   if ('title' in frontmatter && frontmatter.title.length > 0) {
     return frontmatter.title
   } else {
-    return trans('Table of Contents')
+    return trans('Table of contents')
   }
 })
 

@@ -41,11 +41,11 @@ export default function getMenu (
   // default, but ...
   let recentDocsItem: MenuItemConstructorOptions = {
     id: 'menu.recent_docs',
-    label: trans('Recent documents'),
+    label: trans('Recent files'),
     role: 'recentDocuments',
     submenu: [{
       id: 'menu.clear_recent_docs',
-      label: trans('Empty'),
+      label: trans('Clear'),
       role: 'clearRecentDocuments'
     }]
   }
@@ -78,11 +78,11 @@ export default function getMenu (
   const docs = recentDocs.get()
   recentDocsItem = {
     id: 'menu.recent_docs',
-    label: trans('Recent documents'),
+    label: trans('Recent files'),
     submenu: [
       {
         id: 'menu.clear_recent_docs',
-        label: trans('Empty'),
+        label: trans('Clear'),
         click: function (_menuitem, _focusedWindow) {
           recentDocs.clear()
         },
@@ -112,7 +112,7 @@ export default function getMenu (
       label: trans('File'),
       submenu: [
         {
-          label: trans('New File…'),
+          label: trans('New file…'),
           submenu: [
             {
               id: 'menu.new_file',
@@ -161,7 +161,7 @@ export default function getMenu (
         },
         {
           id: 'menu.open',
-          label: trans('Open…'),
+          label: trans('Open file…'),
           accelerator: 'Ctrl+O',
           click: function (_menuitem, _focusedWindow) {
             commands.run('root-open-files', [])
@@ -170,7 +170,7 @@ export default function getMenu (
         },
         {
           id: 'menu.open_workspace',
-          label: trans('Open Workspace …'),
+          label: trans('Open workspace…'),
           accelerator: 'Ctrl+Shift+O',
           click: function (_menuitem, _focusedWindow) {
             commands.run('root-open-workspaces', [])
@@ -264,7 +264,7 @@ export default function getMenu (
             },
             {
               id: 'menu.tags',
-              label: trans('Manage Tags…'),
+              label: trans('Tags Manager'),
               click: function (_menuitem, _focusedWindow) {
                 windows.showTagManager()
               }
@@ -395,7 +395,7 @@ export default function getMenu (
         },
         {
           id: 'menu.find_file',
-          label: trans('Find in file'),
+          label: trans('Find in current file'),
           accelerator: 'Ctrl+F',
           click: function (_menuitem, focusedWindow) {
             (focusedWindow as BrowserWindow|undefined)?.webContents.send('shortcut', 'search')
@@ -403,7 +403,7 @@ export default function getMenu (
         },
         {
           id: 'menu.find_dir',
-          label: trans('Find in directory'),
+          label: trans('Search all files'),
           accelerator: 'Ctrl+Shift+F',
           click: function (_menuitem, focusedWindow) {
             (focusedWindow as BrowserWindow|undefined)?.webContents.send('shortcut', 'global-search')
@@ -455,7 +455,7 @@ export default function getMenu (
         },
         {
           id: 'menu.toggle_file_meta',
-          label: trans('Additional Information'),
+          label: trans('Additional information'),
           accelerator: 'Ctrl+Alt+S',
           type: 'checkbox',
           checked: config.get('fileMeta'),
@@ -465,7 +465,7 @@ export default function getMenu (
         },
         {
           id: 'menu.toggle_distraction_free',
-          label: trans('Distraction free mode'),
+          label: trans('Distraction-free mode'),
           accelerator: 'Ctrl+J',
           click: function (_menuitem, focusedWindow) {
             (focusedWindow as BrowserWindow|undefined)?.webContents.send('shortcut', 'toggle-distraction-free')
@@ -473,7 +473,7 @@ export default function getMenu (
         },
         {
           id: 'menu.toggle_typewriter_mode',
-          label: trans('Typewriter Mode'),
+          label: trans('Typewriter mode'),
           accelerator: 'Ctrl+Alt+T',
           click: function (_menuitem, focusedWindow) {
             (focusedWindow as BrowserWindow|undefined)?.webContents.send('shortcut', 'toggle-typewriter-mode')
@@ -484,7 +484,7 @@ export default function getMenu (
         },
         {
           id: 'menu.toggle_filemanager',
-          label: trans('Toggle file manager'),
+          label: trans('Toggle File Manager'),
           accelerator: 'Ctrl+!',
           click: function (_menuitem, focusedWindow) {
             (focusedWindow as BrowserWindow|undefined)?.webContents.send('shortcut', 'toggle-file-manager')
@@ -535,7 +535,7 @@ export default function getMenu (
         }
       ]
     },
-    // debug MENU
+    // DEVELOP MENU
     {
       id: 'debug-menu',
       label: trans('Develop'),
@@ -558,7 +558,7 @@ export default function getMenu (
         },
         {
           id: 'menu.open_logs',
-          label: trans('Open Logs'),
+          label: trans('View logs'),
           accelerator: 'Ctrl+Alt+Shift+L',
           click: function (_menuitem, _focusedWindow) {
             windows.showLogWindow()
@@ -648,7 +648,7 @@ export default function getMenu (
         },
         {
           id: 'menu.donate',
-          label: trans('Support Zettlr'),
+          label: trans('Support Zettlr ↗︎'),
           click: function (_menuitem, _focusedWindow) {
             const target = 'https://patreon.com/zettlr'
             shell.openExternal(target).catch(e => {
@@ -658,7 +658,7 @@ export default function getMenu (
         },
         {
           id: 'menu.learn_more',
-          label: trans('Visit website'),
+          label: trans('Visit website ↗︎'),
           click: function (_menuitem, _focusedWindow) {
             const target = 'https://www.zettlr.com/'
             shell.openExternal(target).catch(e => {
@@ -668,7 +668,7 @@ export default function getMenu (
         },
         {
           id: 'menu.docs',
-          label: trans('Open user manual'),
+          label: trans('Open user manual ↗︎'),
           accelerator: 'F1',
           click: function (_menuitem, _focusedWindow) {
             const target = 'https://docs.zettlr.com/'
@@ -682,7 +682,7 @@ export default function getMenu (
         },
         {
           id: 'menu.open_tutorial',
-          label: trans('Open Tutorial'),
+          label: trans('Open tutorial'),
           click: function (_menuitem, _focusedWindow) {
             commands.run('tutorial-open', undefined)
               .catch(e => logger.error(String(e.message), e))
@@ -690,7 +690,7 @@ export default function getMenu (
         },
         {
           id: 'menu.clear_fsal_cache',
-          label: trans('Clear FSAL cache …'),
+          label: trans('Clear FSAL cache…'),
           click: function (_menuitem, _focusedWindow) {
             // Clearing the FSAL cache requires a restart -> prompt the user
             dialog.showMessageBox({

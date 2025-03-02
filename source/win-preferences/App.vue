@@ -20,7 +20,7 @@
       <template #view1>
         <TextControl
           v-model="query"
-          v-bind:placeholder="'Find…'"
+          v-bind:placeholder="searchPlaceholder"
           v-bind:search-icon="true"
           v-bind:autofocus="true"
           v-bind:reset="true"
@@ -106,6 +106,7 @@ const appLangOptions = ref<Record<string, string>>({})
 const config = computed(() => configStore.config)
 
 const noResultsMessage = computed(() => trans('No results for "%s"', query.value))
+const searchPlaceholder = trans('Search')
 
 const schema = computed<FormSchema>(() => {
   return {
@@ -214,7 +215,7 @@ const groups = computed<Array<SelectableListItem & { id: PreferencesGroups }>>((
       id: PreferencesGroups.Spellchecking
     },
     {
-      displayText: trans('AutoCorrect'),
+      displayText: trans('Autocorrect'),
       icon: 'wand', // 'block-quote'
       id: PreferencesGroups.Autocorrect
     },
