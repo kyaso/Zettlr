@@ -1835,10 +1835,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@orama/orama@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "@orama/orama@npm:3.0.1"
-  checksum: 10/eddbf89c6c4e07b7685af9e854121b65a8f090667335f7c7979de643177f5bda4c9dc3102c4ea5a51cfedb58c43cacf684117459b5d79ff695d2c51a7e2f04f5
+"@orama/orama@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "@orama/orama@npm:3.1.1"
+  checksum: 10/24ce9f9e7fbf5a8940700a44454d1a4d341a45cf1f4d9c0707cb00ac7c110a3f67cc52b7590f9f3821abad74d0f3f941e6e03b930020799a2e05f5d6aca8f402
   languageName: node
   linkType: hard
 
@@ -7794,10 +7794,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fuzzysort@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "fuzzysort@npm:3.0.2"
-  checksum: 10/049633b2dcca879f4875bf0d433cf1922b5344a7ef810bd2f2b3d835a6d441b299cc72dd983545aa1ec95324b05513c7be78d1497e526017ba99c380abba3c16
+"fuzzysort@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "fuzzysort@npm:3.1.0"
+  checksum: 10/6220e62ff00c0855c7e8d38714ed5ba9641e14ca2e2b793229965d7b6d03a14783bf04ecc169033a4429898ccb28b3c77e45ac73abd6d4647920705832b0cb71
   languageName: node
   linkType: hard
 
@@ -16287,7 +16287,7 @@ __metadata:
     "@eslint/config-inspector": "npm:^1.0.0"
     "@lezer/common": "npm:^1.2.3"
     "@lezer/highlight": "npm:^1.2.1"
-    "@orama/orama": "npm:^3.0.1"
+    "@orama/orama": "npm:^3.1.1"
     "@replit/codemirror-emacs": "npm:^6.1.0"
     "@replit/codemirror-vim": "npm:^6.2.1"
     "@stylistic/eslint-plugin": "npm:^2.13.0"
@@ -16333,7 +16333,7 @@ __metadata:
     eslint-plugin-vue: "npm:^9.32.0"
     fix-path: "npm:^4.0.0"
     fsevents: "npm:^2.3.3"
-    fuzzysort: "npm:^3.0.2"
+    fuzzysort: "npm:^3.1.0"
     gemoji: "npm:^8.1.0"
     gettext-parser: "npm:^8.0.0"
     got: "npm:11.x.x"
