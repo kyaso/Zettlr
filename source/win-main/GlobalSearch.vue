@@ -25,8 +25,14 @@
       <ButtonControl
         v-bind:label="searchButtonLabel"
         v-bind:inline="true"
-        v-bind:disabled="filesToSearch.length > 0"
+        v-bind:disabled="false"
         v-on:click="startSearch()"
+      ></ButtonControl>
+      <ButtonControl
+        label="Cancel"
+        v-bind:inline="true"
+        v-bind:disabled="!searchIsRunning"
+        v-on:click="cancelSearch()"
       ></ButtonControl>
     </p>
     <!-- ... as well as two buttons to clear the results or toggle them. -->
@@ -61,7 +67,7 @@
           v-bind:max="sumFilesToSearch"
           v-bind:value="sumFilesToSearch - filesToSearch.length"
           v-bind:interruptible="true"
-          v-on:interrupt="filesToSearch = []"
+          v-on:interrupt="cancelSearch()"
         ></ProgressControl>
       </div>
       <hr>
@@ -274,6 +280,9 @@ const filteredSearchResults = computed<SearchResultWrapper[]>(() => {
   })
 })
 
+const searchIsRunning = computed(() => { return filesToSearch.value.length > 0 })
+const shouldStartNewSearch = ref<boolean>(false)
+
 watch(fileTree, () => {
   recomputeDirectorySuggestions()
 })
@@ -303,14 +312,14 @@ function recomputeDirectorySuggestions (): void {
 }
 
 function startSearch (overrideQuery?: string): void {
-  if (filesToSearch.value.length > 0) {
-    console.warn('Global search in progress: Not starting a new one.')
-    return
-  }
-
   // This allows other components to inject a new query when starting a search
   if (overrideQuery !== undefined) {
     query.value = overrideQuery
+  }
+
+  if (searchIsRunning.value) {
+    cancelSearch(true)
+    return
   }
 
   // We should start a search. We need two types of information for that:
@@ -438,12 +447,12 @@ async function singleSearchRun (): Promise<void> {
   }
 
   // console.log('[GlobalSearch] Query result: '+res)
-  // console.log('[GlobalSearch] filesToSearch before: '+this.filesToSearch.length)
+  // console.log('[GlobalSearch] filesToSearch before: '+filesToSearch.value.length)
 
   // First filter out all NOT files
   filesToSearch.value = filesToSearch.value.filter(f => !notRes.includes(f.path))
 
-  // console.log('[GlobalSearch] filesToSearch after: '+this.filesToSearch.length)
+  // console.log('[GlobalSearch] filesToSearch after: '+filesToSearch.value.length)
 
   // Next, make sure indexed files are in front
   filesToSearch.value.sort((a, b) => {
@@ -513,8 +522,17 @@ async function singleSearchRun (): Promise<void> {
   finaliseSearch()
 }
 
+function cancelSearch (startNewSearch: boolean = false): void {
+  filesToSearch.value = []
+  shouldStartNewSearch.value = startNewSearch
+}
+
 function finaliseSearch (): void {
   filesToSearch.value = [] // Reset, in case the search was aborted.
+  if (shouldStartNewSearch.value) {
+    shouldStartNewSearch.value = false
+    startSearch()
+  }
 }
 
 function emptySearchResults (): void {
