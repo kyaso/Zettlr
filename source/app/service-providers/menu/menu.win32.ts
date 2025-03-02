@@ -433,7 +433,7 @@ export default function getMenu (
           label: 'Insert base62 ID',
           accelerator: 'Ctrl+L',
           click: function (_menuitem, focusedWindow) {
-            (focusedWindow as BrowserWindow|undefined)?.webContents.send('shortcut', 'copy-current-id', true) // true for base62
+            (focusedWindow as BrowserWindow|undefined)?.webContents.send('shortcut', 'insert-id', true) // true for base62
           }
         }
       ]
