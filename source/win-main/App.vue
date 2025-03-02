@@ -167,7 +167,7 @@ import { type LeafNodeJSON } from '@dts/common/documents'
 import buildPipeTable from '@common/modules/markdown-editor/table-editor/build-pipe'
 import { type UpdateState } from '@providers/updates'
 import { type ToolbarControl } from '@common/vue/window/WindowToolbar.vue'
-import { useConfigStore, useDocumentTreeStore, useWindowStateStore } from 'source/pinia'
+import { useConfigStore, useDocumentTreeStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
 import type { ConfigOptions } from 'source/app/service-providers/config/get-config-template'
 import { type AnyDescriptor } from 'source/types/common/fsal'
 import type { DocumentManagerIPCAPI } from 'source/app/service-providers/documents'
@@ -177,6 +177,7 @@ const ipcRenderer = window.ipc
 const configStore = useConfigStore()
 const documentTreeStore = useDocumentTreeStore()
 const windowStateStore = useWindowStateStore()
+const workspacesStore = useWorkspacesStore()
 
 const SOUND_EFFECTS = [
   {
@@ -318,6 +319,7 @@ const sidebarsBeforeDistractionfree = ref<{ fileManager: boolean, sidebar: boole
 
 const sidebarVisible = computed<boolean>(() => configStore.config.window.sidebarVisible)
 const activeFile = computed(() => documentTreeStore.lastLeafActiveFile)
+const activeFileName = computed(() => getFileName(activeFile.value?.path))
 const shouldCountChars = computed<boolean>(() => configStore.config.editor.countChars)
 const shouldShowToolbar = computed<boolean>(() => !distractionFree.value || !configStore.config.display.hideToolbarInDistractionFree)
 const shouldInsertRootIDSymbol = computed<boolean>(() => configStore.config.zkn.blockIds.addRootIndicator)
@@ -429,6 +431,13 @@ const toolbarControls = computed<ToolbarControl[]>(() => {
       icon: 'arrow',
       direction: 'right',
       visible: getToolbarButtonDisplay('showNextFileButton')
+    },
+    {
+      type: 'button',
+      id: 'search-mentions',
+      title: 'Search Mentions',
+      icon: 'search',
+      visible: true
     },
     {
       type: 'spacer',
@@ -841,6 +850,14 @@ function handleClick (clickedID?: string): void {
         leafId: lastLeafId.value
       }
     } as DocumentManagerIPCAPI).catch(err => console.error(err))
+  } else if (clickedID === 'search-mentions') {
+    if (activeFileName.value !== undefined) {
+      ipcRenderer.invoke('application', {
+        command: 'start-global-search',
+        payload: activeFileName.value
+      })
+        .catch(err => console.error(err))
+    }
   } else if (clickedID === 'export') {
     showExportPopover.value = !showExportPopover.value
   } else if (clickedID === 'show-stats') {
@@ -982,6 +999,15 @@ function stopPomodoro (): void {
 
 function getToolbarButtonDisplay (configName: keyof ConfigOptions['displayToolbarButtons']): boolean {
   return configStore.config.displayToolbarButtons[configName]
+}
+
+// Adapted from RelatededFiles.vue::getRelatedFileName
+function getFileName (filePath: string|undefined): string|undefined {
+  if (filePath === undefined) {
+    return undefined
+  }
+  const descriptor = workspacesStore.getFile(filePath)
+  return descriptor?.name.replace(descriptor.ext, '')
 }
 </script>
 
