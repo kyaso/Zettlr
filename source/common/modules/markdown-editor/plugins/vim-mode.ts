@@ -110,6 +110,7 @@ Vim.map('k', 'gk') // Account for line wraps when moving up
 Vim.unmap('<C-f>') // Allow invoking Ctrl+F search from all modes
 Vim.unmap('<C-t>', 'insert') // Allow task item shortcut in Insert mode
 Vim.unmap('<C-c>', 'insert') // Allow using Ctrl+C without exiting Insert mode
+// @ts-expect-error The types are not properly updated
 Vim.unmap('<C-p>') // Allow focus file filter (custom)
 
 // Why do we do this, even though it seems somewhat pointless? Well, first to
