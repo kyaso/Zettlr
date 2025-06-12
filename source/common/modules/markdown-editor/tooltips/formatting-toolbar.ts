@@ -14,7 +14,7 @@
 
 import { EditorView, showTooltip, type Tooltip } from '@codemirror/view'
 import { type EditorState, StateField } from '@codemirror/state'
-import { applyBold, applyCode, applyItalic, applyZknLink, insertLink, applyStrikeThrough, applyHighlight } from '../commands/markdown'
+import { applyBold, applyCode, applyItalic, applyZknLink, insertLink, applyStrikeThrough, toggleHighlight } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
 import { copyAsPlain } from '../util/copy-paste-cut'
 import { configField } from '../util/configuration'
@@ -114,7 +114,7 @@ function getToolbar (state: EditorState): Tooltip[] {
       zknlink.onmousedown = function (event) { applyZknLink(view) }
       copy.onmousedown = function (event) { copyAsPlain(view) }
       strikeThrough.onmousedown = function (event) { applyStrikeThrough(view) }
-      highlight.onmousedown = function (event) { applyHighlight(view) }
+      highlight.onmousedown = function (event) { toggleHighlight(view) }
 
       return { dom }
     }

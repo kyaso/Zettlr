@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git://github.com/Zettlr/Zettlr.git"
   },
-  "version": "3.4.4-custom.47",
+  "version": "3.5.0-custom.47",
   "license": "GPL-3.0",
   "description": "Your One-Stop Publication Workbench",
   "main": ".webpack/main",
@@ -59,7 +59,7 @@
     "@codemirror/legacy-modes": "^6.5.0",
     "@codemirror/search": "^6.5.10",
     "@codemirror/state": "^6.5.2",
-    "@codemirror/view": "^6.36.5",
+    "@codemirror/view": "^6.36.6",
     "@lezer/common": "^1.2.3",
     "@lezer/highlight": "^1.2.1",
     "@orama/orama": "^3.1.1",
@@ -125,6 +125,7 @@
     "uuid": "^11.1.0",
     "vue": "^3.5.13",
     "vue-virtual-scroller": "^2.0.0-beta.8",
+    "w3c-keyname": "^2.2.8",
     "yaml": "^2.7.1"
   },
   "optionalDependencies": {
