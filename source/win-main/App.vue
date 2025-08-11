@@ -164,7 +164,7 @@ import glassFile from './assets/glass.wav'
 import alarmFile from './assets/digital_alarm.mp3'
 import chimeFile from './assets/chime.mp3'
 import { type LeafNodeJSON } from '@dts/common/documents'
-import buildPipeTable from '@common/modules/markdown-editor/table-editor/build-pipe'
+import { buildPipeMarkdownTable } from '@common/util/build-pipe-markdown-table'
 import { type UpdateState } from '@providers/updates'
 import { type ToolbarControl } from '@common/vue/window/WindowToolbar.vue'
 import { useConfigStore, useDocumentTreeStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
@@ -730,7 +730,7 @@ function insertTable (spec: { rows: number, cols: number }): void {
     ast.push(row)
   }
 
-  editorCommands.value.data = buildPipeTable(ast, align)
+  editorCommands.value.data = buildPipeMarkdownTable(ast, align)
   editorCommands.value.replaceSelection = !editorCommands.value.replaceSelection
 }
 

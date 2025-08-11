@@ -9,19 +9,19 @@
     <!-- Now the tab containers -->
     <div id="sidebar-tab-container">
       <ToCTab
-        v-if="currentTab === 'toc'"
+        v-show="currentTab === 'toc'"
         v-on:move-section="emit('move-section', $event)"
         v-on:jump-to-line="emit('jump-to-line', $event)"
       ></ToCTab>
-      <!-- <ReferencesTab v-if="currentTab === 'references'"></ReferencesTab> -->
-      <!-- <OtherFilesTab v-if="currentTab === 'attachments'"></OtherFilesTab> -->
+      <!-- <ReferencesTab v-show="currentTab === 'references'"></ReferencesTab> -->
+      <!-- <OtherFilesTab v-show="currentTab === 'attachments'"></OtherFilesTab> -->
       <!-- <BacklinksTab
-        v-if="currentTab === 'mentions' || currentTab === 'toc'"
+        v-show="currentTab === 'mentions' || currentTab === 'toc'"
         v-bind:not-in-toc="currentTab==='mentions'"
         v-on:jtl="(filePath, lineNumber, newTab) => $emit('jtl', filePath, lineNumber, newTab)"
       ></BacklinksTab> -->
       <RelatedFilesTab
-        v-if="currentTab === 'relatedFiles' || currentTab === 'toc'"
+        v-show="currentTab === 'relatedFiles' || currentTab === 'toc'"
         v-bind:in-toc="currentTab==='toc'"
       ></RelatedFilesTab>
     </div>
