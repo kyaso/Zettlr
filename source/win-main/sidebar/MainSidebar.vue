@@ -76,17 +76,17 @@ const tabs = [
   //   label: trans('References')
   // },
   {
-    icon: 'file-group',
+    icon: 'link',
     id: 'relatedFiles',
     target: 'sidebar-related-files',
     label: trans('Related files')
   },
-  {
-    icon: 'link',
-    id: 'mentions',
-    target: 'sidebar-mentions',
-    label: 'Mentions'
-  }
+  // {
+  //   icon: 'link',
+  //   id: 'mentions',
+  //   target: 'sidebar-mentions',
+  //   label: 'Mentions'
+  // }
   // {
   //   icon: 'paperclip',
   //   id: 'attachments',
