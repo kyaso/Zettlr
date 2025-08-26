@@ -29,7 +29,7 @@
         v-on:click="startSearch()"
       ></ButtonControl>
       <ButtonControl
-        label="Cancel"
+        v-bind:label="cancelButtonLabel"
         v-bind:inline="true"
         v-bind:disabled="!searchIsRunning"
         v-on:click="cancelSearch()"
@@ -61,7 +61,7 @@
       During searching, display a progress bar that indicates how far we are and
       that allows to interrupt the search, if it takes too long.
     -->
-    <template v-if="filesToSearch.length > 0">
+    <template v-if="searchIsRunning">
       <div>
         <ProgressControl
           v-bind:max="sumFilesToSearch"
@@ -115,7 +115,7 @@
             v-bind:key="idx2"
             class="result-line"
             v-bind:class="{'active': idx==activeFileIdx && idx2==activeLineIdx}"
-            v-on:contextmenu.stop.prevent="fileContextMenu($event, result.file.path, singleRes.line)"
+            v-on:contextmenu.stop.prevent="fileContextMenu($event, result.file.path, singleRes.line, singleRes.restext)"
             v-on:mousedown.stop.prevent="onResultClick($event, idx, idx2, result.file.path, singleRes.line)"
           >
             <!-- NOTE how we have to increase the line number from zero-based to 1-based -->
@@ -171,6 +171,7 @@ const filterLabel = trans('Filter search results')
 const restrictDirLabel = trans('Restrict search to directory')
 const restrictDirPlaceholder = trans('Choose directory…')
 const searchButtonLabel = trans('Search')
+const cancelButtonLabel = trans('Cancel')
 const clearButtonLabel = trans('Clear search')
 const toggleButtonLabel = trans('Toggle results')
 
@@ -184,6 +185,12 @@ function getContextMenu (): AnyMenuItem[] {
     {
       label: trans('Open in new tab'),
       id: 'new-tab',
+      type: 'normal',
+      enabled: true
+    },
+    {
+      label: trans('Copy'),
+      id: 'copy',
       type: 'normal',
       enabled: true
     }
@@ -555,12 +562,15 @@ function toggleIndividualResults (): void {
   }
 }
 
-function fileContextMenu (event: MouseEvent, filePath: string, lineNumber: number): void {
+function fileContextMenu (event: MouseEvent, filePath: string, lineNumber: number, restext: string): void {
   const point = { x: event.clientX, y: event.clientY }
   showPopupMenu(point, getContextMenu(), (clickedID: string) => {
     switch (clickedID) {
       case 'new-tab':
         jumpToLine(filePath, lineNumber, true)
+        break
+      case 'copy':
+        navigator.clipboard.writeText(restext).catch(err => console.error(err))
         break
     }
   })
