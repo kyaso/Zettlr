@@ -72,8 +72,8 @@ import { addRowAfter, addRowBefore, moveNextRow, movePrevRow, swapNextRow, swapP
 // * closeBracketsKeymap
 // * searchKeymap
 export function defaultKeymap (): Extension {
-  const alignLeft = setAlignment('left')
-  const alignCenter = setAlignment('center')
+  // const alignLeft = setAlignment('left')
+  // const alignCenter = setAlignment('center')
   const alignRight = setAlignment('right')
 
   return keymap.of([
