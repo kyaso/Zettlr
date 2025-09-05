@@ -137,7 +137,6 @@ ipcRenderer.on('documents-update', (e, payload: { event: DP_EVENTS, context: Doc
     // need to tell the main editor to reload it as well.
     currentEditor?.reload().catch(e => console.error(e))
   } else if (event === DP_EVENTS.FILE_SAVED && context.filePath === props.file.path) {
-    let startTime = performance.now();
     // The file has been saved to disk. This means we should probably update the
     // descriptor to know of, e.g., library changes.
     ipcRenderer.invoke('application', { command: 'get-descriptor', payload: props.file.path })
@@ -162,8 +161,6 @@ ipcRenderer.on('documents-update', (e, payload: { event: DP_EVENTS, context: Doc
         })
       })
       .catch(err => console.error(err))
-      let endTime = performance.now();
-      console.log(`**** MainEditor: document reload in ${(endTime - startTime).toFixed(2)} ms`);
   }
 })
 
