@@ -1455,6 +1455,7 @@ current contents from the editor somewhere else, and restart the application.`
   }
 
   public async saveFile (filePath: string): Promise<boolean> {
+    this._app.log.info("**** saveFile called for", filePath);
     const doc = this.documents.find(doc => doc.filePath === filePath)
 
     if (doc === undefined) {
@@ -1488,6 +1489,7 @@ current contents from the editor somewhere else, and restart the application.`
     doc.lastSavedVersion = doc.currentVersion
     doc.lastSavedContent = content
 
+    let startTime = performance.now();
     if (doc.descriptor.type === 'file') {
       // In case of an MD File increase the word or char count
       const ast = markdownToAST(content)
@@ -1502,23 +1504,36 @@ current contents from the editor somewhere else, and restart the application.`
       doc.lastSavedWordCount = newWordCount
       doc.lastSavedCharCount = newCharCount
     }
+    let endTime = performance.now();
+    this._app.log.info(`**** saveFile: counted words/chars in ${(endTime - startTime).toFixed(2)} ms`);
 
     this._ignoreChanges.push(filePath)
 
     try {
       if (doc.descriptor.type === 'file') {
+        startTime = performance.now();
         this._app.searchIndex.update(
           doc.descriptor.path,
           doc.descriptor.path,
           content
         )
+        endTime = performance.now();
+        this._app.log.info(`**** saveFile: search index update in ${(endTime - startTime).toFixed(2)} ms`);
+
+        startTime = performance.now();
         await FSALFile.save(
           doc.descriptor,
           content,
           this._app.fsal.getMarkdownFileParser(),
           null
         )
+        endTime = performance.now();
+        this._app.log.info(`**** saveFile: FSALFile save in ${(endTime - startTime).toFixed(2)} ms`);
+
+        startTime = performance.now();
         await this.synchronizeDatabases() // The file may have gotten a library
+        endTime = performance.now();
+        this._app.log.info(`**** saveFile: synchronizeDatabases in ${(endTime - startTime).toFixed(2)} ms`);
       } else {
         await FSALCodeFile.save(doc.descriptor, content, null)
       }
