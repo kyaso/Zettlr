@@ -166,9 +166,12 @@ export const useDocumentTreeStore = defineStore('document-tree', () => {
     const { event, context } = payload
     // A file has been saved or modified
     if (event === DP_EVENTS.CHANGE_FILE_STATUS && context.status === 'modification') {
+      const startTime = performance.now()
       ipcRenderer.invoke('documents-provider', { command: 'get-file-modification-status' } as DocumentManagerIPCAPI)
         .then((modifiedFiles: string[]) => { modifiedDocuments.value = modifiedFiles })
         .catch(err => console.error(err))
+      const endTime = performance.now()
+      console.log(`**** [Document Tree Store] (documents-update) took ${endTime - startTime}ms`)
     } else {
       // We only tend to events that pertain this window
       if (context.windowId !== windowId) {
@@ -201,7 +204,10 @@ export const useDocumentTreeStore = defineStore('document-tree', () => {
             case DP_EVENTS.OPEN_FILE:
             case DP_EVENTS.CLOSE_FILE:
             case DP_EVENTS.FILES_SORTED:
+              const startTime = performance.now()
               copyDelta(paneData, treedata, context)
+              const endTime = performance.now()
+              console.log(`**** [Document Tree Store] (documents-provider) took ${endTime - startTime}ms`)
               break
           }
 

@@ -113,7 +113,10 @@ export default class TagProvider extends ProviderContract {
       // changed. I think it's okay to do so, but in the future we may need to
       // add a sanity check before simply emitting this event, especially if we
       // do something to make the `getAllTags` method take significantly longer.
+      const startTime = performance.now()
       broadcastIpcMessage('tag-provider', 'tags-updated', this.getAllTags())
+      const endTime = performance.now()
+      this._logger.verbose(`**** [Tag Provider] (documents-update) took ${endTime - startTime}ms`)
     })
   }
 

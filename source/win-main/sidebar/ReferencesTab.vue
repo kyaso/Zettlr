@@ -88,11 +88,14 @@ onMounted(() => {
     const { event, context } = payload
     // Update the bibliography if the active file has been saved
     if (event === DP_EVENTS.CHANGE_FILE_STATUS && context.status === 'modification') {
+      const startTime = performance.now()
       const { filePath } = context
 
       if (filePath === activeFile.value?.path) {
         updateBibliography().catch(e => console.error('Could not update bibliography', e))
       }
+      const endTime = performance.now()
+      console.log(`**** [ReferencesTab] (documents-update) took ${endTime - startTime}ms`)
     }
   })
 

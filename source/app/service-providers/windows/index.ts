@@ -248,11 +248,14 @@ export default class WindowProvider extends ProviderContract {
     })
 
     this._documents.on(DP_EVENTS.CHANGE_FILE_STATUS, (_ctx: any) => {
+      let startTime = performance.now()
       // Always update the main window's flag depending on whether the document
       // manager is clean or not
       for (const key in this._mainWindows) {
         this.setModified(key, !this._documents.isClean(key, 'window'))
       }
+      const endTime = performance.now()
+      this._logger.verbose(`**** [Window Manager] Document change file status took ${endTime - startTime}ms`)
     })
 
     this._documents.on(DP_EVENTS.NEW_WINDOW, () => {
