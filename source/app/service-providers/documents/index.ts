@@ -516,7 +516,7 @@ export default class DocumentManager extends ProviderContract {
 
     // Sync everything after boot
     this.syncWatchedFilePaths()
-    await this.synchronizeDatabases()
+    // await this.synchronizeDatabases()
     this.syncToConfig()
 
     this._app.log.info(`[Document Manager] Restored ${this.windowCount()} open windows.`)
@@ -864,7 +864,7 @@ current contents from the editor somewhere else, and restart the application.`
     }
 
     this.broadcastEvent(DP_EVENTS.ACTIVE_FILE, { windowId, leafId, filePath: leaf.tabMan.activeFile?.path })
-    await this.synchronizeDatabases()
+    // await this.synchronizeDatabases()
     this.syncToConfig()
     return ret
   }
@@ -936,7 +936,7 @@ current contents from the editor somewhere else, and restart the application.`
         this.syncToConfig()
       }
 
-      await this.synchronizeDatabases()
+      // await this.synchronizeDatabases()
     }
     return ret
   }
@@ -1518,7 +1518,7 @@ current contents from the editor somewhere else, and restart the application.`
           this._app.fsal.getMarkdownFileParser(),
           null
         )
-        await this.synchronizeDatabases() // The file may have gotten a library
+        // await this.synchronizeDatabases() // The file may have gotten a library
       } else {
         await FSALCodeFile.save(doc.descriptor, content, null)
       }
