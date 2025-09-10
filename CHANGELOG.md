@@ -79,13 +79,39 @@ the leading period of the extension, so do not write `$FILENAME.$EXTENSION`.)
 - Fixed the behavior when clicking widgets (citations, etc.) to accurately
   select only the widget's source text (#5682).
 - Update `it-IT` translation (#5831).
-- Fixed incorrect cursor position after inserting IDs (#5846)
+- Update `da-DA` translations (#5868).
+- Fixed incorrect cursor position after inserting IDs (#5846).
+- The toolbar word counter no longer wraps (#5774; #5881).
+- Improve dark mode linter panel styling (#5882).
+- Fix drop cursor styling (#5883).
+- Fix context menu entry "Insert table" not working (#5835).
+- The keyboard shortcuts for snippets no longer require the field, thus
+  preventing errors in `EditorView`s that map the corresponding shortcuts but
+  don't have snippets installed.
+- The three-way-toggle for the file manager and global search does not wrap on
+  Windows anymore (#5876).
+- The toolbar can now scroll left and right if the main window is too narrow
+  (#5873; #5022).
 
 ## Under the Hood
 
-- Update Electron to version `37.2.5`.
+- Update Electron to version `38.0.0`.
+- Update Pandoc to version `3.8`.
 - Added new `curly` rule to ESLint, enforcing curly brackets for block-statement
   declarations (`if`, `for`, `while`, etc.).
+- The `enabled` property of context menu items is now optional, and defaults to
+  `true`.
+- `EditorPane`s will no longer load all documents at the same time, and instead
+  reuse the existing `MarkdownEditor` component for a single document. This
+  greatly reduces memory consumption, especially for very full tab bars, since
+  only a single document will be actively rendered at any one time.
+- Moved the previously shared common types for the context menu in the renderer
+  into the correct module to colocate the code. The shared types have been a
+  remnant from a time before TypeScript supported the `type` keyword, and will
+  subsequently be removed.
+- Moved the `DirectedGraph` class from the link provider to the stats window.
+- Switched back from `electron-devtools-assembler` to
+  `electron-devtools-installer`; now the Vue.js devtools extension works again.
 
 # 3.6.0
 
