@@ -214,8 +214,9 @@ export default class LinkProvider extends ProviderContract {
       // For some reason the database doesn't remove duplicates, so we do it manually here
       if (!links.includes(link)) {
         // Do not include links to the file itself
-        if (link === path.basename(sourceFilePath, '.md') || link === path.basename(sourceFilePath)) continue
-
+        if (link === path.basename(sourceFilePath, '.md') || link === path.basename(sourceFilePath)) {
+          continue
+        }
         links.push(link)
       }
     }
