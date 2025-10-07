@@ -27,7 +27,7 @@ import { findColumnIndexByRange, findRowIndexByRange, getColIndicesByRanges, get
  * @return  {boolean}             Whether the command has moved any selections
  */
 export function moveNextCell (target: EditorView): boolean {
-  const newSelections: SelectionRange[] = mapSelectionsWithTables(target, ctx => {
+  const tr = mapSelectionsWithTables<TransactionSpec[]>(target, ctx => {
     // Now with the offsets at hand, it's relatively easy: We only need to find
     // the cell in which the cursor is in, then see if there is a next one, and
     // return a cursor that points to the start of the next cell.
@@ -42,17 +42,41 @@ export function moveNextCell (target: EditorView): boolean {
       const lastRow = rowIdx === ctx.offsets.outer.length - 1
   
       if (lastCol && lastRow) {
-        return undefined
-      } else if (!lastCol) {
-        return EditorSelection.cursor(ctx.offsets.inner[rowIdx][colIdx + 1][0])
-      } else if (lastCol && !lastRow) {
-        return EditorSelection.cursor(ctx.offsets.inner[rowIdx + 1][0][0])
+        if (ctx.tableAST.tableType === 'grid') {
+          return undefined // As of now, support only pipe tables.
+        }
+
+        // In this edge case, we want to not do nothing, but instead add a new
+        // row and place the cursor in there. This is going to be a bit iffy,
+        // but not impossible.
+
+        // First, get the current line ...
+        const line = target.state.doc.lineAt(range.from)
+        // ... and prepare to insert a duplicate below the table, moving the
+        // cursor to the first cell of the new row.
+        return {
+          changes: {
+            from: line.to,
+            // Taken from rows.ts
+            insert: '\n' + line.text.replace(/[^\s\|]/g, ' ')
+          },
+          // Move the new cursor to the beginning of the new line.
+          selection: { anchor: line.to + 2 }
+        }
       }
+      
+      if (!lastCol) {
+        return { selection: { anchor: ctx.offsets.inner[rowIdx][colIdx + 1][0] } }
+      } else if (lastCol && !lastRow) {
+        return { selection: { anchor: ctx.offsets.inner[rowIdx + 1][0][0] } }
+      }
+
+      return undefined
     }).filter(i => i !== undefined)
   }).flat()
 
-  if (newSelections.length > 0) {
-    target.dispatch({ selection: EditorSelection.create(newSelections) })
+  if (tr.length > 0) {
+    target.dispatch(...tr)
     return true
   } else {
     return false

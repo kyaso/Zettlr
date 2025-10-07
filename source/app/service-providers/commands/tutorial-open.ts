@@ -17,9 +17,10 @@ import ZettlrCommand from './zettlr-command'
 import { app } from 'electron'
 import isDir from '@common/util/is-dir'
 import findLangCandidates from '@common/util/find-lang-candidates'
+import type { AppServiceContainer } from 'source/app/app-service-container'
 
 export default class TutorialOpen extends ZettlrCommand {
-  constructor (app: any) {
+  constructor (app: AppServiceContainer) {
     super(app, 'tutorial-open')
   }
 
@@ -48,7 +49,7 @@ export default class TutorialOpen extends ZettlrCommand {
 
     // Now we have both a target and a language candidate, let's copy over the files!
     if (await this._app.fsal.pathExists(targetPath)) {
-      this._app.log.info(`The directory ${targetPath} already exists. Not overwriting any files.`)
+      this._app.log.info(`[Application] The directory ${targetPath} already exists. Not overwriting any files.`)
     } else {
       await this._app.fsal.createDir(targetPath)
       // Now copy over every file from the directory
@@ -56,23 +57,34 @@ export default class TutorialOpen extends ZettlrCommand {
       for (const file of tutorialFiles) {
         await this._app.fsal.copyFile(path.join(tutorial, file), path.join(targetPath, file))
       }
-      this._app.log.info('Successfully copied the tutorial files', tutorialFiles)
+      this._app.log.info('[Application] Successfully copied the tutorial files', tutorialFiles)
     }
 
     // Now the last thing to do is set it as open
     await this._app.commands.run('roots-add', [targetPath])
-    const tutorialDirectory = this._app.workspaces.findDir(targetPath)
-    if (tutorialDirectory === undefined) {
-      this._app.log.error('[Application] Could not open tutorial files: Directory has not been added to Workspaces')
+    // Originally, we used `app.workspaces.findDir` to verify that the directory
+    // was added, but that was a bug, because when we run `roots-add` above,
+    // this will only add the path to the configuration, and the config will
+    // then emit an event that the workspaces provider listens to. Long story
+    // short, when the next lines of this command are executed, the workspace is
+    // not yet loaded, so below's check will always fail.
+    if (!this._app.config.get().openPaths.includes(targetPath)) {
+      this._app.log.error('[Application] Could not open tutorial files: Directory has not been added to Configuration')
       return
     }
 
-    this._app.config.set('openDirectory', tutorialDirectory.path)
+    this._app.config.set('openDirectory', targetPath)
     // We will pre-set the app with a three-pane layout at first. There are two
     // reference files that we will open to the right of the "main" file (welcome.md)
 
     // We will use the document provider's functions to programmatically create
     // that layout.
+
+    // Make sure there's at least one window
+    if (this._app.documents.windowCount() === 0) {
+      this._app.documents.newWindow()
+    }
+
     const windowId = this._app.documents.windowKeys()[0]
     // Find the leaf ID
     let leafId: string|undefined

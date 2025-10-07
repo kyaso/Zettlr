@@ -147,13 +147,19 @@ export default class TrayProvider extends ProviderContract {
       // to the Electron runtime that the image should be treated as a "template"
       // and this means it will automatically be displayed white or black
       // depending on the color of the menu bar.
-      iconPath = path.join(__dirname, 'assets/icons/png/22x22_Tray_Template.png')
+      iconPath = path.join(__dirname, 'assets/icons/macOS-menubar/tray-Template.png')
     } else if (process.platform === 'win32') {
       // On Windows, we're using the ICO-file.
       iconPath = path.join(__dirname, 'assets/icons/icon.ico')
     }
 
-    this._tray = new Tray(iconPath)
+    // Provide the app's UUID so that, on Windows and macOS, the tray icon will
+    // remain at its correct position.
+    this._tray = new Tray(iconPath, this._config.get().uuid)
+
+    this._tray.on('click', () => {
+      this._windows.activateFromTray()
+    })
 
     const menu: MenuItemConstructorOptions[] = [
       {

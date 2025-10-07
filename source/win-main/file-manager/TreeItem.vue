@@ -79,6 +79,8 @@
           <input
             ref="nameEditingInput"
             type="text"
+            class="filename-input"
+            v-bind:placeholder="filenameInputPlaceholder"
             v-bind:value="obj.name"
             v-on:keyup.enter="finishNameEditing(($event.target as HTMLInputElement).value)"
             v-on:keyup.esc="nameEditing = false"
@@ -102,9 +104,10 @@
       }"
     >
       <input
-        v-if="operationType !== undefined"
         ref="newObjectInput"
+        class="filename-input"
         type="text"
+        v-bind:placeholder="filenameInputPlaceholder"
         v-on:keyup.enter="handleOperationFinish(($event.target as HTMLInputElement).value)"
         v-on:keyup.esc="operationType = undefined"
         v-on:keydown.stop=""
@@ -165,10 +168,11 @@ import PopoverFileProps from './util/PopoverFileProps.vue'
 
 import RingProgress from '@common/vue/window/toolbar-controls/RingProgress.vue'
 import { nextTick, ref, computed, watch, onMounted, toRef } from 'vue'
-import { type DirDescriptor, type MaybeRootDescriptor } from '@dts/common/fsal'
+import type { AnyDescriptor } from '@dts/common/fsal'
 import { useConfigStore, useWindowStateStore } from 'source/pinia'
 import { pathBasename } from '@common/util/renderer-path-polyfill'
 import { useItemComposable } from './util/item-composable'
+import { hasDataExt, hasImageExt, hasMSOfficeExt, hasOpenOfficeExt, hasPDFExt } from 'source/common/util/file-extention-checks'
 
 const ipcRenderer = window.ipc
 
@@ -178,7 +182,7 @@ const props = defineProps<{
   // How deep is this tree item nested?
   depth: number
   hasDuplicateName: boolean
-  obj: MaybeRootDescriptor
+  obj: AnyDescriptor
   isCurrentlyFiltering: boolean
   activeItem?: string
   windowId: string
@@ -208,6 +212,8 @@ const {
   selectedDir,
   updateObject
 } = useItemComposable(props.obj, displayText, props.windowId, nameEditingInput)
+
+const filenameInputPlaceholder = trans('Enter a name')
 
 function sel (event: MouseEvent): void {
   requestSelection(event)
@@ -245,12 +251,29 @@ const primaryIcon = computed(() => {
     return 'markdown'
   } else if (props.obj.type === 'code') {
     return 'code'
-  } else if (props.obj.dirNotFoundFlag === true) {
+  } else if (props.obj.type === 'other') {
+    // const fileExtIcon = ClarityIcons.registry['file-ext'].outline!
+    if (hasImageExt(props.obj.path)) {
+      return 'image'
+    } else if (hasPDFExt(props.obj.path)) {
+      return 'pdf-file'
+    } else if (hasMSOfficeExt(props.obj.path)) {
+      return 'file' // fileExtIcon.replace('EXT', props.obj.ext.slice(1, 4))
+    } else if (hasOpenOfficeExt(props.obj.path)) {
+      return 'file' // fileExtIcon.replace('EXT', props.obj.ext.slice(1, 4))
+    } else if (hasDataExt(props.obj.path)) {
+      return 'file' // fileExtIcon.replace('EXT', props.obj.ext.slice(1, 4))
+    } else {
+      // Generic other file (this should not happen as they get filtered out before)
+      console.warn(`Encountered a file with extension ${props.obj.ext}. These should've been filtered out before reaching this point!`)
+      return ''
+    }
+  } else if (props.obj.type === 'directory' && props.obj.dirNotFoundFlag === true) {
     return 'disconnect'
-  } else if (props.obj.settings.project !== null) {
+  } else if (props.obj.type === 'directory' && props.obj.settings.project !== null) {
     // Indicate that this directory has a project.
     return 'blocks-group'
-  } else if (props.obj.settings.icon != null) {
+  } else if (props.obj.type === 'directory' && props.obj.settings.icon != null) {
     // Display the custom icon
     return props.obj.settings.icon
   } else {
@@ -322,10 +345,31 @@ const filteredChildren = computed(() => {
   if (props.obj.type !== 'directory') {
     return []
   }
+
   if (combined.value) {
-    return props.obj.children.filter((child): child is MaybeRootDescriptor => child.type !== 'other')
+    return props.obj.children.filter(child => {
+      if (child.type === 'other') {
+        const { files } = configStore.config
+        // Filter other files based on our settings
+        if (hasImageExt(child.path)) {
+          return files.images.showInFilemanager
+        } else if (hasPDFExt(child.path)) {
+          return files.pdf.showInFilemanager
+        } else if (hasMSOfficeExt(child.path)) {
+          return files.msoffice.showInFilemanager
+        } else if (hasOpenOfficeExt(child.path)) {
+          return files.openOffice.showInFilemanager
+        } else if (hasDataExt(child.path)) {
+          return files.dataFiles.showInFilemanager
+        } else {
+          return false // Any other "other" file should be excluded
+        }
+      }
+
+      return true
+    })
   } else {
-    return props.obj.children.filter((child): child is DirDescriptor => child.type === 'directory')
+    return props.obj.children.filter(child => child.type === 'directory')
   }
 })
 
@@ -341,11 +385,11 @@ const projectSortedFilteredChildren = computed(() => {
   // Modify the order using the project files by first mapping the sorted
   // project file paths onto the descriptors available, sorting all other files
   // separately, and then concatenating them with the project files up top.
-  const projectFiles: MaybeRootDescriptor[] = props.obj.settings.project.files
+  const projectFiles = props.obj.settings.project.files
     .map(filePath => filteredChildren.value.find(x => x.name === filePath))
     .filter(x => x !== undefined)
 
-  const files: MaybeRootDescriptor[] = []
+  const files: AnyDescriptor[] = []
   for (const desc of filteredChildren.value) {
     if (!projectFiles.includes(desc)) {
       files.push(desc)
@@ -607,9 +651,24 @@ function maybeUncollapse (): void {
 <style lang="less">
 body {
   div.tree-item-container {
+    font-size: 13px;
+
+    // These inputs should be more or less "invisible"
+    input.filename-input {
+      border: none;
+      color: inherit;
+      font-family: inherit;
+      font-size: inherit;
+      background-color: transparent;
+      width: auto;
+      field-sizing: content;
+      padding: 0;
+    }
+
     .tree-item {
       white-space: nowrap;
       display: flex;
+      margin: 8px 0px;
 
       .item-icon, .toggle-icon {
         display: flex;
@@ -620,18 +679,11 @@ body {
       }
 
       .display-text {
+        padding: 3px 5px;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin-right: 8px;
 
-        // These inputs should be more or less "invisible"
-        input {
-          border: none;
-          color: inherit;
-          font-family: inherit;
-          font-size: inherit;
-          background-color: transparent;
-          padding: 0;
-        }
       }
 
       &.project {
@@ -666,17 +718,13 @@ body {
 
 body.darwin {
   .tree-item {
-    margin: 6px 0px;
     color: rgb(53, 53, 53);
 
     // On macOS, non-standard icons are normally displayed in color
     cds-icon.special { color: var(--system-accent-color, --c-primary); }
 
     .display-text {
-      font-size: 13px;
-      padding: 3px 5px;
       border-radius: 4px;
-      overflow: hidden;
 
       &.highlight {
         outline-width: 2px;
@@ -699,13 +747,8 @@ body.darwin {
 
 body.win32 {
   .tree-item {
-    margin: 8px 0px;
 
     .display-text {
-      font-size: 13px;
-      padding: 3px 5px;
-      overflow: hidden;
-
       &.highlight {
         // This class is applied on drag & drop
         background-color: var(--system-accent-color, --c-primary);
@@ -717,13 +760,8 @@ body.win32 {
 
 body.linux {
   .tree-item {
-    margin: 8px 0px;
 
     .display-text {
-      font-size: 13px;
-      padding: 3px 5px;
-      overflow: hidden;
-
       &.highlight {
         // This class is applied on drag & drop
         background-color: var(--system-accent-color, --c-primary);

@@ -88,7 +88,7 @@
     <term name="forthcoming">previst</term>
     <term name="from">de</term>
     <term name="ibid">ibíd.</term>
-    <term name="in">en</term>
+    <term name="in">dins</term>
     <term name="in press">en impremta</term>
     <term name="internet">internet</term>
     <term name="letter">carta</term>
@@ -415,7 +415,7 @@
     <term name="opus" form="short">op.</term>
     <term name="page" form="short">
       <single>p.</single>
-      <multiple>p.</multiple>
+      <multiple>pp.</multiple>
     </term>
     <term name="number-of-volumes" form="short">
       <single>vol.</single>
@@ -423,7 +423,7 @@
     </term>
     <term name="page-first" form="short">
       <single>p.</single>
-      <multiple>p.</multiple>
+      <multiple>pp.</multiple>
     </term>
     <term name="printing" form="short">
       <single>print.</single>
@@ -433,7 +433,7 @@
 
     <term name="number-of-pages" form="short">
       <single>p.</single>
-      <multiple>p.</multiple>
+      <multiple>pp.</multiple>
     </term>
     <term name="paragraph" form="short">par.</term>
     <term name="part" form="short">pt.</term>
@@ -558,6 +558,10 @@
       <single>editor i traductor</single>
       <multiple>editors i traductors</multiple>
     </term>
+    <term name="editor-translator">
+      <single>editor i traductor</single>
+      <multiple>editors i traductors</multiple>
+    </term>
 
     <!-- SHORT ROLE FORMS -->
     <term name="compiler" form="short">
@@ -624,6 +628,10 @@
       <single>ed. i trad.</single>
       <multiple>ed. i trad.</multiple>
     </term>
+    <term name="editor-translator" form="short">
+      <single>ed. i trad.</single>
+      <multiple>ed. i trad.</multiple>
+    </term>
 
     <!-- VERB ROLE FORMS -->
     <term name="collection-editor" form="verb">editat per</term>
@@ -651,6 +659,7 @@
     <term name="collection-editor" form="verb-short">ed.</term>
     <term name="translator" form="verb">traduït per</term>
     <term name="editortranslator" form="verb">editat i traduït per</term>
+    <term name="editor-translator" form="verb">editat i traduït per</term>
 
     <!-- SHORT VERB ROLE FORMS -->
     <term name="compiler" form="verb-short">comp.</term>
@@ -671,6 +680,7 @@
     <term name="illustrator" form="verb-short">il·lust.</term>
     <term name="translator" form="verb-short">trad.</term>
     <term name="editortranslator" form="verb-short">ed. i trad. per</term>
+    <term name="editor-translator" form="verb-short">ed. i trad. per</term>
 
     <!-- LONG MONTH FORMS -->
     <term name="month-01" gender="masculine">gener</term>
