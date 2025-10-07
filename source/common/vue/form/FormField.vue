@@ -1,7 +1,13 @@
 <template>
   <hr v-if="props.field.type === 'separator'">
   <template v-else-if="props.field.type === 'form-text'">
-    <p v-if="props.field.display === 'info'" class="form-field-info-text">
+    <p
+      v-if="props.field.display === 'info' || props.field.display === 'plain'"
+      v-bind:class="{
+        'form-field-info-text': props.field.display === 'info',
+        'form-field-plain-text': props.field.display === 'plain'
+      }"
+    >
       {{ props.field.contents }}
     </p>
     <h4 v-else-if="props.field.display === 'sub-heading'" class="form-field-sub-heading">
@@ -102,6 +108,7 @@
   ></RadioInput>
   <SelectInput
     v-else-if="props.field.type === 'select'"
+    v-bind:disabled="props.field.disabled"
     v-bind:model-value="model"
     v-bind:label="props.field.label"
     v-bind:name="props.field.model"
@@ -118,11 +125,13 @@
     v-bind:key-names="props.field.keyNames"
     v-bind:name="props.field.model"
     v-bind:deletable="props.field.deletable"
+    v-bind:delete-label="props.field.deleteLabel"
     v-bind:editable="props.field.editable"
     v-bind:striped="props.field.striped"
     v-bind:addable="props.field.addable"
     v-bind:searchable="props.field.searchable"
     v-bind:search-label="props.field.searchLabel"
+    v-bind:empty-message="props.field.emptyMessage"
     v-on:update:model-value="emit('update:modelValue', $event)"
   ></ListControl>
   <TokenInput
@@ -130,6 +139,7 @@
     v-bind:model-value="model"
     v-bind:label="props.field.label"
     v-bind:name="props.field.model"
+    v-bind:placeholder="props.field.placeholder"
     v-on:update:model-value="emit('update:modelValue', $event)"
   ></TokenInput>
   <!-- NOTE: For sliders we only listen to change events -->
@@ -199,5 +209,9 @@ const emit = defineEmits<(e: 'update:modelValue', newValue: any) => void>()
 .form-field-sub-heading {
   font-size: 13px;
   margin-bottom: 10px;
+}
+
+.form-field-plain-text {
+  font-size: 13px;
 }
 </style>

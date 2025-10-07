@@ -34,13 +34,16 @@ const EMPTY_NODES = [
   'SubscriptMark',
   'HighlightMark',
   'HeaderMark',
+  'Blockquote',
   'QuoteMark',
   'ListMark',
+  'TaskMarker',
   'YAMLFrontmatterStart',
   'YAMLFrontmatterEnd',
   'Document',
   'List',
   'ListItem',
+  'TaskMarker',
   'PandocAttribute'
 ]
 
@@ -54,7 +57,7 @@ const EMPTY_NODES = [
  *
  * @return  {Record<string, string>}                 A map of the attributes
  */
-function parseAttributeNode (oldAttributes: Record<string, string> = {}, node: SyntaxNode, markdown: string): Record<string, string> {
+function parseAttributeNode (oldAttributes: Record<string, string|string[]> = {}, node: SyntaxNode, markdown: string): Record<string, string|string[]> {
   if (node.name !== 'PandocAttribute') {
     return oldAttributes
   }

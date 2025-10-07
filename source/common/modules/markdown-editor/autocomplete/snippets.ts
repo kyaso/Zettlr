@@ -25,7 +25,8 @@ import {
   EditorSelection,
   Facet,
   type SelectionRange,
-  type EditorState
+  type EditorState,
+  MapMode,
 } from '@codemirror/state'
 import { Decoration, EditorView, WidgetType } from '@codemirror/view'
 import { type AutocompletePlugin } from '.'
@@ -160,9 +161,13 @@ export const snippetsUpdateField = StateField.define<SnippetStateField>({
     }
 
     // This monstrosity ensures that our ranges stay in sync while the user types
-    val.activeSelections = val.activeSelections.map(selection => {
-      return selection.map(transaction.changes)
-    })
+    val.activeSelections = val.activeSelections
+      .filter(selection => {
+        return selection.ranges.some(r => transaction.changes.mapPos(r.from, -1, MapMode.TrackBefore) !== null)
+      })
+      .map(selection => {
+        return selection.map(transaction.changes)
+      })
 
     return { ...val }
   },
@@ -368,7 +373,12 @@ export const snippets: AutocompletePlugin = {
 
 export function nextSnippet (target: EditorView): boolean {
   // Progresses to the next tabstop if there's one available
-  const { activeSelections } = target.state.field(snippetsUpdateField)
+  const field = target.state.field(snippetsUpdateField, false)
+  if (field === undefined) {
+    return false
+  }
+
+  const { activeSelections } = field
   if (activeSelections.length === 0) {
     return false
   }
@@ -385,7 +395,12 @@ export function nextSnippet (target: EditorView): boolean {
 
 export function abortSnippet (target: EditorView): boolean {
   // Removes all tabstops, if there are any
-  const ranges = target.state.field(snippetsUpdateField).activeSelections.length
+  const field = target.state.field(snippetsUpdateField, false)
+  if (field === undefined) {
+    return false
+  }
+
+  const ranges = field.activeSelections.length
   if (ranges > 0) {
     target.dispatch({ effects: snippetTabsEffect.of([]) })
     return true

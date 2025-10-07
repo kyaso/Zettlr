@@ -17,12 +17,9 @@
 import CSL from 'citeproc'
 import { FSWatcher } from 'chokidar'
 import { ipcMain } from 'electron'
-import { promises as fs, readFileSync } from 'fs'
+import { promises as fs, readFileSync, constants as FS_CONSTANTS } from 'fs'
 import path from 'path'
 import { trans } from '@common/i18n-main'
-import extractBibTexAttachments from './extract-bibtex-attachments'
-import { parse as parseBibTex } from 'astrocite-bibtex'
-import YAML from 'yaml'
 import ProviderContract, { type IPCAPI } from '../provider-contract'
 import type WindowProvider from '../windows'
 import type LogProvider from '../log'
@@ -30,12 +27,13 @@ import type ConfigProvider from '@providers/config'
 import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 import broadcastIpcMessage from '@common/util/broadcast-ipc-message'
 import { showNativeNotification } from '@common/util/show-notification'
+import { loadDatabase } from './util/database-loader'
 
-interface DatabaseRecord {
+export interface DatabaseRecord {
   path: string
   // We basically have CSL databases (do not contain attachments) or BibTex
   // (contain attachments).
-  type: 'csl'|'bibtex'
+  type: 'csl'|'bibtex'|'biblatex'
   cslData: Record<string, CSLItem>
   bibtexAttachments: Record<string, string[]|false>
 }
@@ -46,6 +44,9 @@ export type CiteprocProviderIPCAPI = IPCAPI<{
   'get-citation-sync': { database: string, citations: CiteItem[], composite: boolean }
   'get-bibliography': { database: string, citations: string[] }
 }>
+
+// The default style Zettlr ships with
+const DEFAULT_CHICAGO_STYLE = path.join(__dirname, './assets/csl-styles/chicago-author-date.csl')
 
 /**
  * This class enables to export citations from a CSL JSON file to HTML.
@@ -244,7 +245,7 @@ export default class CiteprocProvider extends ProviderContract {
     this._logger.verbose('Citeproc provider booting up ...')
     this.mainLibrary = this._config.get().export.cslLibrary
 
-    this.loadEngine()
+    await this.loadEngine()
 
     if (this.mainLibrary === '') {
       return
@@ -292,11 +293,8 @@ export default class CiteprocProvider extends ProviderContract {
    *
    * @return {CSL.Engine} The instantiated engine
    */
-  private loadEngine (): void {
-    const style = readFileSync(
-      path.join(__dirname, './assets/csl-styles/chicago-author-date.csl'),
-      { encoding: 'utf8' }
-    )
+  private async loadEngine (): Promise<void> {
+    const style = await fs.readFile(DEFAULT_CHICAGO_STYLE, 'utf-8')
 
     // The last parameter enforces usage of the language we provide
     this.engine = new CSL.Engine(this.sys, style, this._config.get().appLang, true)
@@ -325,53 +323,13 @@ export default class CiteprocProvider extends ProviderContract {
       return // No need to load the database again
     }
 
-    this._logger.info(`[Citeproc Provider] Loading database ${databasePath}`)
-    const record: DatabaseRecord = {
-      path: databasePath,
-      type: 'csl',
-      cslData: {},
-      bibtexAttachments: Object.create(null)
+    try {
+      await fs.access(databasePath, FS_CONSTANTS.F_OK|FS_CONSTANTS.R_OK)
+    } catch (err) {
+      throw new Error(`File "${databasePath}" does not exist or is not visible to the app.`)
     }
 
-    // First read in the database file
-    const data = await fs.readFile(databasePath, 'utf8')
-
-    switch (path.extname(databasePath).toLowerCase()) {
-      case '.json': {
-        for (const item of JSON.parse(data) as CSLItem[]) {
-          record.cslData[item.id] = item
-        }
-        break
-      }
-      case '.yml':
-      case '.yaml': {
-        let yamlData = YAML.parse(data)
-        if ('references' in yamlData) {
-          yamlData = yamlData.references // CSL YAML is stored in `references`
-        } else if (!Array.isArray(yamlData)) {
-          throw new Error('The CSL YAML file did not contain valid contents.')
-        }
-        for (const item of yamlData) {
-          record.cslData[item.id] = item
-        }
-        break
-      }
-      case '.bib': {
-        for (const item of parseBibTex(data)) {
-          record.cslData[item.id] = item
-        }
-        record.type = 'bibtex'
-
-        // If we're here, we had a BibTex library --> extract the attachments
-        const attachments = extractBibTexAttachments(data, path.dirname(databasePath), this._logger)
-        record.bibtexAttachments = attachments
-        break
-      }
-      default:
-        throw new Error(`Could not load database ${databasePath}: Unknown extension`)
-    }
-
-    this._logger.info(`[Citeproc Provider] Database ${record.path} loaded (${Object.keys(record.cslData).length} items).`)
+    const record = await loadDatabase(databasePath, this._logger)
 
     // Add the database to the list of available databases
     this.databases.set(databasePath, record)
@@ -417,7 +375,9 @@ export default class CiteprocProvider extends ProviderContract {
       throw new Error(`Could not select database ${dbPath}: Not loaded.`)
     }
 
-    this._logger.verbose(`[Citeproc Provider] Selecting database ${dbPath}...`)
+    if (this.lastSelectedDatabase !== dbPath) {
+      this._logger.verbose(`[Citeproc Provider] Selecting database ${dbPath}...`)
+    }
 
     this._items = database.cslData
 
@@ -444,7 +404,7 @@ export default class CiteprocProvider extends ProviderContract {
   onConfigUpdate (option: string): void {
     if (option === 'appLang') {
       // We have to reload the engine to reflect the new language
-      this.loadEngine()
+      this.loadEngine().catch(err => this._logger.error(`[Citeproc Provider] Could not reload engine: ${err.message}`, err))
     } else if (option === 'export.cslLibrary') {
       // Determine if we have to reload
       const newValue = this._config.get('export.cslLibrary')
@@ -534,9 +494,12 @@ export default class CiteprocProvider extends ProviderContract {
       } else if (composite && citations.length === 1) {
         // Mimic the composite mode
         const citation = citations[0]
+        const suffix = citation.suffix
+        citation.suffix = undefined
         citation['author-only'] = true
         citation['suppress-author'] = false
         const author = this.engine.makeCitationCluster([citation])
+        citation.suffix = suffix
         citation['author-only'] = false
         citation['suppress-author'] = true
         const rest = this.engine.makeCitationCluster([citation])

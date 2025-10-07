@@ -152,9 +152,7 @@ import AutocompleteText from '@common/vue/form/elements/AutocompleteText.vue'
 import { trans } from '@common/i18n-renderer'
 import { ref, computed, watch, onMounted } from 'vue'
 import type { FileSearchDescriptor, SearchResult, SearchResultWrapper } from '@dts/common/search'
-import showPopupMenu from '@common/modules/window-register/application-menu-helper'
-import { type AnyMenuItem } from '@dts/renderer/context'
-// import { markText } from './shared'
+import showPopupMenu, { type AnyMenuItem } from '@common/modules/window-register/application-menu-helper'
 import { hasMdOrCodeExt } from '@common/util/file-extention-checks'
 import { useConfigStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
 import type { MaybeRootDescriptor } from 'source/types/common/fsal'
@@ -185,14 +183,12 @@ function getContextMenu (): AnyMenuItem[] {
     {
       label: trans('Open in new tab'),
       id: 'new-tab',
-      type: 'normal',
-      enabled: true
+      type: 'normal'
     },
     {
       label: trans('Copy'),
       id: 'copy',
-      type: 'normal',
-      enabled: true
+      type: 'normal'
     }
   ]
 }
@@ -641,6 +637,19 @@ body div#global-search-pane {
     margin: 10px 0;
     border: none;
     border-bottom: 1px solid #ccc;
+  }
+
+  p {
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .form-control {
+    input {
+      margin-top: 5px;
+    }
   }
 
   div.search-result-container {

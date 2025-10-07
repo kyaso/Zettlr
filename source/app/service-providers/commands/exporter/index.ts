@@ -31,7 +31,8 @@ import type AssetsProvider from '@providers/assets'
 import type LogProvider from '@providers/log'
 import { type PandocProfileMetadata } from '@providers/assets'
 import type ConfigProvider from '@providers/config'
-import { parseReaderWriter } from '@common/pandoc-util/parse-reader-writer'
+import { enableExtension, parseReaderWriter, readerWriterToString } from '@common/pandoc-util/parse-reader-writer'
+import { EXT2READER } from '@common/pandoc-util/pandoc-maps'
 
 /**
  * This function returns faux metadata for the custom export formats the
@@ -169,28 +170,32 @@ async function writeDefaults (
 ): Promise<string> {
   const defaultsFile = path.join(app.getPath('temp'), 'defaults.yml')
   const defaults: any = await assets.getDefaultsFile(filename)
-  const { cslLibrary, cslStyle, stripTags, stripLinks } = config.get().export
 
+  const cfg = config.get()
+  const { cslLibrary, cslStyle, stripTags, stripLinks, enforceMarkSupport } = cfg.export
+  const { linkFormat } = cfg.zkn
+
+  // First step: Reader treatment. Zettlr can modify the reader to align with
+  // the user preferences.
+  const parsedReader = parseReaderWriter(defaults.reader as string)
+  const readsMarkdown = EXT2READER['md'].includes(parsedReader.name)
+  
   // The user can choose to use [[link|title]] or [[title|link]] syntax. In
   // order for the Lua filter to work properly and respect the link removal
   // setting upon export, we need to set the appropriate extension if it is not
   // already set in the `reader` property.
-  const { linkFormat } = config.get().zkn
-  const requiredExtension = linkFormat === 'link|title'
+  const linkExt = linkFormat === 'link|title'
     ? 'wikilinks_title_after_pipe'
     : 'wikilinks_title_before_pipe'
-  const parsedReader = parseReaderWriter(defaults.reader)
-  const mdReaders = [
-    'commonmark', 'commonmark_x', 'gfm', 'ipynb', 'markdown', 'markdown_mmd',
-    'markdown_phpextra', 'markdown_strict'
-  ]
+  enableExtension(parsedReader, linkExt)
 
-  if (
-    mdReaders.includes(parsedReader.name) &&
-    !parsedReader.enabledExtensions.includes(requiredExtension)
-  ) {
-    defaults.reader += `+${requiredExtension}`
+  // Same for the `mark` extension which makes Pandoc correctly parse `==mark==`
+  if (readsMarkdown && enforceMarkSupport) {
+    enableExtension(parsedReader, 'mark')
   }
+
+  // Finally, write the modified reader
+  defaults.reader = readerWriterToString(parsedReader)
 
   // In order to facilitate file-only databases, we need to get the currently
   // selected database. This could break in a lot of places, but until Pandoc

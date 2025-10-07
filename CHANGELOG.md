@@ -58,34 +58,253 @@ keep `$FILENAME`, but wherever you need both the file name and its file
 extension, please use `$FILENAME$EXTENSION`. (The latter variable includes
 the leading period of the extension, so do not write `$FILENAME.$EXTENSION`.)
 
+## Image Viewer and PDF Viewer
+
+This update brings with it a great new feature for Zettlr: A built-in image
+viewer and PDF viewer. Once you have selected in the settings that you wish to
+open images or PDF files in Zettlr instead of the default behavior to open it
+externally, Zettlr will open them in editor panes just like the editors. You can
+rearrange them just like you can other files, and you have some options
+available to inspect the files.
+
+For images, the viewer offers various options to zoom and fit the images so that
+you can view every detail of them while having other files open side-by-side.
+In addition, the image viewer offers four background modes to accommodate
+transparency and difficult-to-view colors in the images better: transparent
+(the default), a black background, white background, and a translucent
+checkerboard background.
+
+The PDF viewer likewise allows you to preview PDF files using Chromium's built-
+in PDF viewer that you may already know if you have opened PDF files in Google
+Chrome or Edge. Due to restrictions in how this works, however, you will have to
+manually "enable" such a viewer before being able to scroll it by clicking into
+it. Whether an iframe is interactive is indicated by a small border around the
+iframe.
+
+Note that both image and PDF viewers are just that: viewers. As Zettlr is a text
+app, we do not plan on implementing any ways of editing images or PDF files. To
+annotate your PDF files, please continue using your existing workflow.
+
+## New Citation Parser
+
+This release of Zettlr ships with a fully rewritten citation parser. We have
+decided to do so because the existing citation parser was very coarse. It would
+only detect and indicate entire citation nodes, but it could not distinguish
+between the various parts of citations (such as prefix, citekey, and suffix). In
+addition, there were quite many inefficiencies in how Zettlr would parse
+citations.
+
+The new citation parser aims at fixing these issues. It now mounts individual
+nodes into the document for all individual parts of a citation node.
+Specifically, it now detects formatting characters, the `@`-sign, the suppress-
+author-flag (a hyphen preceding the `@`-sign), prefix, suffix, and the locator
+individually. This not just makes styling individual citation parts possible,
+but also makes all processing within Zettlr more efficient and faster.
+Especially in documents with a lot of citations, you should be able to observe a
+performance improvement.
+
+Lastly, we took this opportunity to align the parser more with how Pandoc
+Citeproc processes citations. Most notably, this includes relaxing some
+requirements such as having to place commas after the citekey, and support for
+curly brackets, which allows you more flexibility in defining citekeys (e.g.,
+`@{AuthorYear}`) and locators (e.g., `{pp. 23-24, 66-69}`),
+
+If you prefer to style Zettlr using Custom CSS, you can now style the individual
+parts of your citations, using the following CSS classes:
+
+* `cm-citation`: The entire citation node
+* `cm-citation-mark`: Formatting characters (`{}[];`) except the `@`-sign and
+  the suppress-author-flag
+* `cm-citation-prefix`: The citation prefix
+* `cm-citation-suppress-author-flag`: The suppress-author-flag
+* `cm-citation-at-sign`: The `@`-sign in front of your citekey
+* `cm-citation-citekey`: The actual cite key (sans surrounding curly brackets)
+* `cm-citation-locator`: The locator after your citekey
+* `cm-citation-suffix`: The citation suffix
+
+## Modified Zettelkasten Link Workflow
+
+With this update, we have updated the Zettelkasten link insertion workflow. This
+is due to the new capabilities of Zettlr to understand link labels. To do so, we
+have removed the previous settings "Link with filename only" and "When linking
+files, add the document name …". Instead, we have added two new settings,
+"Always use the file title as label for internal links" and "Use the file ID as
+link target if possible."
+
+The new workflow applies when you autocomplete a filename, and works as follows:
+
+1. If "Use the file ID" is enabled, Zettlr will use a file's ID, if the file has
+   one, and fall back to the filename only where no ID is available. If it is
+   disabled, Zettlr will always use the filename to generate internal Wikilinks.
+2. If "Always use the file title" is enabled, Zettlr will add the file's title
+   (YAML frontmatter title; first heading level 1; filename) as the link label.
+   If it is disabled, Zettlr will never add a link label automatically.
+
 ## GUI and Functionality
 
 - **Feature**: Full TableEditor Rewrite. The new TableEditor keeps most
   functionality of the previous version, with the exception of more safeguards
   against data loss, and more ergonomic usage.
-- Fixed inline math not rendering when transforming Markdown to HTML (e.g., in
-  footnotes).
+- **Feature**: Image and PDF previews. Zettlr has now two dedicated viewers that
+  allow users to open common image types and PDF files right from within the app
+  for preview purposes (#5501).
+- **Feature**: Fully rewritten citation parser (#5902).
 - **Feature**: Full-text (aka. global) search runs can now be cancelled via a
   dedicated button. You can now also trigger a new search while another search
   is already running.
 - **Feature**: Individual global search results can now be copied to the
   clipboard (#2070).
+- **Feature**: The file manager can now show and display other file types as
+  opposed to having those only in the sidebar. Images and PDF files can be
+  opened directly in Zettlr, while other files will be opened using the system
+  default application. You can use the appropriate section in the advanced
+  settings to customize this. By default, none of the new file types will be
+  displayed in the file manager (#5501).
+- **Feature**: Zettlr now provides a Liquid Glass icon for macOS 26.
+- **Feature**: A new option has been added to allow a simple switching between a
+  raw Markdown syntax mode and a preview mode ("WYSIWYG"), both in the settings
+  and in the statusbar. Clicking it will toggle Markdown files between a pure
+  syntax view, and a mode in which those items which you have selected will be
+  pre-rendered/previewed (#4514).
+- **Feature**: Zettlr now ships with a brand-new onboarding wizard that helps
+  new users tweak some central settings immediately without having to scour the
+  preferences.
+- **Feature**: macOS users with an Apple Silicon chip can now access Writing
+  Tools from context menus.
+- **Feature**: Allow turning off the behavior of Zettlr to automatically open
+  files upon successful export (#5609).
+- **Feature**: Added a simple setting that forcefully enables Pandoc's `mark`-
+  extension when exporting from Markdown if that is not already enabled. This
+  ensures that `==highlighted==` spans are properly considered in any output
+  format.
+- **Feature**: Improved the calendar view in the statistics window to better
+  convey the numbers. It now features a gradient heatmap, only considers the
+  numbers from the visible year, and logs the numbers to spread out the
+  distribution across the new, ten activity levels.
+- **Feature**: Improved the statistics chart to better help you contextualize
+  your writing flow. It now shows you your current word count for this week, and
+  compares it to this and last years's averages.
+- **Feature**: The LanguageTool integration is now more performant and allows
+  ignoring of certain rules (#5910). Whenever you ignore a rule, it shows up in
+  the spellchecking preferences section alongside some additional info. From
+  this section you can re-enable it by removing it from the list of ignored
+  rules.
+- **Feature**: "Hide heading characters" now properly hides the characters
+  instead of replacing them with another element, bringing Zettlr's renderer
+  closer to a true WYSIWYG experience. The heading level is now indicated to the
+  left side in its own gutter element.
+- **Feature**: You can now show line numbers in Markdown files via a new setting
+  (#5917).
+- **Feature**: Zettlr has now improved support for reference-style links. This
+  support extends to the link context-menu (which now supports handling links
+  from both link and link reference), the tooltips (which accurately show link
+  previews), rendering (which accounts for link labels), to any action (such as
+  copying or removing a link) (#5142).
+- **Feature**: Zettlr now supports loading BibLaTeX libraries as well (#460).
+- **Feature**: Zettlr now correctly displays crossref-style citations (#248).
+- **Feature**: You can now collapse and un-collapse the files and workspace
+  sections in the file manager. This can be helpful if you are working with both
+  a lot of individual files and workspaces. Your choice is remembered (#5916).
 - **Change**: Snippets: The `$FILENAME` variable now does not contain the file
   extension anymore. Users who also want the extension should update their
   snippets to `$FILENAME$EXTENSION` (#4191).
+- **Change**: The word and character counters in the statusbar now always show
+  both counts.
+- **Change**: Modified the Zettelkasten link insertion workflow. The previous
+  settings "Link with filename only" and "When linking files, add the document
+  name …" have been removed. Instead, there are two new settings, "Always use
+  the file title as label for internal links" and "Use the file ID as link
+  target if possible." The first new setting will always insert the detected
+  file title (YAML frontmatter title; first heading level 1; filename) as the
+  link label. If disabled, Zettlr will always create links without labels. The
+  second setting controls whether Zettlr will always use filenames to link to
+  files, or use IDs where available.
+- **A11y**: Zettlr now respects if you choose to reduce transparency in system
+  settings and no longer add window vibrancy on macOS.
+- You can now show an item in Finder/Explorer/file browser when right-clicking a
+  document tab (#5914).
+- Fixed inline math not rendering when transforming Markdown to HTML (e.g., in
+  footnotes).
 - The diagnostics info field in the statusbar now toggles the lint panel,
   instead of only opening the panel (#5847).
 - Fixed WebP images not rendering from relative paths (#5181).
 - Fixed the behavior when clicking widgets (citations, etc.) to accurately
   select only the widget's source text (#5682).
 - Update `it-IT` translation (#5831).
-- Fixed incorrect cursor position after inserting IDs (#5846)
+- Update `da-DA` translations (#5868).
+- Fixed incorrect cursor position after inserting IDs (#5846).
+- The toolbar word counter no longer wraps (#5774; #5881).
+- Fix context menu entry "Insert table" not working (#5835).
+- The keyboard shortcuts for snippets no longer require the field, thus
+  preventing errors in `EditorView`s that map the corresponding shortcuts but
+  don't have snippets installed.
+- The three-way-toggle for the file manager and global search does not wrap on
+  Windows anymore (#5876).
+- The toolbar can now scroll left and right if the main window is too narrow
+  (#5873; #5022).
+- Popovers (especially in the toolbar) will now properly close when clicking the
+  associated toolbar button a second time (#5870).
+- Style improvements: linter panel dark mode (#5882);  drop cursor (#5883);
+  export, pomodoro, and tags popover (#5895); spacing in file manager tree view
+  (#5891); global search (#5894).
+- Switched the icons for code and comments in the formatting toolbar (#5901).
+- The word counter now uses a proper segmenter that will make the word count
+  more accurate for languages that do not use spaces to separate words (#5898).
+- Fixed the tutorial pages not correctly opening on first start.
+- Improved the macOS tray icon display.
+- Single clicks on the tray icon now activate the app (#4267).
+- Fixed footnote placing edge cases.
+- Due to updates in Apple's Human Interface Guidelines, the main process now no
+  longer removes accelerators/keyboard shortcuts from the menus.
+- The recent documents provider now uses the OS API to return a list of recent
+  documents. The provider is only retained for Linux at this point.
+- Improved performance for documents with many and/or large tables (#5903).
+- Fixes print functionality by completely abandoning the `iframe` approach and
+  switching to the built-in Markdown-to-HTML parser.
+- Fixed the user dictionary not persisting to disk under certain conditions
+  (#5922).
+- The toolbar update button now includes a clearly visible label indicating that
+  an update is available, making it less likely to miss it.
+- Improved the styling and labelling of the additional attachment extensions
+  setting in the advanced settings
+- The citation context menu now shows rendered citations instead of the raw
+  citation keys, and utilizes macOS's `sublabel` feature to describe the context
+  menu items.
 
 ## Under the Hood
 
-- Update Electron to version `37.2.5`.
+- Update Electron to version `38.2.0`.
+- Update Pandoc to version `3.8`.
 - Added new `curly` rule to ESLint, enforcing curly brackets for block-statement
   declarations (`if`, `for`, `while`, etc.).
+- The `enabled` property of context menu items is now optional, and defaults to
+  `true`.
+- `EditorPane`s will no longer load all documents at the same time, and instead
+  reuse the existing `MarkdownEditor` component for a single document. This
+  greatly reduces memory consumption, especially for very full tab bars, since
+  only a single document will be actively rendered at any one time.
+- Moved the previously shared common types for the context menu in the renderer
+  into the correct module to colocate the code. The shared types have been a
+  remnant from a time before TypeScript supported the `type` keyword, and will
+  subsequently be removed.
+- Moved the `DirectedGraph` class from the link provider to the stats window.
+- Switched back from `electron-devtools-assembler` to
+  `electron-devtools-installer`; now the Vue.js devtools extension works again.
+- Style groups in form builder fields now support a label that will be rendered
+  atop of these groups.
+- Zettlr now records and remembers the binary's build date. This information is
+  shown in the debug info to help pinpoint from when a version is. In addition,
+  this information is now used to disambiguate nightly versions so that both the
+  FSAL cache will be cleared more regularly, and you get a visual indicator that
+  you did update your nightly release.
+- The AST parser now properly detects task lists, and the Markdown-to-HTML
+  converter appropriately handles them.
+- Improved list form controls. They now allow customizing the delete label and
+  provide a custom "No records" message.
+- The `rangeInSelection` utility function now accepts an optional parameter that
+  allows inclusion of adjacent selection ranges in calculating the result. This
+  allows, e.g., renderers to detect whether a selection touches a node-to-be-
+  rendered.
 
 # 3.6.0
 
@@ -178,6 +397,13 @@ The available transforms as of now are:
 
 ## GUI and Functionality
 
+- **New Feature**: Zettlr can now display a set of file types not only in the
+  sidebar's "Other files" tab, but also in the file manager, which in turn makes
+  it simpler to find and open relevant plots or PDF files for reference.
+- **New Feature**: Zettlr can now open images and PDF files right next to your
+  regular files, enabling you to preview pictures of, e.g., plots, or studies to
+  reference in your text; and double-check PDF files which you need to
+  reference.
 - **Feature**: The code editors (in the assets manager and elsewhere) now share
   the same keymap as the main editor.
 - **Feature**: The image renderer now acknowledges and respects the presence of

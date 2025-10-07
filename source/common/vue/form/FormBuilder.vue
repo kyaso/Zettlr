@@ -35,6 +35,11 @@
             ?
           </div>
         </div>
+        <!-- Info String, if applicable -->
+        <p v-if="fieldset.infoString" style="margin: 10px 0;" class="form-field-info-text">
+          {{ fieldset.infoString }}
+        </p>
+
         <!-- Now to the contents of the fieldset -->
         <template v-for="(field, fieldIdx) in fieldset.fields" v-bind:key="fieldIdx">
           <FormFieldControl
@@ -45,24 +50,55 @@
           ></FormFieldControl>
           <div
             v-else-if="field.type === 'style-group'"
-            v-bind:class="{
-              'style-group': true,
-              columns: field.style === 'columns'
-            }"
+            class="style-group"
           >
-            <template v-for="(subField, subfieldIdx) in field.fields" v-bind:key="subfieldIdx">
-              <FormFieldControl
-                v-if="'model' in subField"
-                v-bind:field="subField"
-                v-bind:model="getModelValue(subField.model)"
-                v-on:update:model-value="emit('update:modelValue', subField.model, $event)"
-              ></FormFieldControl>
-              <FormFieldControl
-                v-else
-                v-bind:field="subField"
-                v-bind:model="undefined"
-              ></FormFieldControl>
-            </template>
+            <p
+              v-if="field.label !== undefined"
+              class="form-field-plain-text"
+            >
+              {{ field.label }}
+            </p>
+            <div v-bind:class="{ columns: field.style === 'columns' }">
+              <template v-for="(subField, subfieldIdx) in field.fields" v-bind:key="subfieldIdx">
+                <FormFieldControl
+                  v-if="'model' in subField"
+                  v-bind:field="subField"
+                  v-bind:model="getModelValue(subField.model)"
+                  v-on:update:model-value="emit('update:modelValue', subField.model, $event)"
+                ></FormFieldControl>
+                <FormFieldControl
+                  v-else
+                  v-bind:field="subField"
+                  v-bind:model="undefined"
+                ></FormFieldControl>
+              </template>
+            </div>
+          </div>
+          <!-- Display a set of related controls in a table/grid-like layout -->
+          <div
+            v-else-if="field.type === 'control-grid'"
+            class="control-grid"
+          >
+            <div v-if="field.header !== undefined" class="control-grid-row">
+              <div v-for="(header, headerIdx) in field.header" v-bind:key="headerIdx" class="control-grid-cell heading">
+                {{ header }}
+              </div>
+            </div>
+            <div v-for="(row, rowIdx) in field.rows" v-bind:key="rowIdx" class="control-grid-row">
+              <div v-for="(subField, subfieldIdx) in row" v-bind:key="`${rowIdx}${subfieldIdx}`" class="control-grid-cell">
+                <FormFieldControl
+                  v-if="'model' in subField"
+                  v-bind:field="subField"
+                  v-bind:model="getModelValue(subField.model)"
+                  v-on:update:model-value="emit('update:modelValue', subField.model, $event)"
+                ></FormFieldControl>
+                <FormFieldControl
+                  v-else
+                  v-bind:field="subField"
+                  v-bind:model="undefined"
+                ></FormFieldControl>
+              </div>
+            </div>
           </div>
           <!-- Else for all elements that don't have a model (i.e., the separator) -->
           <FormFieldControl
@@ -134,7 +170,7 @@ interface Separator {
 
 interface FormText {
   type: 'form-text'
-  display: 'info'|'sub-heading'
+  display: 'info'|'sub-heading'|'plain'
   contents: string
 }
 
@@ -207,8 +243,10 @@ interface ListField extends BasicInfo {
   addable?: boolean
   editable?: boolean | number[]
   deletable?: boolean
+  deleteLabel?: string
   searchable?: boolean
   searchLabel?: string
+  emptyMessage?: string
 }
 
 interface TokenField extends BasicInfo {
@@ -247,7 +285,20 @@ SliderField
 interface StyleGroup {
   type: 'style-group'
   style: 'columns'
+  label?: string
   fields: FormField[]
+}
+
+/**
+ * This field can be used to display a series of repeating controls in a grid
+ * layout (e.g., when you have several elements that share the same sets of
+ * controls but that are separate of each other, and when you want to display
+ * the same control type in a single column).
+ */
+interface ControlGrid {
+  type: 'control-grid',
+  header?: string[],
+  rows: Array<FormField[]>
 }
 
 export interface Fieldset {
@@ -255,6 +306,10 @@ export interface Fieldset {
    * The section heading for the fieldset
    */
   title: string
+  /**
+   * An optional info string detailing what this fieldset does or contains.
+   */
+  infoString?: string
   /**
    * An optional help string that can be shown in a questionmark tooltip
    */
@@ -267,7 +322,7 @@ export interface Fieldset {
   /**
    * The fields which are part of this formfield
    */
-  fields: Array<FormField|StyleGroup>
+  fields: Array<FormField|StyleGroup|ControlGrid>
   [key: string]: any // Allow arbitrary additional fields
 }
 
@@ -359,6 +414,19 @@ function getModelValue (model: string): any {
       .columns {
         column-count: 2;
         column-fill: balance;
+      }
+    }
+
+    .control-grid {
+      display: table;
+      .control-grid-row { display: table-row }
+      .control-grid-cell {
+        display: table-cell;
+        padding: 5px 10px;
+        &.heading {
+          font-weight: bold;
+          font-size: 13px;
+        }
       }
     }
   }

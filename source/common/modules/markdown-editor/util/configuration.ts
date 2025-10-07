@@ -32,6 +32,7 @@ export interface EditorConfiguration {
   autocompleteSuggestEmojis: boolean
   autocorrect: AutocorrectOptions
   autoCloseBrackets: boolean
+  renderingMode: 'preview'|'raw'
   renderCitations: boolean
   renderIframes: boolean
   renderImages: boolean
@@ -49,7 +50,8 @@ export interface EditorConfiguration {
   indentWithTabs: boolean
   linkPreference: 'always'|'never'|'withID'
   zknLinkFormat: 'link|title'|'title|link'
-  linkFilenameOnly: boolean
+  zknAddFileTitle: boolean
+  linkWithIDIfPossible: boolean
   metadata: {
     path: string
     id: string
@@ -72,6 +74,7 @@ export interface EditorConfiguration {
   theme: MarkdownTheme
   margins: 'S'|'M'|'L'
   highlightWhitespace: boolean
+  showMarkdownLineNumbers: boolean
   countChars: boolean
 }
 
@@ -88,6 +91,7 @@ export function getDefaultConfig (): EditorConfiguration {
     },
     autocompleteSuggestEmojis: false,
     autoCloseBrackets: true,
+    renderingMode: 'preview',
     renderCitations: true,
     renderIframes: true,
     renderImages: true,
@@ -105,7 +109,8 @@ export function getDefaultConfig (): EditorConfiguration {
     indentWithTabs: false,
     linkPreference: 'always',
     zknLinkFormat: 'link|title',
-    linkFilenameOnly: false,
+    linkWithIDIfPossible: false,
+    zknAddFileTitle: true,
     metadata: {
       path: '',
       id: '',
@@ -128,6 +133,7 @@ export function getDefaultConfig (): EditorConfiguration {
     theme: 'berlin',
     margins: 'M',
     highlightWhitespace: false,
+    showMarkdownLineNumbers: false,
     countChars: false
   }
 }

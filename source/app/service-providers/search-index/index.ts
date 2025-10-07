@@ -54,7 +54,7 @@ export default class SearchIndexProvider extends ProviderContract {
   public insert (id: string, fileName: string, fileContent: string) {
     this._logger.verbose(`SearchIndexProvider: Inserting ${id}...`)
     this.startTimeMeasurement()
-    insert(this._db, {
+    void insert(this._db, {
       id,
       fileName,
       fileContent
@@ -65,7 +65,7 @@ export default class SearchIndexProvider extends ProviderContract {
   public update (id: string, fileName: string, fileContent: string) {
     this._logger.verbose(`SearchIndexProvider: Updating ${id}...`)
     this.startTimeMeasurement()
-    update(this._db, id, {
+    void update(this._db, id, {
       id,
       fileName,
       fileContent

@@ -23,9 +23,10 @@ import { PANDOC_WRITERS } from '@common/pandoc-util/pandoc-maps'
 import { type PandocProfileMetadata } from '@providers/assets'
 import { runShellCommand } from './exporter/run-shell-command'
 import { showNativeNotification } from '@common/util/show-notification'
+import type { AppServiceContainer } from 'source/app/app-service-container'
 
 export default class Export extends ZettlrCommand {
-  constructor (app: any) {
+  constructor (app: AppServiceContainer) {
     super(app, [ 'export', 'custom-export' ])
   }
 
@@ -145,12 +146,14 @@ export default class Export extends ZettlrCommand {
         showNativeNotification(trans('Exporting to %s', readableFormat))
 
         // In case of a textbundle/pack it's a folder, else it's a file
-        if ([ 'textbundle', 'textpack' ].includes(arg.profile.writer)) {
-          shell.showItemInFolder(output.targetFile)
-        } else {
-          const potentialError = await shell.openPath(output.targetFile)
-          if (potentialError !== '') {
-            throw new Error('Could not open exported file: ' + potentialError)
+        if (this._app.config.get().export.autoOpenExportedFiles) {
+          if ([ 'textbundle', 'textpack' ].includes(arg.profile.writer)) {
+            shell.showItemInFolder(output.targetFile)
+          } else {
+            const potentialError = await shell.openPath(output.targetFile)
+            if (potentialError !== '') {
+              throw new Error('Could not open exported file: ' + potentialError)
+            }
           }
         }
       } else {

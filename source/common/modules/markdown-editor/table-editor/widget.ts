@@ -15,25 +15,76 @@
 
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState, Range } from '@codemirror/state'
-import { WidgetType, EditorView, type DecorationSet, Decoration } from '@codemirror/view'
+import type { Rect, DecorationSet } from '@codemirror/view'
+import { WidgetType, EditorView, Decoration } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import type { TableRow, Table, TableCell } from '../../markdown-utils/markdown-ast'
 import { parseTableNode } from '../../markdown-utils/markdown-ast/parse-table-node'
 import { nodeToHTML } from '../../markdown-utils/markdown-to-html'
 import { createSubviewForCell, hiddenSpanField } from './subview'
 import { getCoordinatesForRange } from './commands/util'
-import { generateColumnControls, generateEmptyTableWidgetElement, generateRowControls } from './widget-dom'
+import { generateColumnControls, generateEmptyTableWidgetElement, generateRowControls, tableTD, tableTH, tableTR } from './widget-dom'
 import { displayTableContextMenu } from './context-menu'
 import { addColAfter, addColBefore, clearCol, deleteCol, swapNextCol, swapPrevCol } from './commands/columns'
 import { addRowAfter, addRowBefore, clearRow, deleteRow, swapNextRow, swapPrevRow } from './commands/rows'
 import { clearTable, setAlignment } from './commands/tables'
 import { CITEPROC_MAIN_DB } from 'source/types/common/citeproc'
 import { configField } from '../util/configuration'
+import { applyBold, applyItalic, insertLink } from '../commands/markdown'
+import { copyAsHTML, copyAsPlain, cut, paste, pasteAsPlain } from '../util/copy-paste-cut'
+import { selectAllCommand } from '../keymaps/table-editor'
+import { stripDuplicateSpaces } from '../commands/transforms/strip-duplicate-spaces'
+import { italicsToQuotes } from '../commands/transforms/italics-to-quotes'
+import { quotesToItalics } from '../commands/transforms/quotes-to-italics'
+import { removeLineBreaks } from '../commands/transforms/remove-line-breaks'
+import { addSpacesAroundEmdashes } from '../commands/transforms/add-spaces-around-emdashes'
+import { removeSpacesAroundEmdashes } from '../commands/transforms/remove-spaces-around-emdashes'
+import { doubleQuotesToSingle } from '../commands/transforms/double-quotes-to-single-quotes'
+import { singleQuotesToDouble } from '../commands/transforms/single-quotes-to-double-quotes'
+import { straightenQuotes } from '../commands/transforms/straighten-quotes'
+import { toDoubleQuotes } from '../commands/transforms/to-double-quotes'
+import { toSentenceCase } from '../commands/transforms/to-sentence-case'
+import { toTitleCase } from '../commands/transforms/to-title-case'
+import { zapGremlins } from '../commands/transforms/zap-gremlins'
 
 // This widget holds a visual DOM representation of a table.
 export class TableWidget extends WidgetType {
+  // TODO: This number is literally only what I have here right now. So for
+  // other people -- especially with other themes, different zoom levels, etc.,
+  // this value will be off. The more off this is, the worse the scroll jumping
+  // will become. I will have to modify the table widgets to use a ViewPlugin
+  // instead of the current StateField so that I gain access to the view and can
+  // provide more reliable methods of measuring the average table row height.
+  private readonly meanRowHeight = 35
   constructor (readonly table: string, readonly node: SyntaxNode) {
     super()
+  }
+
+  // Okay, this is wild. So, this getter (plus the `coordsAt` overwrite below)
+  // fixes the scroll-jumping issue that many users (incl. me) have experienced
+  // and reported. It turns out that Codemirror really relies on estimates from
+  // the widgets ESPECIALLY for large block ones like tables. If you don't give
+  // it an estimated height (again, does not need to be pixel perfect), it will
+  // apparently assume a zero height for calculating viewpoint positions. This
+  // will cause scroll jumps, because Codemirror does not know how much space
+  // our widget takes up. With even a rough estimate, Codemirror will jump just
+  // a little bit the first time you select inside a cell (depending, of course,
+  // on how wrong this estimate is), but then it will actually measure it and no
+  // more jumping occurs. "Why does the jumping continue if we just don't
+  // provide an estimate here?" you may ask now. Well, as far as I'm concerned,
+  // I believe if the actual cursor position jumps out of the viewport,
+  // Codemirror will re-calculate everything once you're back at the correct
+  // position, because you changed the viewport, and only if not you but
+  // Codemirror changed the viewport will it believe (itself). Anyways, now it
+  // works -- much better than before.
+  get estimatedHeight (): number {
+    const tableAST = parseTableNode(this.node, this.table)
+    if (tableAST.type !== 'Table') {
+      return -1
+    }
+
+    // We base our height estimate off the mean row height.
+    return tableAST.rows.length * this.meanRowHeight
   }
 
   toDOM (view: EditorView): HTMLElement {
@@ -44,6 +95,7 @@ export class TableWidget extends WidgetType {
         throw new Error('Cannot render table: Likely malformed')
       }
       updateTable(table, tableAST, view)
+      view.requestMeasure()
       return wrapper
     } catch (err: any) {
       console.log('Could not create table', err)
@@ -65,7 +117,13 @@ export class TableWidget extends WidgetType {
 
     const tableAST = parseTableNode(this.node, view.state.sliceDoc())
     if (tableAST.type === 'Table') {
+      const height = table.getBoundingClientRect().height
       updateTable(table, tableAST, view)
+      // Instruct the editor to remeasure its height; see
+      // https://discuss.codemirror.net/t/5604
+      if (height !== table.getBoundingClientRect().height) {
+        view.requestMeasure()
+      }
       return true
     }
 
@@ -85,6 +143,50 @@ export class TableWidget extends WidgetType {
         subview.destroy()
       }
     }
+  }
+
+  // This is the second secret to preventing scroll jumping-issues: Give
+  // Codemirror approximate pixel positions of a position its requesting within
+  // the table widget.
+  coordsAt (dom: HTMLElement, pos: number, _side: number): Rect | null {
+    // We use this helper function to help Codemirror determine the exact, pixel
+    // perfect position of a given position inside our table so that it can
+    // correctly calculate viewpoint positions where necessary.
+    const cells = [...dom.querySelectorAll<HTMLDivElement>('td, th')]
+      .map(cell => {
+        return {
+          td: cell,
+          from: parseInt(cell.dataset.cellFrom!, 10),
+          to: parseInt(cell.dataset.cellTo!, 10)
+        }
+      })
+    
+    const realPos = pos + this.node.from // NOTE that `pos` is only an offset.
+
+    // NOTE: This code ignores the "side" parameter. Also, it ignores the offset
+    // into the table cell itself.
+    for (const cell of cells) {
+      const { from, to, td } = cell
+      if ((from <= realPos && to >= realPos) || realPos < from) {
+        // Found it: The pos is somewhere within this cell, or it was after the
+        // previous cell (but before this one), or in the leading formatting
+        // characters of the table. In any case, report back the correct pixel
+        // position of this cell
+        const content = td.querySelector('.content')
+        if (content !== null) {
+          // Found via https://github.com/codemirror/view/blob/45268f0eb62d1c6a0d70952ebdeb2e5ac898109d/src/dom.ts#L89
+          // This seems to improve the situation marginally.
+          const { left, top, bottom } = content.getBoundingClientRect()
+          return { left, right: left, top, bottom }
+        } else {
+          console.warn('[TableEditor] Cannot provide accurate client rect: no `.content`-element found in table cell.')
+          return td.getBoundingClientRect()
+        }
+      }
+    }
+
+    // Not found in the table -> fall back to the rect of the entire table
+    return dom.getBoundingClientRect()
   }
 
   ignoreEvent (event: Event): boolean {
@@ -164,14 +266,12 @@ function updateTable (table: HTMLTableElement, tableAST: Table, view: EditorView
     const row = tableAST.rows[i]
     if (i === trs.length) {
       // We have to create a new TR
-      const tr = document.createElement('tr')
+      const tr = tableTR()
       table.appendChild(tr)
       trs.push(tr)
-      updateRow(tr, row, i, tableAST.alignment, view, rowsChanged, coords)
-    } else {
-      // Transfer the contents
-      updateRow(trs[i], row, i, tableAST.alignment, view, rowsChanged, coords)
     }
+    // Transfer the contents
+    updateRow(trs[i], row, i, tableAST.alignment, view, rowsChanged, coords)
   }
 }
 
@@ -190,7 +290,7 @@ function updateRow (
   tr: HTMLTableRowElement,
   astRow: TableRow,
   idx: number,
-  align: Array<'left'|'center'|'right'>,
+  align: Array<'left'|'center'|'right'|null>,
   view: EditorView,
   rowsChanged: boolean,
   selectionCoords?: { col: number, row: number },
@@ -210,7 +310,7 @@ function updateRow (
     const selectionInCell = row === idx && col === i
     if (i === tds.length) {
       // We have to create a new TD
-      const td = document.createElement(astRow.isHeaderOrFooter ? 'th' : 'td')
+      const td = astRow.isHeaderOrFooter ? tableTH() : tableTD()
 
       // TODO: Enable citation rendering here
       const contentWrapper = document.createElement('div')
@@ -240,7 +340,11 @@ function updateRow (
           return
         }
 
-        setSelectionToCell(td, cell, view)
+        const subview = EditorView.findFromDOM(td)
+
+        if (subview === null) {
+          setSelectionToCell(td, cell, view)
+        }
 
         displayTableContextMenu(event, clickedID => {
           switch (clickedID) {
@@ -292,6 +396,72 @@ function updateRow (
             case 'delete.col':
               deleteCol(view)
               break
+            case 'markdownBold':
+              applyBold(subview ?? view)
+              break
+            case 'markdownItalic':
+              applyItalic(subview ?? view)
+              break
+            case 'markdownLink':
+              insertLink(subview ?? view)
+              break
+            case 'cut':
+              cut(subview ?? view)
+              break
+            case 'copy':
+              copyAsPlain(subview ?? view)
+              break
+            case 'copyAsHTML':
+              copyAsHTML(subview ?? view)
+              break
+            case 'paste':
+              paste(subview ?? view)
+              break
+            case 'pasteAsPlain':
+              pasteAsPlain(subview ?? view)
+              break
+            case 'selectAll':
+              selectAllCommand(subview ?? view)
+              break
+            case 'stripDuplicateSpaces':
+              stripDuplicateSpaces(subview ?? view)
+              break
+            case 'italicsToQuotes':
+              italicsToQuotes(subview ?? view)
+              break
+            case 'quotesToItalics':
+              quotesToItalics(view.state.field(configField).italicFormatting)(subview ?? view)
+              break
+            case 'removeLineBreaks':
+              removeLineBreaks(subview ?? view)
+              break
+            case 'addSpacesAroundEmdashes':
+              addSpacesAroundEmdashes(subview ?? view)
+              break
+            case 'removeSpacesAroundEmdashes':
+              removeSpacesAroundEmdashes(subview ?? view)
+              break
+            case 'doubleQuotesToSingle':
+              doubleQuotesToSingle(subview ?? view)
+              break
+            case 'singleQuotesToDouble':
+              singleQuotesToDouble(subview ?? view)
+              break
+            case 'straightenQuotes':
+              straightenQuotes(subview ?? view)
+              break
+            case 'toDoubleQuotes':
+              toDoubleQuotes(subview ?? view)
+              break
+            case 'toSentenceCase':
+              toSentenceCase(String(window.config.get('appLang')))(subview ?? view)
+              break
+            case 'toTitleCase':
+              toTitleCase(String(window.config.get('appLang')))(subview ?? view)
+              break
+            case 'zapGremlins':
+              zapGremlins(subview ?? view)
+              break
           }
         })
       })
@@ -310,7 +480,7 @@ function updateRow (
         tds[i].appendChild(elem)
       }
     }
-    
+
     if (i === 0 && row === idx) {
       // Selection is in this row
       for (const elem of generateRowControls(view)) {
@@ -322,7 +492,7 @@ function updateRow (
     // include whitespace here (minus one space padding if applicable).
     tds[i].dataset.cellFrom = String(cell.from)
     tds[i].dataset.cellTo = String(cell.to)
-    tds[i].style.textAlign = align[i] ?? 'left'
+    tds[i].style.textAlign = align[i] ?? ''
 
     const contentWrapper: HTMLDivElement = tds[i].querySelector('div.content')!
     const subview = EditorView.findFromDOM(contentWrapper)
@@ -339,11 +509,43 @@ function updateRow (
       const html = nodeToHTML(cell.children, callback, {}, 0).trim()
       contentWrapper.innerHTML = html.length > 0 ? html : '&nbsp;'
     } else if (subview === null && selectionInCell) {
-      // Create a new subview to represent the selection here. Ensure the cell
-      // itself is empty before we mount the subview.
-      contentWrapper.innerHTML = ''
-      createSubviewForCell(view, contentWrapper, { from: cell.from, to: cell.to })
-      contentWrapper.classList.add('editing')
+      // Before we mount a subview, we need to normalize the selection if
+      // necessary. The table commands are allowed to place the new selection
+      // anywhere inside the table cell delimiters, and this will make
+      // `selectionInCell` turn `true` because that only checks if we are
+      // anywhere between the table cell delimiters. However, especially when
+      // the selection is inside an empty cell with more than two spaces, it is
+      // entirely arbitrary where the (synthetic) content span will end up.
+      // Our AST parser will just decide on something, so before this point we
+      // actually don't know if the selection will literally end up where the
+      // AST has placed the cell content span. But that is important, because
+      // that is where the subview will place the editable span of the cell. If
+      // the selection is inside the table cell delimiters, but outside of what
+      // the AST considers "content," this will lead to weird transactions that
+      // won't pass either the transaction filter of the subview, or, worse, add
+      // the inserted characters at completely arbitrary positions of the table.
+      // So, here we enforce that the main selection is definitely somewhere
+      // inside the table cell *content*.
+      const sel = view.state.selection.main
+      let newFrom = Math.max(sel.from, cell.from)
+      newFrom = Math.min(newFrom, cell.to)
+      let newTo = Math.max(sel.to, cell.from)
+      newTo = Math.min(newTo, cell.to)
+
+      // NOTE: This entire code runs during updates (since that's when the
+      // widget's updateDOM function will be called), so we must wait until that
+      // update is complete before we do anything.
+      requestAnimationFrame(() => {
+        if (newFrom !== sel.from || newTo !== sel.to) {
+          view.dispatch({ selection: { anchor: newFrom, head: newTo } })
+        }
+
+        // Create a new subview to represent the selection here. Ensure the cell
+        // itself is empty before we mount the subview.
+        contentWrapper.innerHTML = ''
+        createSubviewForCell(view, contentWrapper, { from: cell.from, to: cell.to })
+        contentWrapper.classList.add('editing')
+      })
     } else if (subview === null) {
       // Simply transfer the contents
       const html = nodeToHTML(cell.children, callback, {}, 0).trim()

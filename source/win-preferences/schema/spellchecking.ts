@@ -22,6 +22,7 @@ export function getSpellcheckingFields (config: ConfigOptions): PreferencesField
   return [
     {
       title: trans('LanguageTool'),
+      infoString: trans('Turning this setting on will send your texts to LanguageTool. The default are the official servers, but you can also self-host the software.'),
       group: PreferencesGroups.Spellchecking,
       titleField: {
         type: 'switch',
@@ -151,6 +152,28 @@ export function getSpellcheckingFields (config: ConfigOptions): PreferencesField
           model: 'editor.lint.languageTool.apiKey',
           placeholder: 'API key',
           disabled: !config.editor.lint.languageTool.active || config.editor.lint.languageTool.provider === 'custom'
+        }
+      ]
+    },
+    {
+      title: trans('LanguageTool: Ignored rules'),
+      group: PreferencesGroups.Spellchecking,
+      help: undefined, // TODO
+      fields: [
+        {
+          type: 'list',
+          valueType: 'record',
+          keyNames: [ 'name', 'id', 'category' ],
+          columnLabels: [ trans('Name'), trans('Rule ID'), trans('Category') ],
+          label: trans('These are LanguageTool rules that you have disabled. You can re-enable them here.'),
+          model: 'editor.lint.languageTool.ignoredRules',
+          deletable: true,
+          deleteLabel: trans('Re-enable'),
+          editable: false,
+          searchable: true,
+          searchLabel: trans('Filter'),
+          striped: true,
+          emptyMessage: trans('No ignored rules.')
         }
       ]
     },

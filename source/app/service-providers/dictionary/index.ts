@@ -78,7 +78,11 @@ export default class DictionaryProvider extends ProviderContract {
       if (command === 'get-user-dictionary') {
         return this._userDictionary.map(elem => elem)
       } else if (command === 'set-user-dictionary') {
-        this.setUserDictionary(message.payload)
+        const dict = message.payload
+        if (!Array.isArray(dict) || !dict.every(d => typeof d === 'string')) {
+          throw new Error('[Dictionary Provider] Cannot set user dictionary: Argument was not a string array.')
+        }
+        this.setUserDictionary(dict)
       } else if (command === 'check') {
         return terms.map(t => this.check(t))
       } else if (command === 'suggest') {
@@ -91,7 +95,10 @@ export default class DictionaryProvider extends ProviderContract {
     // Reload as soon as the config has been updated
     this._config.on('update', (_opt: string) => {
       // Reload the dictionaries (if applicable) ...
-      this.reload()
+      this.synchronizeHunspellDictionaries()
+        .catch(err => {
+          this._logger.error(`[Dictionary Provider] Could not (re)load dictionaries: ${err.message as string}`, err)
+        })
       // ... and add cache the autocorrect replacements so they are not seen as "wrong"
       this._cacheAutoCorrectValues()
     })
@@ -99,10 +106,9 @@ export default class DictionaryProvider extends ProviderContract {
 
   async boot (): Promise<void> {
     this._logger.verbose('Dictionary provider booting up ...')
-    // Afterwards, load the first batch of dictionaries
-    this.reload()
+    await this.synchronizeHunspellDictionaries()
+    await this.loadUserDictionary()
     this._cacheAutoCorrectValues()
-    await this._loadUserDict()
   }
 
   /**
@@ -110,7 +116,7 @@ export default class DictionaryProvider extends ProviderContract {
    */
   async shutdown (): Promise<void> {
     this._logger.verbose('Dictionary provider shutting down ...')
-    await this._persist()
+    await this.persistUserDictionary()
   }
 
   /**
@@ -126,6 +132,10 @@ export default class DictionaryProvider extends ProviderContract {
     this._userDictionary = dict
     this._userDictionary = [...new Set(this._userDictionary)]
     this._userDictionary = this._userDictionary.filter(word => word.trim() !== '')
+    this.persistUserDictionary()
+      .catch(err => {
+        this._logger.error(`[Dictionary Provider] Could not persist user dictionary: ${String(err.message)}`, err)
+      })
 
     // Send an invalidation message to the renderer
     broadcastIpcMessage('dictionary-provider', { command: 'invalidate-dict' })
@@ -173,7 +183,7 @@ export default class DictionaryProvider extends ProviderContract {
    * (Re)Loads the dictionaries efficiently based upon the selected dictionaries
    * @return {Promise} Does not throw, as we catch errors.
    */
-  async _load (): Promise<void> {
+  async synchronizeHunspellDictionaries (): Promise<void> {
     if (this._reloadLock) {
       // Another reload is wanted
       this._reloadWanted = true
@@ -249,7 +259,7 @@ export default class DictionaryProvider extends ProviderContract {
 
     this._reloadLock = false
     if (this._reloadWanted) {
-      await this._load() // Reload again
+      await this.synchronizeHunspellDictionaries()
     }
   }
 
@@ -257,12 +267,12 @@ export default class DictionaryProvider extends ProviderContract {
    * Loads the user dictionary from file.
    * @return {Promise} Will resolve after the dictionary has been loaded.
    */
-  async _loadUserDict (): Promise<void> {
+  async loadUserDictionary (): Promise<void> {
     try {
       await fs.lstat(this._userDictionaryPath)
     } catch (err) {
       // Create a new file and add the current user dictionary to it
-      await this._persist()
+      await this.persistUserDictionary()
     }
 
     const fileContents = await fs.readFile(this._userDictionaryPath, 'utf8')
@@ -282,7 +292,7 @@ export default class DictionaryProvider extends ProviderContract {
   /**
    * Persists the user dictionary to disk
    */
-  private async _persist (): Promise<void> {
+  private async persistUserDictionary (): Promise<void> {
     if (this._fileLock) {
       // If there is a file lock, set the changes flag and abort
       this._unwrittenChanges = true
@@ -290,16 +300,16 @@ export default class DictionaryProvider extends ProviderContract {
     }
 
     // Initiate the filelock, write, release the lock
-    this._fileLock = true
-    this._unwrittenChanges = false
     const data = this._userDictionary.join('\n')
+    this._fileLock = true
+    this._unwrittenChanges = false // NOTE that this has to come before the writing
     await fs.writeFile(this._userDictionaryPath, data)
     this._fileLock = false
 
     // After we're done, check if someone tried to call the function in the
     // meantime. If so, the flag will be true by now: immediately call it again.
     if (this._unwrittenChanges) {
-      return await this._persist()
+      return await this.persistUserDictionary()
     }
   }
 
@@ -377,6 +387,10 @@ export default class DictionaryProvider extends ProviderContract {
     // Adds the given term to the user dictionary
     if (!this._userDictionary.includes(term)) {
       this._userDictionary.push(term)
+      this.persistUserDictionary()
+        .catch(err => {
+          this._logger.error(`[Dictionary Provider] Could not persist user dictionary: ${String(err.message)}`, err)
+        })
       // Send an invalidation message to the renderer so that it reloads all words
       broadcastIpcMessage('dictionary-provider', { command: 'invalidate-dict' })
 
@@ -384,18 +398,6 @@ export default class DictionaryProvider extends ProviderContract {
     }
 
     return false
-  }
-
-  /**
-   * Initiates a full reload of the loaded dictionaries.
-   * @return {void} Does not return.
-   */
-  reload (): void {
-    // Reload the dictionary based upon the new selected dictionaries.
-    this._load()
-      .catch(err => {
-        this._logger.error(`[Dictionary Provider] Could not (re)load dictionaries: ${err.message as string}`, err)
-      })
   }
 
   /**

@@ -26,9 +26,10 @@
           v-bind:key="idx"
           class="attachment"
           draggable="true"
+          href="#"
           v-bind:data-link="attachment.path"
           v-bind:title="attachment.path"
-          v-bind:href="makeValidUri(attachment.path)"
+          v-on:click.prevent="handleClick(attachment.path)"
           v-on:dragstart="handleDragStart($event, attachment.path)"
         >
           <img v-if="hasPreview(attachment.path)" v-bind:src="getPreviewImageData(attachment.path)">
@@ -51,9 +52,17 @@ import { type OtherFileDescriptor } from '@dts/common/fsal'
 import { ClarityIcons } from '@cds/core/icon'
 import { computed } from 'vue'
 import { useConfigStore, useDocumentTreeStore, useWorkspacesStore } from 'source/pinia'
-import { pathDirname, isAbsolutePath, resolvePath } from 'source/common/util/renderer-path-polyfill'
+import { pathDirname, isAbsolutePath, resolvePath, pathExtname } from 'source/common/util/renderer-path-polyfill'
+import { hasDataExt, hasImageExt, hasMSOfficeExt, hasOpenOfficeExt, hasPDFExt } from 'source/common/util/file-extention-checks'
 
-const IMAGE_RE = /\.(?:png|jpe?g|svg|bmp|webp|gif)$/
+const ipcRenderer = window.ipc
+
+const searchParams = new URLSearchParams(window.location.search)
+const windowId = searchParams.get('window_id')
+
+if (windowId === null) {
+  throw new Error('windowID was null')
+}
 
 const configStore = useConfigStore()
 const documentTreeStore = useDocumentTreeStore()
@@ -66,7 +75,7 @@ const noAttachmentsMessage = trans('No other files')
 const attachments = computed<Array<{ path: string, files: OtherFileDescriptor[] }>>(() => {
   const activeFile = documentTreeStore.lastLeafActiveFile
   if (activeFile === undefined) {
-    return [] as any
+    return []
   }
 
   const currentDir = workspacesStore.getDir(pathDirname(activeFile.path))
@@ -74,15 +83,32 @@ const attachments = computed<Array<{ path: string, files: OtherFileDescriptor[] 
     return []
   }
 
-  const extensions = configStore.config.attachmentExtensions
+  const { files, attachmentExtensions, editor } = configStore.config
+  
+  const assetsDir = editor.defaultSaveImagePath.trim()
+  const showImages = files.images.showInSidebar
+  const showDataFiles = files.dataFiles.showInSidebar
+  const showOfficeFiles = files.msoffice.showInSidebar
+  const showOpenOffice = files.openOffice.showInSidebar
+  const showPDF = files.pdf.showInSidebar
 
-  const files = currentDir.children
+  // Quick helper function that tests whether the provided attachment should be
+  // shown in the sidebar. This essentially tests the file's extension and
+  // returns true if it shuld shown in the sidebar.
+  const shouldShowAttachment = (filePath: string): boolean => {
+    return attachmentExtensions.includes(pathExtname(filePath).toLowerCase()) ||
+      (showImages && hasImageExt(filePath)) ||
+      (showDataFiles && hasDataExt(filePath)) ||
+      (showOfficeFiles && hasMSOfficeExt(filePath)) ||
+      (showOpenOffice && hasOpenOfficeExt(filePath)) ||
+      (showPDF && hasPDFExt(filePath))
+  }
+
+  const dirAttachments = currentDir.children
     .filter((child): child is OtherFileDescriptor => child.type === 'other')
-    .filter(attachment => extensions.includes(attachment.ext))
+    .filter(attachment => shouldShowAttachment(attachment.path))
 
-  const att = [{ path: trans('Current folder'), files }]
-
-  const assetsDir = configStore.config.editor.defaultSaveImagePath.trim()
+  const att = [{ path: trans('Current folder'), files: dirAttachments }]
 
   const assetsDescriptor = isAbsolutePath(assetsDir)
     ? workspacesStore.getDir(assetsDir)
@@ -91,7 +117,7 @@ const attachments = computed<Array<{ path: string, files: OtherFileDescriptor[] 
   if (assetsDescriptor !== undefined) {
     const files = assetsDescriptor.children
       .filter((child): child is OtherFileDescriptor => child.type === 'other')
-      .filter(attachment => extensions.includes(attachment.ext))
+      .filter(attachment => shouldShowAttachment(attachment.path))
 
     att.push({ path: assetsDir, files })
   }
@@ -121,6 +147,23 @@ function getIcon (ext: string): string {
   }
 }
 
+function handleClick (filePath: string) {
+  if (hasImageExt(filePath) && configStore.config.files.images.openWith === 'zettlr') {
+    // Open this image in Zettlr
+    ipcRenderer.invoke('documents-provider', {
+      command: 'open-file',
+      // We leave leafId undefined
+      payload: { path: filePath, windowId }
+    })
+      .catch(e => console.error(e))
+  } else {
+    // Open the file externally (again, NOTE, this only works because main
+    // intercepts every navigation attempt).
+    window.location.href = makeValidUri(filePath)
+  }
+
+}
+
 /**
  * Returns true for any attachments that Zettlr can show a preview for
  *
@@ -129,7 +172,7 @@ function getIcon (ext: string): string {
  * @return  {boolean}                  Returns true for previewable attachments
  */
 function hasPreview (attachmentPath: string): boolean {
-  if (IMAGE_RE.test(attachmentPath)) {
+  if (hasImageExt(attachmentPath)) {
     return true
   }
 
@@ -145,7 +188,7 @@ function hasPreview (attachmentPath: string): boolean {
  * @return  {string}                  The image src attribute's contents
  */
 function getPreviewImageData (attachmentPath: string): string {
-  if (IMAGE_RE.test(attachmentPath)) {
+  if (hasImageExt(attachmentPath)) {
     return makeValidUri(attachmentPath) // Can be used (almost) as-is
   }
 

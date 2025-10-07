@@ -19,44 +19,83 @@ import getLanguageFile from '@common/util/get-language-file'
 
 export type MarkdownTheme = 'berlin'|'frankfurt'|'bielefeld'|'karl-marx-stadt'|'bordeaux'
 
+// This is a handy interface to add groups of file types to the settings in
+// order to allow users to display them in filemanager and/or sidebar, and open
+// internally or externally.
+// NOTE: The generics are meant so that you can restrict certain groupings.
+// E.g., FileTypeSettings<true, false, 'zettlr'> enforces these values for the
+// three properties.
+interface FileTypeSettings<F = boolean, S = boolean, O = 'zettlr'|'system'> {
+  showInFilemanager: F
+  showInSidebar: S
+  openWith: O
+}
+
+/**
+ * This type describes an entry of the ignored rules array in the config. We
+ * define this type here, and not in the LanguageTool command, because if we
+ * change its structure, bad things could happen. By colocating it with the
+ * config, it is harder for us to forget to write a migration rule if we ever
+ * change this structure.
+ */
+export interface LanguageToolIgnoredRuleEntry {
+  /**
+   * The description of the rule (usually localized).
+   */
+  description: string
+  /**
+   * The unique ID of this rule.
+   */
+  id: string
+  /**
+   * The category for this rule.
+   */
+  category: string
+}
+
 export interface ConfigOptions {
   version: string
+  buildDate: string
+  uuid: string
+  appLang: string
+
+  darkMode: boolean
+  autoDarkMode: 'off'|'system'|'schedule'
+  autoDarkModeStart: string
+  autoDarkModeEnd: string
+
   openPaths: string[]
   openDirectory: string|null
+  attachmentExtensions: string[]
+  alwaysReloadFiles: boolean
+  muteLines: boolean
+
+  fileManagerMode: 'thin'|'combined'|'expanded'
+  fileManagerShowFiles: boolean
+  fileManagerShowWorkspaces: boolean
+  fileMeta: boolean
+  fileMetaTime: 'modtime'|'creationtime'
+  sorting: 'natural'|'ascii'
+  sortFoldersFirst: boolean
+  fileNameDisplay: 'filename'|'title'|'heading'|'title+heading'
+
+  newFileNamePattern: string
+  newFileDontPrompt: boolean
+  selectedDicts: string[]
+
+  debug: boolean
+  checkForBeta: boolean
+
   dialogPaths: {
     askFileDialog: string
     askDirDialog: string
     askLangFileDialog: string
   }
-  window: {
-    nativeAppearance: boolean
-    vibrancy: boolean
-    sidebarVisible: boolean
-    currentSidebarTab: 'toc'|'references'|'relatedFiles'|'attachments'|'mentions'
-    recentGlobalSearches: string[]
-  }
-  ui: {
-    fileManagerSplitSize: [number, number]
-    editorSidebarSplitSize: [number, number]
-  }
-  attachmentExtensions: string[]
-  darkMode: boolean
-  alwaysReloadFiles: boolean
-  autoDarkMode: 'off'|'system'|'schedule'
-  autoDarkModeStart: string
-  autoDarkModeEnd: string
-  fileMeta: boolean
-  fileMetaTime: 'modtime'|'creationtime'
-  sorting: 'natural'|'ascii'
-  sortFoldersFirst: boolean
-  muteLines: boolean
-  fileManagerMode: 'thin'|'combined'|'expanded'
-  fileNameDisplay: 'filename'|'title'|'heading'|'title+heading'
-  newFileNamePattern: string
-  newFileDontPrompt: boolean
   export: {
     dir: 'temp'|'cwd'|'ask'
     stripTags: boolean
+    autoOpenExportedFiles: boolean
+    enforceMarkSupport: boolean
     stripLinks: 'full'|'unlink'|'no'
     cslLibrary: string
     cslStyle: string
@@ -68,8 +107,8 @@ export interface ConfigOptions {
   zkn: {
     idRE: string
     idGen: string
-    linkFilenameOnly: boolean
-    linkWithFilename: 'always'|'never'|'withID'
+    linkAddFileTitle: boolean
+    linkWithIDIfPossible: boolean
     linkFormat: 'link|title'|'title|link'
     autoSearch: boolean
     customDirectory: string
@@ -90,6 +129,7 @@ export interface ConfigOptions {
     showStatusbar: boolean
     showFormattingToolbar: boolean
     showWhitespace: boolean
+    showMarkdownLineNumbers: boolean
     defaultSaveImagePath: string
     enableTableHelper: boolean
     indentUnit: number
@@ -112,6 +152,7 @@ export interface ConfigOptions {
           pt: string
           ca: string
         }
+        ignoredRules: LanguageToolIgnoredRuleEntry[]
         provider: 'official'|'custom'
         customServer: string
         username: string
@@ -134,6 +175,7 @@ export interface ConfigOptions {
     markdownFileExtensions: boolean
     imageWidth: number
     imageHeight: number
+    renderingMode: 'preview'|'raw'
     renderCitations: boolean
     renderIframes: boolean
     renderImages: boolean
@@ -143,12 +185,33 @@ export interface ConfigOptions {
     renderHTags: boolean
     renderEmphasis: boolean
   }
-  selectedDicts: string[]
-  appLang: string
-  debug: boolean
+  files: {
+    // Built-in files cannot be shown in the sidebar, will always be shown in
+    // the file manager, and will always be opened with Zettlr.
+    builtin: FileTypeSettings<true, false, 'zettlr'>
+    // Images and PDFs can be entirely hidden or shown everywhere, and opened
+    // with the system default, or in Zettlr
+    images: FileTypeSettings
+    pdf: FileTypeSettings
+    // These file types can be shown anywhere, but are not open-able by Zettlr.
+    msoffice: FileTypeSettings<boolean, boolean, 'system'>
+    openOffice: FileTypeSettings<boolean, boolean, 'system'>
+    dataFiles: FileTypeSettings<boolean, boolean, 'system'>
+  }
   watchdog: {
     activatePolling: boolean
     stabilityThreshold: number
+  }
+  window: {
+    nativeAppearance: boolean
+    vibrancy: boolean
+    sidebarVisible: boolean
+    currentSidebarTab: 'toc'|'references'|'relatedFiles'|'attachments'
+    recentGlobalSearches: string[]
+  }
+  ui: {
+    fileManagerSplitSize: [number, number]
+    editorSidebarSplitSize: [number, number]
   }
   system: {
     deleteOnFail: boolean
@@ -158,7 +221,6 @@ export interface ConfigOptions {
     checkForUpdates: boolean
     zoomBehavior: 'gui'|'editor'
   }
-  checkForBeta: boolean
   displayToolbarButtons: {
     showOpenPreferencesButton: boolean
     showNewFileButton: boolean
@@ -174,7 +236,6 @@ export interface ConfigOptions {
     showDocumentInfoText: boolean
     showPomodoroButton: boolean
   }
-  uuid: string
   custom: {
     ctrlNum: {
       file1: string
@@ -198,19 +259,6 @@ export interface ConfigOptions {
   }
 }
 
-const ZETTLR_VERSION = app.getVersion()
-const ATTACHMENT_EXTENSIONS = [
-  '.pdf', '.odt', '.odp', '.ods',
-  // Microsoft office
-  '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  // Data scientific file types
-  '.do', '.r', '.py',
-  // Data files
-  '.sav', '.zsav', '.csv', '.tsv',
-  // Image types
-  '.png', '.jpg', '.jpeg', '.gif', '.tiff'
-]
-
 export function getConfigTemplate (): ConfigOptions {
   // Before returning the settings object, we have to make sure we retrieve a
   // locale that is both installed as a translation AND more or less the user's
@@ -227,7 +275,8 @@ export function getConfigTemplate (): ConfigOptions {
 
   // Return the complete configuration object
   return {
-    version: ZETTLR_VERSION, // Useful for migrating
+    version: app.getVersion(), // Useful for migrating
+    buildDate: __BUILD_DATE__,
     openPaths: [], // Array to include all opened root paths
     openDirectory: null, // Save last opened dir path here
     dialogPaths: {
@@ -251,7 +300,7 @@ export function getConfigTemplate (): ConfigOptions {
       editorSidebarSplitSize: [ 80, 20 ]
     },
     // Visible attachment filetypes
-    attachmentExtensions: ATTACHMENT_EXTENSIONS,
+    attachmentExtensions: [],
     // UI related options
     darkMode: false,
     alwaysReloadFiles: true, // Should Zettlr automatically load remote changes?
@@ -264,12 +313,16 @@ export function getConfigTemplate (): ConfigOptions {
     sortFoldersFirst: true, // should folders be shown first in combined fileview
     muteLines: true, // Should the editor mute lines in distraction free mode?
     fileManagerMode: 'combined', // thin = Preview or directories visible --- expanded = both visible --- combined = tree view displays also files
+    fileManagerShowFiles: true, // Allow users to persistently collapse or uncollapse the files and workspaces sections.
+    fileManagerShowWorkspaces: true,
     fileNameDisplay: 'title+heading', // Controls what info is displayed as filenames
     newFileNamePattern: '%id.md',
     newFileDontPrompt: false, // If true immediately creates files
     export: {
       dir: 'temp', // Can either be "temp", "cwd" (current working directory) or "ask"
       stripTags: false, // Strip tags a.k.a. #tag
+      autoOpenExportedFiles: true,
+      enforceMarkSupport: true,
       stripLinks: 'full', // Strip internal links: "full" - remove completely, "unlink" - only remove brackets, "no" - don't alter
       cslLibrary: '', // Path to a CSL JSON library file
       cslStyle: '', // Path to a CSL Style file
@@ -282,8 +335,8 @@ export function getConfigTemplate (): ConfigOptions {
     zkn: {
       idRE: '(\\d{14})',
       idGen: '%Y%M%D%h%m%s',
-      linkFilenameOnly: false,
-      linkWithFilename: 'never', // can be always|never|withID
+      linkAddFileTitle: true,
+      linkWithIDIfPossible: false,
       linkFormat: 'link|title', // Determines what internal links ([[link|title]]) look like
       autoSearch: true, // Automatically start a search upon following a link?
       customDirectory: '', // If present, saves auto-created files here
@@ -302,6 +355,7 @@ export function getConfigTemplate (): ConfigOptions {
       autoCloseBrackets: true,
       showLinkPreviews: true, // Whether to fetch link previews in the editor
       showWhitespace: false,
+      showMarkdownLineNumbers: false,
       defaultSaveImagePath: '',
       citeStyle: 'regular', // Determines how autocomplete will complete citations
       enableTableHelper: true, // Enable the table helper plugin
@@ -328,6 +382,9 @@ export function getConfigTemplate (): ConfigOptions {
             pt: 'pt-PT',
             ca: 'ca-ES'
           },
+          // This is an (initially empty) array of rules the user chose to
+          // ignore globally.
+          ignoredRules: [],
           provider: 'official',
           customServer: '',
           username: '',
@@ -407,6 +464,7 @@ export function getConfigTemplate (): ConfigOptions {
       markdownFileExtensions: false,
       imageWidth: 100, // Maximum preview image width
       imageHeight: 50, // Maximum preview image height
+      renderingMode: 'preview',
       renderCitations: true,
       renderIframes: true,
       renderImages: true,
@@ -415,6 +473,14 @@ export function getConfigTemplate (): ConfigOptions {
       renderTasks: true,
       renderHTags: false,
       renderEmphasis: false
+    },
+    files: {
+      builtin: { showInFilemanager: true, showInSidebar: false, openWith: 'zettlr' },
+      images: { showInFilemanager: false, showInSidebar: true, openWith: 'system' },
+      pdf: { showInFilemanager: false, showInSidebar: true, openWith: 'system' },
+      msoffice: { showInFilemanager: false, showInSidebar: true, openWith: 'system' },
+      openOffice: { showInFilemanager: false, showInSidebar: true, openWith: 'system' },
+      dataFiles: { showInFilemanager: false, showInSidebar: true, openWith: 'system' }
     },
     // Language
     selectedDicts: [], // By default no spell checking is active to speed up first start.
