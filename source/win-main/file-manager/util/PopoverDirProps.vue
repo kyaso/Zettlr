@@ -1,73 +1,79 @@
 <template>
   <PopoverWrapper v-bind:target="target" v-on:close="emit('close')">
-    <h4>{{ props.directory.name }}</h4>
-    <div class="properties-info-container">
-      <div><span>{{ createdLabel }}: {{ creationTime }}</span></div>
-      <div>
-        <span>{{ filesLabel }}: {{ formattedFiles }}</span>
+    <div id="dir-props">
+      <h4>{{ props.directory.name }}</h4>
+      <div class="properties-info-container">
+        <div><span>{{ createdLabel }}: {{ creationTime }}</span></div>
+        <div>
+          <span>{{ filesLabel }}: {{ formattedFiles }}</span>
+        </div>
       </div>
-    </div>
-    <div class="properties-info-container">
-      <div><span>{{ modifiedLabel }}: {{ modificationTime }}</span></div>
-      <div><span>{{ foldersLabel }}: {{ formattedDirs }}</span></div>
-    </div>
-    <div class="properties-info-container">
-      <div>
-        <!--
-          We display the outer div always as a placeholder to have the word
-          count flush right, even if we don't have a git repository
-        -->
-        <span v-if="props.directory.isGitRepository">
-          <cds-icon shape="git"></cds-icon> Git Repository
-        </span>
+      <div class="properties-info-container">
+        <div><span>{{ modifiedLabel }}: {{ modificationTime }}</span></div>
+        <div><span>{{ foldersLabel }}: {{ formattedDirs }}</span></div>
       </div>
-      <div><span>{{ formattedWordCount }}</span></div>
-    </div>
-    <hr>
-    <!-- Sorting options -->
-    <SelectControl
-      v-model="sortingType"
-      v-bind:inline="true"
-      v-bind:options="{
-        name: sortByNameLabel,
-        time: sortByTimeLabel
-      }"
-    ></SelectControl>
-    <SelectControl
-      v-model="sortingDirection"
-      v-bind:inline="true"
-      v-bind:options="{
-        up: ascendingLabel,
-        down: descendingLabel
-      }"
-    ></SelectControl>
-    <hr>
-    <!-- Project options -->
-    <SwitchControl
-      v-model="isProject"
-      v-bind:label="projectToggleLabel"
-    ></SwitchControl>
-    <ButtonControl
-      v-if="isProject"
-      v-bind:label="projectPropertiesLabel"
-      v-on:click="openProjectPreferences"
-    ></ButtonControl>
-    <hr style="clear: both;">
-    <!-- Directory icon -->
-    <div class="icon-selector">
-      <div
-        v-for="iconElement, idx in icons"
-        v-bind:key="idx"
-        v-bind:class="{
-          active: iconElement.shape === props.directory.settings.icon
-        }"
-        v-bind:title="iconElement.title"
-        v-on:click="updateIcon(iconElement.shape)"
-      >
-        <cds-icon
-          v-if="iconElement.shape !== null"
-          v-bind:shape="iconElement.shape"
-        ></cds-icon>
+      <div class="properties-info-container">
+        <div>
+          <!--
+            We display the outer div always as a placeholder to have the word
+            count flush right, even if we don't have a git repository
+          -->
+          <span v-if="props.directory.isGitRepository">
+            <cds-icon shape="git"></cds-icon> Git Repository
+          </span>
+        </div>
+        <div><span>{{ formattedWordCount }}</span></div>
+      </div>
+      <hr>
+      <div style="display: flex; justify-content: space-between;">
+        <!-- Sorting options -->
+        <SelectControl
+          v-model="sortingType"
+          v-bind:inline="true"
+          v-bind:options="{
+            name: sortByNameLabel,
+            time: sortByTimeLabel
+          }"
+        ></SelectControl>
+        <SelectControl
+          v-model="sortingDirection"
+          v-bind:inline="true"
+          v-bind:options="{
+            up: ascendingLabel,
+            down: descendingLabel
+          }"
+        ></SelectControl>
+      </div>
+      <hr>
+      <div>
+        <!-- Project options -->
+        <SwitchControl
+          v-model="isProject"
+          v-bind:label="projectToggleLabel"
+        ></SwitchControl>
+        <ButtonControl
+          v-if="isProject"
+          v-bind:label="projectPropertiesLabel"
+          v-on:click="openProjectPreferences"
+        ></ButtonControl>
+      </div>
+      <hr style="clear: both;">
+      <!-- Directory icon -->
+      <div class="icon-selector">
+        <div
+          v-for="iconElement, idx in icons"
+          v-bind:key="idx"
+          v-bind:class="{
+            active: iconElement.shape === props.directory.settings.icon
+          }"
+          v-bind:title="iconElement.title"
+          v-on:click="updateIcon(iconElement.shape)"
+        >
+          <cds-icon
+            v-if="iconElement.shape !== null"
+            v-bind:shape="iconElement.shape"
+          ></cds-icon>
+        </div>
       </div>
     </div>
   </PopoverWrapper>
@@ -90,12 +96,12 @@
 
 import formatDate from '@common/util/format-date'
 import localiseNumber from '@common/util/localise-number'
-import PopoverWrapper from 'source/win-main/PopoverWrapper.vue'
+import PopoverWrapper from '@common/vue/PopoverWrapper.vue'
 import SelectControl from '@common/vue/form/elements/SelectControl.vue'
 import SwitchControl from '@common/vue/form/elements/SwitchControl.vue'
 import ButtonControl from '@common/vue/form/elements/ButtonControl.vue'
 import { trans } from '@common/i18n-renderer'
-import { type DirDescriptor, type MDFileDescriptor } from '@dts/common/fsal'
+import type { AnyDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import { ref, computed, watch, toRef, onBeforeMount } from 'vue'
 import { useConfigStore } from 'source/pinia'
 
@@ -126,8 +132,8 @@ const icons = [
   { shape: 'bell', title: trans('Bell') },
   { shape: 'user', title: trans('Person') },
   { shape: 'users', title: trans('People') },
-  { shape: 'folder', title: trans('Folder') },
-  { shape: 'folder-open', title: trans('Folder (open)') },
+  { shape: 'home', title: trans('Home') },
+  { shape: 'ban', title: trans('Ban') },
   { shape: 'image', title: trans('Image') },
   { shape: 'eye', title: trans('Eye') },
   { shape: 'eye-hide', title: trans('Eye (crossed)') },
@@ -187,7 +193,7 @@ const icons = [
 
 const configStore = useConfigStore()
 
-const props = defineProps<{ target: HTMLElement, directory: DirDescriptor }>()
+const props = defineProps<{ target: HTMLElement, directory: DirDescriptor, children: AnyDescriptor[] }>()
 
 const emit = defineEmits<(e: 'close') => void>()
 
@@ -204,15 +210,15 @@ const modificationTime = computed(() => {
 })
 
 const formattedFiles = computed(() => {
-  return localiseNumber(props.directory.children.filter(x => x.type !== 'directory').length)
+  return localiseNumber(props.children.filter(x => x.type !== 'directory').length)
 })
 
 const formattedDirs = computed(() => {
-  return localiseNumber(props.directory.children.filter(x => x.type === 'directory').length)
+  return localiseNumber(props.children.filter(x => x.type === 'directory').length)
 })
 
 const formattedWordCount = computed(() => {
-  const totalWords = props.directory.children
+  const totalWords = props.children
     .filter((x): x is MDFileDescriptor => x.type === 'file')
     .map(x => x.wordCount)
     .reduce((prev, cur) => { return prev + cur }, 0)
@@ -296,17 +302,41 @@ function updateProject (): void {
 <style lang="less">
 // Most styles are defined in the File popover
 body {
+  #dir-props {
+    padding: 10px;
+
+    h4 {
+      margin-bottom: 10px;
+    }
+
+    select.inline {
+      margin: 0;
+    }
+
+    .switch-group {
+      margin: 10px 0;
+    }
+
+    .form-control {
+      padding: 5px 0;
+    }
+  }
+
   .icon-selector {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0 auto; // Center the div
-    width: 200px; // Ten icons per row
+    cds-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+
     div {
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       &:hover, &.active { background-color: rgb(180, 180, 180); }
     }
   }

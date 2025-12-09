@@ -66,18 +66,20 @@ import { diff } from '@codemirror/legacy-modes/mode/diff'
 import { octave } from '@codemirror/legacy-modes/mode/octave'
 import { lua } from '@codemirror/legacy-modes/mode/lua'
 import { pascal } from '@codemirror/legacy-modes/mode/pascal'
+import { nix } from '@replit/codemirror-lang-nix'
 
 // Additional parser
 import { citationParser } from './citation-parser'
-import { footnoteParser, footnoteRefParser } from './footnote-parser'
+import { footnoteComposite, footnoteParser, footnoteRefParser } from './footnote-parser'
 import { frontmatterParser, yamlCodeParse } from './frontmatter-parser'
 import { inlineMathParser, blockMathParser } from './math-parser'
-import { sloppyParser } from './sloppy-parser'
+import { pandocLinkParser } from './pandoc-link-parser'
 import { gridTableParser, pipeTableParser } from './pandoc-table-parser'
 import { type ZknLinkParserConfig, zknLinkParser } from './zkn-link-parser'
 import { pandocAttributesParser } from './pandoc-attributes-parser'
 import { highlightParser } from './highlight-parser'
 import { zknTagParser } from './zkn-tag-parser'
+import { pandocDivComposite, pandocDivParser, pandocSpanParser } from './pandoc-div-span-parser'
 
 const codeLanguages: Array<{ mode: Language|LanguageDescription|null, selectors: string[] }> = [
   {
@@ -115,6 +117,7 @@ const codeLanguages: Array<{ mode: Language|LanguageDescription|null, selectors:
   { mode: StreamLanguage.define(kotlin), selectors: [ 'kotlin', 'kt' ] },
   { mode: StreamLanguage.define(less), selectors: ['less'] },
   { mode: StreamLanguage.define(lua), selectors: ['lua'] },
+  { mode: nix().language, selectors: ['nix'] },
   { mode: StreamLanguage.define(objectiveC), selectors: [ 'objective-c', 'objectivec', 'objc' ] },
   { mode: StreamLanguage.define(octave), selectors: ['octave'] },
   { mode: StreamLanguage.define(pascal), selectors: ['pascal'] },
@@ -188,6 +191,7 @@ export default function markdownParser (config?: MarkdownParserConfig): Language
       // options here, since "extensions" also takes an array.
       wrap: yamlCodeParse(),
       parseBlock: [
+        pandocDivParser,
         // This BlockParser parses YAML frontmatters
         frontmatterParser,
         // This BlockParser parses math blocks
@@ -198,20 +202,21 @@ export default function markdownParser (config?: MarkdownParserConfig): Language
       ],
       parseInline: [
         // Add inline parsers that add AST elements for various additional types
+        pandocSpanParser,
         inlineMathParser,
         footnoteParser,
         citationParser,
-        sloppyParser,
         zknLinkParser(config?.zknLinkParserConfig),
         zknTagParser,
+        pandocLinkParser,
         pandocAttributesParser,
-        highlightParser
+        highlightParser,
       ],
       // We have to notify the markdown parser about the additional Node Types
       // that the YAML block parser utilizes
       // NOTE: Changes here must be reflected in util/custom-tags.ts and theme/syntax.ts!
       defineNodes: [
-        { name: 'YAMLFrontmatter' },
+        { name: 'YAMLFrontmatter', block: true },
         { name: 'YAMLFrontmatterStart', style: customTags.YAMLFrontmatterStart },
         { name: 'YAMLFrontmatterEnd', style: customTags.YAMLFrontmatterEnd },
         // Citation elements
@@ -229,17 +234,32 @@ export default function markdownParser (config?: MarkdownParserConfig): Language
         // within this node as well. The default is to only style otherwise "empty"
         // spans of plain text.
         { name: 'HighlightContent', style: { 'HighlightContent/...': customTags.HighlightContent } },
-        { name: 'Footnote', style: customTags.Footnote },
-        { name: 'FootnoteRef', style: customTags.FootnoteRef },
+        { name: 'Footnote', style:  { 'Footnote/...': customTags.Footnote }, },
+        {
+          name: 'FootnoteRef',
+          style: { 'FootnoteRef/...': customTags.FootnoteRef },
+          block: true,
+          composite: footnoteComposite,
+        },
         { name: 'FootnoteRefLabel', style: customTags.FootnoteRefLabel },
-        { name: 'FootnoteRefBody', style: customTags.FootnoteRefBody },
         { name: 'ZknLink', style: customTags.ZknLink },
         { name: 'ZknLinkContent', style: customTags.ZknLinkContent },
         { name: 'ZknLinkTitle', style: customTags.ZknLinkTitle },
         { name: 'ZknLinkPipe', style: customTags.ZknLinkPipe },
         { name: 'ZknTag', style: customTags.ZknTag },
         { name: 'ZknTagContent', style: customTags.ZknTagContent },
-        { name: 'PandocAttribute', style: customTags.PandocAttribute }
+        { name: 'PandocAttribute', style: customTags.PandocAttribute },
+        { name: 'PandocAttributeMark', style: customTags.PandocAttributeMark },
+        {
+          name: 'PandocDiv',
+          block: true,
+          style: { 'PandocDiv/...': customTags.PandocDiv },
+          composite: pandocDivComposite
+        },
+        { name: 'PandocDivInfo', style: customTags.PandocDivInfo },
+        { name: 'PandocDivMark', style: customTags.PandocDivMark },
+        { name: 'PandocSpan', style: { 'PandocSpan/...': customTags.PandocSpan } },
+        { name: 'PandocSpanMark', style: customTags.PandocSpanMark },
       ]
     }
   })

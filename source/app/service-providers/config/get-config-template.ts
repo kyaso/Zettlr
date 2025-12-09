@@ -12,7 +12,7 @@
  * END HEADER
  */
 
-import { app } from 'electron'
+import { app, nativeTheme } from 'electron'
 import * as bcp47 from 'bcp-47'
 import { v4 as uuid4 } from 'uuid'
 import getLanguageFile from '@common/util/get-language-file'
@@ -100,9 +100,10 @@ export interface ConfigOptions {
     cslLibrary: string
     cslStyle: string
     useBundledPandoc: boolean
-    singleFileLastExporter: string
     exportQmdWithQuarto: boolean
     customCommands: Array<{ displayName: string, command: string }>
+    selectedProfiles: Array<{ filePath: string, profile: string }>
+    lastUsedProfile: string
   }
   zkn: {
     idRE: string
@@ -184,6 +185,8 @@ export interface ConfigOptions {
     renderTasks: boolean
     renderHTags: boolean
     renderEmphasis: boolean
+    renderPandoc: boolean
+    renderHorizontalRules: boolean
   }
   files: {
     // Built-in files cannot be shown in the sidebar, will always be shown in
@@ -226,7 +229,6 @@ export interface ConfigOptions {
     showNewFileButton: boolean
     showPreviousFileButton: boolean
     showNextFileButton: boolean
-    showToggleReadabilityButton: boolean
     showMarkdownCommentButton: boolean
     showMarkdownLinkButton: boolean
     showMarkdownImageButton: boolean
@@ -289,7 +291,7 @@ export function getConfigTemplate (): ConfigOptions {
       // is false, this means that Zettlr will display the menu bar and window
       // controls as defined in the HTML.
       nativeAppearance: process.platform === 'darwin', // Linux only
-      vibrancy: process.platform === 'darwin', // macOS only
+      vibrancy: process.platform === 'darwin' && !nativeTheme.prefersReducedTransparency,
       // Store a few GUI related settings here as well
       sidebarVisible: false,
       currentSidebarTab: 'toc',
@@ -302,7 +304,7 @@ export function getConfigTemplate (): ConfigOptions {
     // Visible attachment filetypes
     attachmentExtensions: [],
     // UI related options
-    darkMode: false,
+    darkMode: nativeTheme.shouldUseDarkColors,
     alwaysReloadFiles: true, // Should Zettlr automatically load remote changes?
     autoDarkMode: 'system', // Possible values: 'off', 'system', 'schedule', 'auto'
     autoDarkModeStart: '21:00', // Switch into dark mode at this time
@@ -328,8 +330,9 @@ export function getConfigTemplate (): ConfigOptions {
       cslStyle: '', // Path to a CSL Style file
       useBundledPandoc: true, // Whether to use the bundled Pandoc
       exportQmdWithQuarto: false, // Whether .qmd-files should be exported with Quarto
-      singleFileLastExporter: 'html', // Remembers the last chosen exporter for easy re-exporting
-      customCommands: [] // Custom commands that the user can use to run arbitrary exports
+      customCommands: [], // Custom commands that the user can use to run arbitrary exports
+      selectedProfiles: [], // Remembers the last chosen exporter per file for easy re-exporting
+      lastUsedProfile: 'HTML.yaml' // Remembers the last chosen exporter for easy re-exporting
     },
     // Zettelkasten stuff (IDs, as well as link matchers)
     zkn: {
@@ -471,8 +474,10 @@ export function getConfigTemplate (): ConfigOptions {
       renderLinks: true,
       renderMath: true,
       renderTasks: true,
-      renderHTags: false,
-      renderEmphasis: false
+      renderHTags: true,
+      renderEmphasis: true,
+      renderPandoc: true,
+      renderHorizontalRules: true
     },
     files: {
       builtin: { showInFilemanager: true, showInSidebar: false, openWith: 'zettlr' },
@@ -505,7 +510,6 @@ export function getConfigTemplate (): ConfigOptions {
       showNewFileButton: true,
       showPreviousFileButton: true,
       showNextFileButton: true,
-      showToggleReadabilityButton: true,
       showMarkdownCommentButton: true,
       showMarkdownLinkButton: true,
       showMarkdownImageButton: true,

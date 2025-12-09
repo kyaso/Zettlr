@@ -38,6 +38,7 @@ import { getWhitespaceBeforeNode } from './get-whitespace-before-node'
 import { genericTextNode } from './generic-text-node'
 import { parseChildren } from './parse-children'
 import { nodeToCiteItem, type Citation } from '../../markdown-editor/parser/citation-parser'
+import { parseLinkAttributes } from '@common/pandoc-util/parse-link-attributes'
 
 /**
  * Basic info every ASTNode needs to provide
@@ -70,6 +71,14 @@ export interface MDNode {
 }
 
 /**
+ * This is the AST top node
+ */
+export interface Document extends MDNode {
+  type: 'Document'
+  children: ASTNode[]
+}
+
+/**
  * Represents a footnote (the indicator within the text itself, not the
  * reference).
  */
@@ -96,9 +105,28 @@ export interface FootnoteRef extends MDNode {
    */
   label: string
   /**
+   * Start of the label, for easy access.
+   */
+  labelFrom: number
+  /**
+   * End of the label, for easy access.
+   */
+  labelTo: number
+  /**
    * A list of children representing the footnote's body
    */
   children: ASTNode[]
+}
+
+/**
+ * A footnote reference label is the label attached to a footnote reference.
+ */
+export interface FootnoteRefLabel extends MDNode {
+  type: 'FootnoteRefLabel'
+  /**
+   * The label of the footnote label (sans the formatting, i.e., [^1]: -> 1)
+   */
+  label: string
 }
 
 /**
@@ -422,6 +450,36 @@ export interface Comment extends MDNode {
 }
 
 /**
+ * Represents a pandoc fenced div (`::: {.class}`)
+ */
+export interface PandocDiv extends MDNode {
+  type: 'PandocDiv'
+  /**
+   * The string value of the content node.
+   */
+  value: string
+  /**
+   * The children of this node
+   */
+  children: ASTNode[]
+}
+
+/**
+ * Represents a pandoc bracketed span (`[my text]{.class}`)
+ */
+export interface PandocSpan extends MDNode {
+  type: 'PandocSpan'
+  /**
+   * The string value of the content node.
+   */
+  value: string
+  /**
+   * The children of this node
+   */
+  children: ASTNode[]
+}
+
+/**
  * A generic text node that can represent a string of content. Most nodes
  * contain at least one TextNode as its content (e.g. emphasis).
  */
@@ -449,10 +507,11 @@ export interface GenericNode extends MDNode {
 /**
  * Any node that can be part of the AST is an ASTNode.
  */
-export type ASTNode = Comment | Footnote | FootnoteRef | LinkOrImage | TextNode
-| Heading | CitationNode | Highlight | Superscript | Subscript | OrderedList
-| BulletList | ListItem | GenericNode | FencedCode | InlineCode | YAMLFrontmatter
-| Emphasis | Table | TableCell | TableRow | ZettelkastenLink | ZettelkastenTag
+export type ASTNode = Document | Comment | Footnote | FootnoteRef | FootnoteRefLabel
+| LinkOrImage | TextNode | Heading | CitationNode | Highlight | Superscript
+| Subscript | OrderedList | BulletList | ListItem | GenericNode | FencedCode
+| InlineCode | YAMLFrontmatter | Emphasis | Table | TableCell | TableRow
+| ZettelkastenLink | ZettelkastenTag | PandocDiv | PandocSpan
 /**
  * Extract the "type" properties from the ASTNodes that can differentiate these.
  */
@@ -470,12 +529,25 @@ export type ASTNodeType = ASTNode['type']
  */
 export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
   switch (node.name) {
+    case 'Document':
+      const docNode: Document = {
+        type: 'Document',
+        name: 'Document',
+        from: node.from,
+        to: node.to,
+        whitespaceBefore: '',
+        attributes: {},
+        children: []
+      }
+      return parseChildren(docNode, node, markdown)
     // NOTE: Most nodes are treated as generics (see default case); here we only
     // define nodes which we can "compress" a little bit or make accessible
     case 'Image':
     case 'Link': {
-      const alt = node.getChild('LinkLabel')
+      const marks = node.getChildren('LinkMark')
       const url = node.getChild('URL')
+      const title = node.getChild('LinkTitle')
+
       if (url === null) {
         return {
           type: 'Generic',
@@ -495,21 +567,12 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         from: node.from,
         to: node.to,
         whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
-        // title: genericTextNode(node.from, node.to, markdown.substring(node.from, node.to)), TODO
+        title: title === null ? undefined : genericTextNode(title.from, title.to, markdown.substring(title.from, title.to)),
         url: markdown.substring(url.from, url.to),
-        alt: alt !== null
-          ? genericTextNode(alt.from, alt.to, markdown.substring(alt.from, alt.to))
+        alt: marks.length >= 2
+          ? genericTextNode(marks[0].to, marks[1].from, markdown.substring(marks[0].to, marks[1].from))
           : genericTextNode(url.from, url.to, markdown.substring(url.from, url.to))
       }
-
-      const marks = node.getChildren('LinkMark')
-
-      if (alt === null && marks.length >= 2) {
-        // The default Markdown parser doesn't apply "LinkLabel" unfortunately.
-        // So instead we have to get whatever is in between the first and second
-        // linkMark.
-        astNode.alt = genericTextNode(marks[0].to, marks[1].from, markdown.substring(marks[0].to, marks[1].from))
-      } // Else: Somewhat malformed link.
 
       return astNode
     }
@@ -596,9 +659,24 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
       }
       return astNode
     }
+    case 'FootnoteRefLabel': {
+      const astNode: FootnoteRefLabel = {
+        type: 'FootnoteRefLabel',
+        name: 'FootnoteRefLabel',
+        attributes: {},
+        from: node.from,
+        to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
+        label: markdown.substring(node.from + 2, node.to - 2)
+      }
+      return astNode
+    }
     case 'FootnoteRef': {
       const label = node.getChild('FootnoteRefLabel')
-      const body = node.getChild('FootnoteRefBody')
+      if (label === null) {
+        return genericTextNode(node.from, node.to, markdown.substring(node.from, node.to), getWhitespaceBeforeNode(node, markdown))
+      }
+
       const astNode: FootnoteRef = {
         type: 'FootnoteRef',
         name: 'FootnoteRef',
@@ -606,15 +684,13 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         from: node.from,
         to: node.to,
         whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
-        label: label !== null ? markdown.substring(label.from + 2, label.to - 2) : '',
+        label: markdown.substring(label.from + 2, label.to - 2),
+        labelFrom: label.from + 2,
+        labelTo: label.to - 2,
         children: []
       }
 
-      if (body !== null) {
-        return parseChildren(astNode, body, markdown)
-      } else {
-        return astNode
-      }
+      return parseChildren(astNode, node, markdown)
     }
     case 'HighlightContent': {
       const astNode: Highlight = {
@@ -782,6 +858,65 @@ export function parseNode (node: SyntaxNode, markdown: string): ASTNode {
         source: source !== null ? markdown.substring(source.from, source.to) : ''
       }
       return astNode
+    }
+    case 'PandocDiv': {
+      const marks = node.getChildren('PandocDivMark')
+      const content = marks.length === 2 ? markdown.substring(marks[0].to, marks[1].from) : ''
+
+      const attr = node.getChild('PandocAttribute')
+      const attributes = attr ? parseLinkAttributes(markdown.substring(attr.from, attr.to)) : {}
+
+      const info = node.getChild('PandocDivInfo')
+      const divName = info ? markdown.substring(info.from, info.to) : ''
+
+      const id = attributes.id ?? ''
+      const classes = attributes.classes ?? []
+
+      if (info) { classes.push(divName) }
+
+      const astNode: PandocDiv = {
+        type: 'PandocDiv',
+        name: 'PandocDiv',
+        attributes: {
+          id: id,
+          class: classes,
+          ...attributes.properties
+        },
+        from: node.from,
+        to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
+        value: content,
+        children: [],
+      }
+
+      return parseChildren(astNode, node, markdown)
+    }
+    case 'PandocSpan': {
+      const marks = node.getChildren('PandocSpanMark')
+      const content = marks.length === 2 ? markdown.substring(marks[0].to, marks[1].from) : ''
+
+      const attr = node.getChild('PandocAttribute')
+      const attributes = attr ? parseLinkAttributes(markdown.substring(attr.from, attr.to)) : {}
+
+      const id = attributes.id ?? ''
+      const classes = attributes.classes ?? ''
+
+      const astNode: PandocSpan = {
+        type: 'PandocSpan',
+        name: 'PandocSpan',
+        attributes: {
+          id: id,
+          class: classes,
+          ...attributes.properties
+        },
+        from: node.from,
+        to: node.to,
+        whitespaceBefore: getWhitespaceBeforeNode(node, markdown),
+        value: content,
+        children: [],
+      }
+
+      return parseChildren(astNode, node, markdown)
     }
     case 'YAMLFrontmatter': {
       const source = node.getChild('CodeText')

@@ -78,24 +78,6 @@ function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: stri
   const title: HTMLHeadingElement = getTitle(linkIsFile ? desc.name : linkContents)
 
   wrapper.appendChild(title)
-  // const title = document.createElement('p')
-  // title.classList.add('filename')
-  // title.textContent = metadata[0]
-
-  // const content = document.createElement('div')
-  // content.classList.add('note-content')
-  // const html = md2html(metadata[1], window.getCitationCallback(CITEPROC_MAIN_DB))
-  // content.innerHTML = sanitizeHtml(html, {
-  //   // These options basically translate into: Allow nothing but bare metal tags
-  //   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-  //   disallowedTagsMode: 'escape',
-  //   allowedIframeDomains: [],
-  //   allowedIframeHostnames: [],
-  //   allowedScriptDomains: [],
-  //   allowedSchemes: [],
-  //   allowedScriptHostnames: [],
-  //   allowVulnerableTags: false
-  // })
 
   // When the link is an actual file, show also the directory.
   if (linkIsFile) {
@@ -163,11 +145,6 @@ function getPreviewElement (desc: MDFileDescriptor|undefined, linkContents: stri
     actions.appendChild(openButtonNT)
   }
 
-  // wrapper.appendChild(title)
-  // wrapper.appendChild(document.createElement('hr'))
-  // wrapper.appendChild(content)
-  // wrapper.appendChild(document.createElement('hr'))
-  // wrapper.appendChild(meta)
   wrapper.appendChild(actions)
 
   return wrapper

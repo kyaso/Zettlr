@@ -29,7 +29,7 @@ function hideHeadingMarks (view: EditorView): RangeSet<Decoration> {
     syntaxTree(view.state).iterate({
       from, to,
       enter (node) {
-        if(rangeInSelection(view.state, node.from, node.to, true)) {
+        if(rangeInSelection(view.state.selection, node.from, node.to, true)) {
           return
         }
 
@@ -64,7 +64,9 @@ export const renderHeadings = ViewPlugin.fromClass(class {
   }
 
   update (update: ViewUpdate): void {
-    this.decorations = hideHeadingMarks(update.view)
+    if (update.docChanged || update.viewportChanged || update.selectionSet) {
+      this.decorations = hideHeadingMarks(update.view)
+    }
   }
 }, {
   decorations: v => v.decorations

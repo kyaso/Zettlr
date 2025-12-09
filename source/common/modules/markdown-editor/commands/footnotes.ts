@@ -17,7 +17,7 @@
 // 2. Cmd-Click them to edit them in place
 // 3. And, obviously, add and remove them
 
-import { syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { type ChangeSpec } from '@codemirror/state'
 import { type EditorView } from '@codemirror/view'
 import { extractASTNodes, markdownToAST } from '@common/modules/markdown-utils'
@@ -31,7 +31,7 @@ import { type Footnote, type FootnoteRef } from '@common/modules/markdown-utils/
  * @return  {boolean}             Whether the command ran.
  */
 export function addNewFootnote (target: EditorView): boolean {
-  const ast = markdownToAST(target.state.sliceDoc())
+  const ast = markdownToAST(target.state.sliceDoc(), ensureSyntaxTree(target.state, target.state.doc.length))
   const identifiers = extractASTNodes(ast, 'Footnote') as Footnote[]
   const refs = extractASTNodes(ast, 'FootnoteRef') as FootnoteRef[]
   const changes: ChangeSpec[] = []
@@ -149,7 +149,34 @@ export function addNewFootnote (target: EditorView): boolean {
     // 3 = [^] (the identifier)
     // 2x the new number length
     // Any offset chars, since the selection must be in terms of characters AFTER the update
-    selection: { anchor: whereRef + 5 + prefix.length + 3 + String(newIdentifier).length * 2 + offsetChars }
+    selection: { anchor: whereRef + 5 + prefix.length + 3 + String(newIdentifier).length * 2 + offsetChars },
+    scrollIntoView: true
   })
   return true
+}
+
+/**
+ * This command should run on delete. It tests if there is a Footnote next to
+ * the cursor that would be deleted. If so, it first selects the footnote
+ * entirely. This serves two purposes: (a) footnote deletion happens for the
+ * entire node, and (b) a double-check to visually tell the user they are about
+ * to delete a footnote now.
+ *
+ * @param   {EditorView}  target  The editor view.
+ *
+ * @return  {boolean}             Whether the command did something.
+ */
+export function selectFootnoteBeforeDelete (target: EditorView): boolean {
+  if (!target.state.selection.main.empty) {
+    return false
+  }
+
+  const pos = target.state.selection.main.head
+  const node = syntaxTree(target.state).resolveInner(pos, -1)
+  if (node.type.name === 'Footnote' && node.to === pos) {
+    target.dispatch({ selection: { anchor: node.to, head: node.from } })
+    return true
+  }
+
+  return false
 }

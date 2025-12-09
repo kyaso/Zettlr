@@ -49,15 +49,16 @@ export default class OpenAttachment extends ZettlrCommand {
 
   /**
    * Attempt to open a PDF (or other) attachment for a given citekey.
-   * @param {String} evt The event name
-   * @param  {Object} arg An object containing the citekey to open.
+   *
+   * @param  {string}  evt The event name
+   * @param  {any}     arg An object containing the citekey to open.
    */
-  async run (evt: string, arg: any): Promise<boolean> {
+  async run (evt: string, arg: { filePath: string, citekey: string }): Promise<boolean> {
     if (!('citekey' in arg) || typeof arg.citekey !== 'string') {
       return false
     }
 
-    const descriptor = this._app.workspaces.find(arg.filePath)
+    const descriptor = await this._app.fsal.getDescriptorFor(arg.filePath)
     if (descriptor === undefined || descriptor.type !== 'file') {
       return false
     }
@@ -106,7 +107,7 @@ export default class OpenAttachment extends ZettlrCommand {
       }
 
       // Now map the result set. It will contain ALL attachments.
-      let allAttachments = res.result.map((elem: any) => elem.path)
+      let allAttachments: string[] = res.result.map((elem: any) => elem.path)
       // Sort them with PDFs on top
       allAttachments = allAttachments.sort(pdfSorter)
       const potentialError = await shell.openPath(allAttachments[0])

@@ -74,7 +74,6 @@ const printContainer = ref<HTMLDivElement|null>(null)
 
 onMounted(async () => {
   if (filePath === '' || printContainer.value === null) {
-    console.log({ filePath, cont: printContainer.value })
     return
   }
 
@@ -86,11 +85,24 @@ onMounted(async () => {
   const base = pathDirname(filePath)
   const { frontmatter } = extractYamlFrontmatter(fileContents)
   const library = frontmatter !== null && 'bibliography' in frontmatter && typeof frontmatter.bibliography === 'string' ? frontmatter.bibliography : CITEPROC_MAIN_DB
-  printContainer.value.innerHTML = md2html(fileContents, window.getCitationCallback(library), undefined, {
+  md2html(fileContents, {
+    referenceSectionTitle: trans('References'),
+    onCitation: window.getCitationCallback(library),
+    onBibliography: async (citations) => {
+      return await ipcRenderer.invoke('citeproc-provider', {
+        command: 'get-bibliography',
+        payload: { database: library, citations }
+      })
+    },
+    zknLinkFormat: window.config.get('zkn.linkFormat') ?? 'link|title',
     onImageSrc (src) {
       return 'safe-file://' + resolvePath(base, src)
     }
   })
+    .then(html => {
+      printContainer.value!.innerHTML = html
+    })
+    .catch(err => console.error(err))
 })
 
 function handleClick (buttonID?: string): void {
@@ -229,6 +241,37 @@ function handleClick (buttonID?: string): void {
     header {
       margin-bottom: 4em;
       text-align: center;
+    }
+  }
+
+  #footnote-container {
+    font-size: 0.8rem;
+
+    div.footnote-ref {
+      :is(p:first-of-type) {
+        display: inline;
+      }
+
+      :not(sup, a, p:first-of-type) {
+        margin-left: 2rem;
+      }
+    }
+  }
+
+  span {
+    &.mark {
+      background-color: #ffff0080;
+    }
+    &dark .mark {
+      background-color: #ffff0060;
+    }
+
+    &.underline {
+      text-decoration: underline;
+    }
+
+    &.smallcaps {
+      font-variant-caps: small-caps;
     }
   }
 }

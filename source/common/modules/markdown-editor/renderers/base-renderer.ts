@@ -24,7 +24,7 @@ import {
 } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { type SyntaxNodeRef } from '@lezer/common'
-import { StateField, type EditorState } from '@codemirror/state'
+import { StateField, type Range, type EditorState } from '@codemirror/state'
 import { rangeInSelection } from '../util/range-in-selection'
 
 /**
@@ -68,7 +68,7 @@ function renderWidgets (
   shouldHandleNode: (node: SyntaxNodeRef) => boolean,
   createWidget: (state: EditorState, node: SyntaxNodeRef) => WidgetType|undefined
 ): DecorationSet {
-  const widgets: any[] = [] // TODO: Correct type
+  const widgets: Range<Decoration>[] = []
 
   if (visibleRanges.length === 0) {
     // visibleRanges is empty, hence we should (re)process the whole document
@@ -82,7 +82,7 @@ function renderWidgets (
       enter: (node) => {
         // Determine the number of overlapping selections. If these are non-
         // null, we must not render this widget
-        if (rangeInSelection(state, node.from, node.to)) {
+        if (rangeInSelection(state.selection, node.from, node.to)) {
           return
         }
 

@@ -19,9 +19,10 @@ import { configField } from '../util/configuration'
 import type { LanguageToolLinterRequest, LanguageToolLinterResponse } from '@providers/commands/language-tool'
 import { StateEffect, StateField, type Transaction } from '@codemirror/state'
 import extractYamlFrontmatter from 'source/common/util/extract-yaml-frontmatter'
-import type { ViewUpdate } from '@codemirror/view'
+import { EditorView, type ViewUpdate } from '@codemirror/view'
 import { trans } from 'source/common/i18n-renderer'
 import type { LanguageToolIgnoredRuleEntry } from '@providers/config/get-config-template'
+import { ensureSyntaxTree } from '@codemirror/language'
 
 const ipcRenderer = window.ipc
 
@@ -49,6 +50,42 @@ ipcRenderer.on('dictionary-provider', (event, message) => {
     refreshUserDictionary()
   }
 })
+
+/**
+ * Utility function that can extract a list of all suggestions for a misspelling
+ * that LanguageTool has produced.
+ *
+ * @param   {Diagnostic}     diag  The diagnostic
+ *
+ * @return  {string[]|null}        Returns either null, if there are no
+ *                                 suggestions to extract, or a list of those
+ *                                 suggestions.
+ */
+export function extractLTSpellcheckSuggestionsFrom (diag: Diagnostic): string[]|null {
+  if (!isLanguageToolMisspelling(diag)) {
+    return null
+  }
+
+  if (diag.actions === undefined) {
+    return null
+  }
+
+  return diag.actions
+    .filter(action => action.markClass === 'cm-ltSuggestAction')
+    .map(action => action.name) // NOTE: If we ever change the name value below in the linter, we must adapt this line, too!
+}
+
+/**
+ * Checks whether the provided diagnostic corresponds to a misspelling as
+ * produced by the LanguageTool linter.
+ *
+ * @param   {Diagnostic}  diag  The diagnostic to check
+ *
+ * @return  {boolean}           Whether the diagnostic describes a spellcheck error.
+ */
+export function isLanguageToolMisspelling (diag: Diagnostic): boolean {
+  return diag.source === 'language-tool(misspelling)'
+}
 
 export interface LanguageToolStateField {
   running: boolean
@@ -142,7 +179,7 @@ const ltLinter = linter(async view => {
 
   const diagnostics: Diagnostic[] = []
 
-  const ast = markdownToAST(view.state.doc.toString())
+  const ast = markdownToAST(view.state.doc.toString(), ensureSyntaxTree(view.state, view.state.doc.length))
   // Extract TextNodes to later filter diagnostics that only cover these nodes.
   const textNodes = extractTextnodes(ast)
 
@@ -217,6 +254,7 @@ const ltLinter = linter(async view => {
 
         actions.push({
           name: value,
+          markClass: 'cm-ltSuggestAction',
           apply (view, from, to) {
             view.dispatch({ changes: { from, to, insert: value } })
           }
@@ -229,6 +267,7 @@ const ltLinter = linter(async view => {
     // lands in a release
     actions.push({
       name: trans('Disable Rule'),
+      markClass: 'cm-ltDisableAction',
       apply (view) {
         // In order to ignore a rule, we do two things. First, we keep the
         // local ignoring-mechanism from @benniekiss, because that will allow us
@@ -270,7 +309,14 @@ const ltLinter = linter(async view => {
   needsRefresh
 })
 
+const languagetoolTheme = EditorView.theme({
+  '.cm-diagnosticAction.cm-ltDisableAction': {
+    backgroundColor: '#af5151'
+  }
+})
+
 export const languageTool = [
   ltLinter,
-  languageToolState
+  languageToolState,
+  languagetoolTheme
 ]

@@ -25,37 +25,19 @@ import { createSubviewForCell, hiddenSpanField } from './subview'
 import { getCoordinatesForRange } from './commands/util'
 import { generateColumnControls, generateEmptyTableWidgetElement, generateRowControls, tableTD, tableTH, tableTR } from './widget-dom'
 import { displayTableContextMenu } from './context-menu'
-import { addColAfter, addColBefore, clearCol, deleteCol, swapNextCol, swapPrevCol } from './commands/columns'
-import { addRowAfter, addRowBefore, clearRow, deleteRow, swapNextRow, swapPrevRow } from './commands/rows'
-import { clearTable, setAlignment } from './commands/tables'
 import { CITEPROC_MAIN_DB } from 'source/types/common/citeproc'
 import { configField } from '../util/configuration'
-import { applyBold, applyItalic, insertLink } from '../commands/markdown'
-import { copyAsHTML, copyAsPlain, cut, paste, pasteAsPlain } from '../util/copy-paste-cut'
-import { selectAllCommand } from '../keymaps/table-editor'
-import { stripDuplicateSpaces } from '../commands/transforms/strip-duplicate-spaces'
-import { italicsToQuotes } from '../commands/transforms/italics-to-quotes'
-import { quotesToItalics } from '../commands/transforms/quotes-to-italics'
-import { removeLineBreaks } from '../commands/transforms/remove-line-breaks'
-import { addSpacesAroundEmdashes } from '../commands/transforms/add-spaces-around-emdashes'
-import { removeSpacesAroundEmdashes } from '../commands/transforms/remove-spaces-around-emdashes'
-import { doubleQuotesToSingle } from '../commands/transforms/double-quotes-to-single-quotes'
-import { singleQuotesToDouble } from '../commands/transforms/single-quotes-to-double-quotes'
-import { straightenQuotes } from '../commands/transforms/straighten-quotes'
-import { toDoubleQuotes } from '../commands/transforms/to-double-quotes'
-import { toSentenceCase } from '../commands/transforms/to-sentence-case'
-import { toTitleCase } from '../commands/transforms/to-title-case'
-import { zapGremlins } from '../commands/transforms/zap-gremlins'
 
 // This widget holds a visual DOM representation of a table.
 export class TableWidget extends WidgetType {
-  // TODO: This number is literally only what I have here right now. So for
-  // other people -- especially with other themes, different zoom levels, etc.,
-  // this value will be off. The more off this is, the worse the scroll jumping
-  // will become. I will have to modify the table widgets to use a ViewPlugin
-  // instead of the current StateField so that I gain access to the view and can
-  // provide more reliable methods of measuring the average table row height.
-  private readonly meanRowHeight = 35
+  // TODO: This number appears to be highly important to preventing sudden
+  // jumping behavior in editors with large tables that have wrapped lines. What
+  // we have found so far is that this number simply needs to be larger than the
+  // highest wrapped cell in a table to prevent any jumping. But I'll keep the
+  // TODO here for as long as we don't really know why this works.
+  // For more background, see issue #5940.
+  private readonly meanRowHeight = 500
+
   constructor (readonly table: string, readonly node: SyntaxNode) {
     super()
   }
@@ -305,6 +287,11 @@ function updateRow (
 
   const { row, col } = selectionCoords !== undefined ? selectionCoords : { row: -1, col: -1 }
 
+  // Prepare the citation callback
+  let { library } = view.state.field(configField).metadata
+  library = library === '' ? CITEPROC_MAIN_DB : library
+  const onCitation = window.getCitationCallback(library)
+
   for (let i = 0; i < astRow.cells.length; i++) {
     const cell = astRow.cells[i]
     const selectionInCell = row === idx && col === i
@@ -312,11 +299,12 @@ function updateRow (
       // We have to create a new TD
       const td = astRow.isHeaderOrFooter ? tableTH() : tableTD()
 
-      // TODO: Enable citation rendering here
       const contentWrapper = document.createElement('div')
       contentWrapper.classList.add('content')
       td.appendChild(contentWrapper)
-      const html = nodeToHTML(cell.children, (_citations, _composite) => undefined, {}, 0).trim()
+
+      const { zknLinkFormat } = view.state.field(configField)
+      const html = nodeToHTML(cell.children, { onCitation, zknLinkFormat }, 0).trim()
       contentWrapper.innerHTML = html.length > 0 ? html : '&nbsp;'
 
       // NOTE: This handle gets attached once and then remains on the TD for
@@ -340,130 +328,16 @@ function updateRow (
           return
         }
 
+        event.preventDefault()
+        event.stopPropagation()
+
         const subview = EditorView.findFromDOM(td)
 
         if (subview === null) {
           setSelectionToCell(td, cell, view)
         }
 
-        displayTableContextMenu(event, clickedID => {
-          switch (clickedID) {
-            case 'insert.row.above':
-              addRowBefore(view)
-              break
-            case 'insert.row.below':
-              addRowAfter(view)
-              break
-            case 'insert.col.right':
-              addColAfter(view)
-              break
-            case 'insert.col.left':
-              addColBefore(view)
-              break
-            case 'move.row.up':
-              swapPrevRow(view)
-              break
-            case 'move.row.down':
-              swapNextRow(view)
-              break
-            case 'move.col.left':
-              swapPrevCol(view)
-              break
-            case 'move.col.right':
-              swapNextCol(view)
-              break
-            case 'align.col.left':
-              setAlignment('left')(view)
-              break
-            case 'align.col.center':
-              setAlignment('center')(view)
-              break
-            case 'align.col.right':
-              setAlignment('right')(view)
-              break
-            case 'clear.row':
-              clearRow(view)
-              break
-            case 'clear.col':
-              clearCol(view)
-              break
-            case 'clear.table':
-              clearTable(view)
-              break
-            case 'delete.row':
-              deleteRow(view)
-              break
-            case 'delete.col':
-              deleteCol(view)
-              break
-            case 'markdownBold':
-              applyBold(subview ?? view)
-              break
-            case 'markdownItalic':
-              applyItalic(subview ?? view)
-              break
-            case 'markdownLink':
-              insertLink(subview ?? view)
-              break
-            case 'cut':
-              cut(subview ?? view)
-              break
-            case 'copy':
-              copyAsPlain(subview ?? view)
-              break
-            case 'copyAsHTML':
-              copyAsHTML(subview ?? view)
-              break
-            case 'paste':
-              paste(subview ?? view)
-              break
-            case 'pasteAsPlain':
-              pasteAsPlain(subview ?? view)
-              break
-            case 'selectAll':
-              selectAllCommand(subview ?? view)
-              break
-            case 'stripDuplicateSpaces':
-              stripDuplicateSpaces(subview ?? view)
-              break
-            case 'italicsToQuotes':
-              italicsToQuotes(subview ?? view)
-              break
-            case 'quotesToItalics':
-              quotesToItalics(view.state.field(configField).italicFormatting)(subview ?? view)
-              break
-            case 'removeLineBreaks':
-              removeLineBreaks(subview ?? view)
-              break
-            case 'addSpacesAroundEmdashes':
-              addSpacesAroundEmdashes(subview ?? view)
-              break
-            case 'removeSpacesAroundEmdashes':
-              removeSpacesAroundEmdashes(subview ?? view)
-              break
-            case 'doubleQuotesToSingle':
-              doubleQuotesToSingle(subview ?? view)
-              break
-            case 'singleQuotesToDouble':
-              singleQuotesToDouble(subview ?? view)
-              break
-            case 'straightenQuotes':
-              straightenQuotes(subview ?? view)
-              break
-            case 'toDoubleQuotes':
-              toDoubleQuotes(subview ?? view)
-              break
-            case 'toSentenceCase':
-              toSentenceCase(String(window.config.get('appLang')))(subview ?? view)
-              break
-            case 'toTitleCase':
-              toTitleCase(String(window.config.get('appLang')))(subview ?? view)
-              break
-            case 'zapGremlins':
-              zapGremlins(subview ?? view)
-              break
-          }
-        })
+        displayTableContextMenu(event, view, subview ?? view)
       })
 
       tr.appendChild(td)
@@ -499,14 +373,11 @@ function updateRow (
 
     const [ subviewFrom, subviewTo ] = subview?.state.field(hiddenSpanField).cellRange ?? [ -1, -1 ]
 
-    const config = view.state.field(configField).metadata.library
-    const library = config === '' ? CITEPROC_MAIN_DB : config
-    const callback = window.getCitationCallback(library)
-
     if (subview !== null && !selectionInCell) {
       subview.destroy()
       contentWrapper.classList.remove('editing')
-      const html = nodeToHTML(cell.children, callback, {}, 0).trim()
+      const { zknLinkFormat } = view.state.field(configField)
+      const html = nodeToHTML(cell.children, { onCitation, zknLinkFormat }, 0).trim()
       contentWrapper.innerHTML = html.length > 0 ? html : '&nbsp;'
     } else if (subview === null && selectionInCell) {
       // Before we mount a subview, we need to normalize the selection if
@@ -548,7 +419,8 @@ function updateRow (
       })
     } else if (subview === null) {
       // Simply transfer the contents
-      const html = nodeToHTML(cell.children, callback, {}, 0).trim()
+      const { zknLinkFormat } = view.state.field(configField)
+      const html = nodeToHTML(cell.children, { onCitation, zknLinkFormat }, 0).trim()
       if (html !== contentWrapper.innerHTML) {
         contentWrapper.innerHTML = html.length > 0 ? html : '&nbsp;'
       }

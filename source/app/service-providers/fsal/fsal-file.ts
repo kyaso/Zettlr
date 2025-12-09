@@ -73,12 +73,10 @@ export async function parse (
   filePath: string,
   cache: FSALCache|null,
   parser: (file: MDFileDescriptor, content: string) => void,
-  isRoot: boolean,
   searchIndex: SearchIndexProvider
 ): Promise<MDFileDescriptor> {
   // First of all, prepare the file descriptor
   let file: MDFileDescriptor = {
-    root: isRoot,
     dir: path.dirname(filePath), // Containing dir
     path: filePath,
     name: path.basename(filePath),

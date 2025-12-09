@@ -7,7 +7,7 @@
  * Maintainer:      Hendrik Erz
  * License:         GNU GPL v3
  *
- * Description:     This module contains a set of methods that are used to 
+ * Description:     This module contains a set of methods that are used to
  *                  create and manage subviews within table editor widgets. A
  *                  subview is a CodeMirror instance that mirrors the main
  *                  document, but only allows editing the span of text within a
@@ -26,6 +26,7 @@ import { configField, type EditorConfiguration } from '../util/configuration'
 import { getMainEditorThemes } from '../editor-extension-sets'
 import { darkMode } from '../theme/dark-mode'
 import { markdownSyntaxHighlighter } from '../theme/syntax'
+import { defaultKeymap } from '../keymaps/default'
 
 /**
  * A transaction filter that ensures that any changes made to the view that
@@ -227,8 +228,10 @@ export function createSubviewForCell (
     selection: mainView.state.selection,
     extensions: [
       // A minimal set of extensions
+      defaultKeymap(),
       Prec.highest(tableEditorKeymap(mainView)),
       drawSelection({ drawRangeCursor: false, cursorBlinkRate: 1000 }),
+      EditorState.allowMultipleSelections.of(true),
       // Add the configuration and preset it with whatever is in the main view.
       // The config field will automagically update since we forward any effects
       // to the subview.

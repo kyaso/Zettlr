@@ -19,8 +19,9 @@ import extractBOM from './extract-bom'
 import extractFileId from './extract-file-id'
 import { parse as parseYAML } from 'yaml'
 import {
-  markdownToAST as md2ast,
-  extractASTNodes
+  markdownToAST,
+  extractASTNodes,
+  extractTextnodes
 } from '@common/modules/markdown-utils'
 import type {
   Heading,
@@ -72,7 +73,7 @@ export default function getMarkdownFileParser (
     const zknLinksInHeadings = extractZknLinksInHeadings(content)
 
     // Parse the file into our AST
-    const ast = md2ast(content)
+    const ast = markdownToAST(content)
 
     const tags = extractASTNodes(ast, 'ZettelkastenTag') as ZettelkastenTag[]
     file.tags = tags.map(tag => tag.value.toLowerCase())
@@ -89,7 +90,8 @@ export default function getMarkdownFileParser (
     const headings = extractASTNodes(ast, 'Heading') as Heading[]
     const firstH1 = headings.find(h => h.level === 1)
     if (firstH1 !== undefined) {
-      file.firstHeading = firstH1.content
+      const content = extractTextnodes(firstH1)
+      file.firstHeading = content.map(node => node.whitespaceBefore + node.value).join('').trim()
     }
 
     const locale: string | undefined = isAppServiceContainerReady() ? getAppServiceContainer().config.get('appLang') : undefined
@@ -117,7 +119,7 @@ export default function getMarkdownFileParser (
         file.frontmatter = frontmatter
       }
 
-      for (const [ key, value ] of Object.entries(frontmatter)) {
+      for (const [ key, value ] of Object.entries(frontmatter as { [s: string]: unknown })) {
         // Only keep those values which Zettlr can understand
         if (FRONTMATTER_VARS.includes(key)) {
           file.frontmatter[key] = value

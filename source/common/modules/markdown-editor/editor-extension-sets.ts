@@ -35,14 +35,13 @@ import {
 import { autocomplete } from './autocomplete'
 import { codeSyntaxHighlighter, markdownSyntaxHighlighter } from './theme/syntax'
 import markdownParser from './parser/markdown-parser'
-import { syntaxExtensions } from './parser/syntax-extensions'
 import { defaultContextMenu } from './plugins/default-context-menu'
 import { readabilityMode } from './plugins/readability'
 import { hookDocumentAuthority } from './plugins/remote-doc'
 import { lintGutter, linter } from '@codemirror/lint'
 import { spellcheck } from './linters/spellcheck'
 import { mdLint } from './linters/md-lint'
-import { countField } from './plugins/statistics-fields'
+import { countField, countPlugin } from './plugins/statistics-fields'
 import { tocField } from './plugins/toc-field'
 import { typewriter } from './plugins/typewriter'
 import { formattingToolbar, footnoteHover, filePreview, urlHover, tagTooltipExt } from './tooltips'
@@ -178,7 +177,7 @@ function getCoreExtensions (options: CoreExtensionOptions): Extension[] {
     history(),
     // SELECTIONS
     // Overrides the default browser selection drawing, allows styling
-    drawSelection({ drawRangeCursor: false, cursorBlinkRate: 1000 }),
+    drawSelection({ drawRangeCursor: false, cursorBlinkRate: 1200 }),
     highlightWhitespace(options.initialConfig.highlightWhitespace),
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
@@ -313,13 +312,13 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     }),
     // ... which can then be styled with a highlighter
     markdownSyntaxHighlighter(),
-    syntaxExtensions, // Add our own specific syntax plugin
     renderers(options.initialConfig),
     showLineNumbers(options.initialConfig.showMarkdownLineNumbers),
     mdLinterExtensions,
     headingGutter,
     languageTool,
     // Some statistics we need for Markdown documents
+    countPlugin,
     countField,
     typewriter,
     distractionFree,

@@ -26,7 +26,7 @@ export default class FileSearch extends ZettlrCommand {
    * @param  {Object} arg An object containing a hash of a file to be searched
    * @return {Boolean}     Whether the call succeeded.
    */
-  async run (evt: string, arg: any): Promise<any> {
+  async run (evt: string, arg: any): Promise<boolean|any> {
     // Handle a query index event
     if (evt === 'query-index') {
       // console.log('[file-search]: query-index event received. Query: '+arg.query)

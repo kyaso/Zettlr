@@ -23,6 +23,7 @@ import path from 'path'
 import crypto from 'crypto'
 import got, { type Response } from 'got'
 import semver from 'semver'
+import { net } from 'electron'
 
 import { ipcMain, app, shell, dialog } from 'electron'
 import { trans } from '@common/i18n-main'
@@ -293,14 +294,34 @@ export default class UpdateProvider extends ProviderContract {
    * @return {Promise} Resolves only when there is an update available.
    */
   async check (): Promise<void> {
+    if (!net.online) {
+      // Don't check if we don't have an internet connection; preserve the last
+      // state so that the user sees what the most recent result was.
+      return
+    }
+
     // First, reset the update state
     this._resetState()
 
     try {
       this._logger.info(`[Update Provider] Checking ${REPO_URL} for application updates ...`)
+      let platformString = ''
+      if (process.platform === 'win32') {
+        platformString = `Windows NT 10.0; ${process.arch}`
+      }
+      if (process.platform === 'darwin') {
+        platformString = `Macintosh; Intel Mac OS X ${process.getSystemVersion()}; ${process.arch}`
+      }
+      if (process.platform === 'linux') {
+        platformString = `Linux ${process.arch === 'x64' ? 'x86_64' : process.arch}`
+      }
+
       const response: Response<string> = await got(REPO_URL, {
         timeout: { request: 5000 },
         method: 'GET',
+        headers: {
+          'User-Agent': `Zettlr/${CUR_VER} (${platformString})`
+        },
         searchParams: new URLSearchParams([
           [ 'accept-beta', this._config.get('checkForBeta') ]
         ])
@@ -347,6 +368,7 @@ export default class UpdateProvider extends ProviderContract {
       // If we have an ENOTFOUND error there is no response and no statusCode
       // so we'll use TypeScript shortcuts to save us from ugly errors.
       const notFoundError = err.code === 'ENOTFOUND'
+      const timeoutError = err.code === 'ETIMEDOUT'
       const serverError = err?.response?.statusCode >= 500
       const clientError = err?.response?.statusCode >= 400
       const redirectError = err?.response?.statusCode >= 300
@@ -366,6 +388,13 @@ export default class UpdateProvider extends ProviderContract {
         // This normally only happens if the networking interface is
         // offline. In this case, no need to inform the user every hour.
         const msg = trans('Could not check for updates: Could not establish connection')
+        this._reportError(err.code as string, msg, false)
+      } else if (timeoutError) {
+        // This can happen if the internet is either really bad or drops during the
+        // connection attempt. In any case, this can happen often with, e.g.,
+        // company VPNs and other firewalls, and would be distracting to see every
+        // hour or so. See #5944 for context.
+        const msg = trans('Could not check for updates: The connection attempt timed out.')
         this._reportError(err.code as string, msg, false)
       } else {
         // Something else has occurred. GotError objects have a name property.
@@ -391,13 +420,13 @@ export default class UpdateProvider extends ProviderContract {
     const parsedResponse = JSON.parse(response.body) as ServerAPIResponse
     const state = getUpdateState()
 
-    const lv = semver.parse(CUR_VER) // localVersion
-    const rv = semver.parse(parsedResponse.tag_name) // remoteVersion
+    const localVersion = semver.parse(CUR_VER) // localVersion
+    const remoteVersion = semver.parse(parsedResponse.tag_name) // remoteVersion
 
-    if (lv === null || rv === null) {
+    if (localVersion === null || remoteVersion === null) {
       this._cleanup()
       const error = new Error('Cannot complete check for new version: Either the local or remote version could not be parsed!')
-      this._logger.error(error.message, { localVersion: lv, remoteVersion: rv })
+      this._logger.error(error.message, { localVersion, remoteVersion })
       throw error
     }
   
@@ -408,20 +437,16 @@ export default class UpdateProvider extends ProviderContract {
     // "postrelease"...? I don't think this term exists). Here we have to do a
     // bit of manual engineering to account for this edge case.
 
-    // First, store the regular check in the variable ...
-    state.updateAvailable = semver.lt(lv, rv)
-    // ... and then check if the versions match up except for the local one
-    // having "nightly" in its prerelease array.
-    if (
-      lv.major === rv.major && lv.minor === rv.minor && lv.patch === rv.patch &&
-      lv.prerelease.includes('nightly')
-    ) {
-      state.updateAvailable = false
-    }
+    // NOTE: Zettlr makes use of major, minor, and patch versions, plus "betas"
+    // (beta, beta.1, beta.2, etc.), and as build-identifiers "nightly".
+    // This ensures that `semver.lt` will always work properly, indicating that
+    // nightlies will never attempt to update to the same-but-older version:
+    // semver.lt('4.0.0-beta+nightly', '4.0.0-beta' returns false).
+    state.updateAvailable = semver.lt(localVersion, remoteVersion)
 
     // Adapt the rest of the state
     state.tagName = parsedResponse.tag_name
-    state.changelog = md2html(parsedResponse.body, (_c1, _c2) => undefined)
+    state.changelog = await md2html(parsedResponse.body, { onCitation: (_c1, _c2) => undefined, zknLinkFormat: 'link|title' })
     state.prerelease = parsedResponse.prerelease
     state.releasePage = parsedResponse.html_url
 

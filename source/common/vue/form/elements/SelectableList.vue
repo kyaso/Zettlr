@@ -6,6 +6,9 @@
     }"
   >
     <div class="selectable-list-container">
+      <div v-if="items.length === 0" class="no-items-label">
+        {{ noItemsLabel }}
+      </div>
       <div
         v-for="item, idx in items" v-bind:key="idx"
         v-bind:class="{
@@ -35,7 +38,17 @@
     </div>
     <!-- Add an optional footer -->
     <div v-if="editable" class="selectable-list-footer">
-      <div class="add" v-on:click="emit('add')">
+      <PopoverWrapper v-if="requestTextInput === true" v-bind:target="addButton!" v-bind:placement-priorities="['above', 'right', 'left']">
+        <TextControl
+          v-model="textInput"
+          v-bind:placeholder="requestTextInputPlaceholder"
+          v-bind:autofocus="true"
+          v-on:confirm="finishTextInput(true)"
+          v-on:escape="finishTextInput(false)"
+          v-on:blur="finishTextInput(false)"
+        ></TextControl>
+      </PopoverWrapper>
+      <div ref="addButton" class="add" v-on:click="addItem()">
         <cds-icon shape="plus"></cds-icon>
       </div>
       <div v-if="selectedItem !== undefined" class="remove" v-on:click="emit('remove', selectedItem)">
@@ -63,7 +76,10 @@
  */
 
 import showPopupMenu, { type AnyMenuItem } from '@common/modules/window-register/application-menu-helper'
-import { computed } from 'vue'
+import { trans } from 'source/common/i18n-renderer'
+import { computed, ref } from 'vue'
+import PopoverWrapper from '../../PopoverWrapper.vue'
+import TextControl from './TextControl.vue'
 
 export interface SelectableListItem {
   displayText: string
@@ -76,15 +92,25 @@ export interface SelectableListItem {
 
 const props = defineProps<{
   items: Array<string|SelectableListItem>
+  noItemsLabel?: string
   selectedItem?: number
   editable?: boolean
+  addTextItem?: boolean
+  requestTextPlaceholder?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'select', value: number): void
-  (e: 'add'): void
+  (e: 'add', itemText?: string): void
   (e: 'remove', value: number): void
 }>()
+
+const addButton = ref<HTMLDivElement|null>(null)
+const requestTextInput = ref<boolean>(false)
+const requestTextInputPlaceholder = computed(() => props.requestTextPlaceholder ?? trans('New item'))
+const textInput = ref('')
+
+const noItemsLabel = computed(() => props.noItemsLabel ?? trans('No items'))
 
 // If there is at least one icon, we need the icon column for the entire list
 const needsIconColumn = computed<boolean>(() => {
@@ -127,14 +153,45 @@ function handleContextMenu (event: MouseEvent, idx: number): void {
     }
   })
 }
+
+function addItem () {
+  if (props.addTextItem) {
+    // The parent of this list has requested the addition of a text-based item.
+    // Requesting text input from the user is something we implement here, as
+    // it makes most sense to have it implemented here from a UI flow
+    // perspective. The user simply expects text input to originate next to the
+    // plus button instead of somewhere else in the UI. Here we essentially
+    // trigger the first part of the text input, that is, show the corresponding
+    // popover, which in turn will request text input from the user and then
+    // trigger the finishTextInput button below.
+    requestTextInput.value = !requestTextInput.value
+  } else {
+    emit('add')
+  }
+}
+
+function finishTextInput (emitEvent: boolean) {
+  const name = textInput.value
+  textInput.value = ''
+  requestTextInput.value = false
+
+  if (emitEvent) {
+    emit('add', name)
+  }
+}
 </script>
 
 <style lang="less">
 body .selectable-list-wrapper {
   --selectable-list-border-color: rgb(230, 230, 230);
-  padding: 10px;
+  --muted-color: gray;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 10px 0px 10px;
+  display: flex;
+  flex-direction: column;
 
-  &.has-footer { padding-bottom: 40px; }
+  &.has-footer { margin-bottom: 20px; }
 
   .selectable-list-footer {
     height: 22px;
@@ -155,8 +212,19 @@ body .selectable-list-wrapper {
 
   .selectable-list-container {
     border: 1px solid var(--selectable-list-border-color);
-    height: 100%;
+    flex: 1;
+    min-height: 50px;
     overflow: auto;
+
+    div.no-items-label {
+      height: 100%;
+      font-size: 200%;
+      padding: 5px;
+      display: grid;
+      align-items: center;
+      text-align: center;
+      color: var(--muted-color);
+    }
 
     div.item {
       background-color: white;
@@ -212,7 +280,7 @@ body .selectable-list-wrapper {
       .info-string {
         grid-area: info;
         font-size: 10px;
-        color: gray;
+        color: var(--muted-color);
 
         &.error { color: rgb(200, 80, 100); }
       }

@@ -203,6 +203,10 @@ async function writeDefaults (
   // const bibliography = global.citeproc.getSelectedDatabase()
   if (isFile(cslLibrary)) {
     if ('bibliography' in defaults) {
+      // Ensure the bibliography is an array, not a single string.
+      if (!Array.isArray(defaults.bibliography)) {
+        defaults.bibliography = [defaults.bibliography]
+      }
       defaults.bibliography.push(cslLibrary)
     } else {
       defaults.bibliography = [cslLibrary]
@@ -244,7 +248,7 @@ async function writeDefaults (
     defaults.filters = []
   }
 
-  const filters = await assets.getAllFilters()
+  const filters = await assets.listFilters(true)
   defaults.filters = defaults.filters.concat(filters)
 
   // After we have added our default keys, let the plugin add their keys, which

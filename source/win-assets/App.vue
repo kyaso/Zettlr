@@ -6,7 +6,7 @@
     v-bind:show-tabbar="true"
     v-bind:tabbar-tabs="tabs"
     v-bind:tabbar-label="'Defaults'"
-    v-bind:disable-vibrancy="true"
+    v-bind:disable-vibrancy="!hasVibrancy"
     v-on:tab="currentTab = $event"
   >
     <!--
@@ -29,14 +29,18 @@
         v-if="tabs[currentTab].id === 'tab-import-control'"
         v-bind:which="'import'"
       ></DefaultsTab>
-      <!-- Custom CSS -->
-      <CustomCSS
-        v-else-if="tabs[currentTab].id === 'tab-custom-css-control'"
-      ></CustomCSS>
+      <!-- Lua Filter editor -->
+      <FilterTab
+        v-else-if="tabs[currentTab].id === 'tab-filter-control'"
+      ></FilterTab>
       <!-- Snippets Editor -->
       <SnippetsTab
         v-else-if="tabs[currentTab].id === 'tab-snippets-control'"
       ></SnippetsTab>
+      <!-- Custom CSS -->
+      <CustomCSS
+        v-else-if="tabs[currentTab].id === 'tab-custom-css-control'"
+      ></CustomCSS>
     </div>
   </WindowChrome>
 </template>
@@ -49,6 +53,8 @@ import SnippetsTab from './SnippetsTab.vue'
 import { trans } from '@common/i18n-renderer'
 import { ref, computed } from 'vue'
 import { type WindowTab } from '@common/vue/window/WindowTabbar.vue'
+import { useConfigStore } from 'source/pinia'
+import FilterTab from './FilterTab.vue'
 
 const currentTab = ref(0)
 const windowTitle = computed(() => {
@@ -58,6 +64,9 @@ const windowTitle = computed(() => {
     return trans('Assets Manager')
   }
 })
+
+const configStore = useConfigStore()
+const hasVibrancy = computed(() => configStore.config.window.vibrancy && process.platform === 'darwin')
 
 const tabs: WindowTab[] = [
   {
@@ -73,20 +82,85 @@ const tabs: WindowTab[] = [
     icon: 'import'
   },
   {
-    label: trans('Custom CSS'),
-    controls: 'tab-custom-css',
-    id: 'tab-custom-css-control',
-    icon: 'code'
+    label: trans('Lua Filter'),
+    controls: 'tab-filter',
+    id: 'tab-filter-control',
+    icon: 'filter'
   },
   {
     label: trans('Snippets'),
     controls: 'tab-snippets',
     id: 'tab-snippets-control',
     icon: 'pinboard'
+  },
+  {
+    label: trans('Custom CSS'),
+    controls: 'tab-custom-css',
+    id: 'tab-custom-css-control',
+    icon: 'code'
   }
 ]
 </script>
 
 <style lang="less">
-//
+.asset-container-list {
+  display: flex;
+  flex-direction: column;
+  height: stretch;
+
+  .form-control {
+    display: flex;
+    padding: 10px;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
+.asset-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  margin: 0px 10px;
+
+  .asset-admonition {
+    margin-top: 15px;
+  }
+
+  .asset-input {
+    display: flex;
+    gap: 15px;
+    margin-top: 5px;
+
+    .asset-input-name {
+      flex: 2;
+    }
+
+    .asset-input-button {
+      button {
+        height: stretch;
+      }
+    }
+  }
+
+  .save-asset-file {
+    padding: 10px 0px;
+    display: flex;
+    gap: 15px;
+
+    button {
+      width: 50px;
+    }
+  }
+
+  .CodeMirror {
+    flex-grow: 1;
+  }
+
+  span.protected-info {
+    color: gray;
+  }
+}
 </style>

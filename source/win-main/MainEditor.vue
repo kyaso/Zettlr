@@ -34,7 +34,6 @@
  */
 
 import MarkdownEditor, { type EditorViewPersistentState } from '@common/modules/markdown-editor'
-import objectToArray from '@common/util/object-to-array'
 
 import { ref, computed, onMounted, onBeforeUnmount, watch, toRef, onUpdated } from 'vue'
 import { type EditorCommands } from './App.vue'
@@ -42,11 +41,11 @@ import { hasMarkdownExt } from '@common/util/file-extention-checks'
 import { DP_EVENTS, type OpenDocument } from '@dts/common/documents'
 import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 import { type EditorConfigOptions } from '@common/modules/markdown-editor/util/configuration'
-import type { AnyDescriptor, CodeFileDescriptor, MDFileDescriptor } from '@dts/common/fsal'
+import type { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import { getBibliographyForDescriptor as getBibliography } from '@common/util/get-bibliography-for-descriptor'
 import { EditorSelection } from '@codemirror/state'
 import { documentAuthorityIPCAPI } from '@common/modules/markdown-editor/util/ipc-api'
-import { useConfigStore, useDocumentTreeStore, useTagsStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
+import { useConfigStore, useDocumentTreeStore, useTagsStore, useWindowStateStore, useWorkspaceStore } from 'source/pinia'
 import { isAbsolutePath, pathBasename, pathDirname, resolvePath } from '@common/util/renderer-path-polyfill'
 import type { DocumentManagerIPCAPI, DocumentsUpdateContext } from 'source/app/service-providers/documents'
 import type { CiteprocProviderIPCAPI } from 'source/app/service-providers/citeproc'
@@ -82,7 +81,7 @@ const emit = defineEmits<(e: 'globalSearch', query: string) => void>()
 
 const windowStateStore = useWindowStateStore()
 const documentTreeStore = useDocumentTreeStore()
-const workspacesStore = useWorkspacesStore()
+const workspaceStore = useWorkspaceStore()
 const configStore = useConfigStore()
 const tagStore = useTagsStore()
 
@@ -264,6 +263,8 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
     renderHeadings: display.renderHTags,
     renderTables: editor.enableTableHelper,
     renderEmphasis: display.renderEmphasis,
+    renderPandoc: display.renderPandoc,
+    renderHorizontalRules: display.renderHorizontalRules,
     zknLinkFormat: zkn.linkFormat,
     zknAddFileTitle: zkn.linkAddFileTitle,
     linkWithIDIfPossible: zkn.linkWithIDIfPossible,
@@ -286,9 +287,10 @@ const editorConfiguration = computed<EditorConfigOptions>(() => {
 function updateProjectInfo (): ProjectInfo|null {
   // If this file is part of a project, the project must be defined in any
   // containing folder -> traverse up the file tree until we have found one.
-  let dir = workspacesStore.getDir(pathDirname(props.file.path))
+  let dir = workspaceStore.descriptorMap.get(pathDirname(props.file.path)) as DirDescriptor|undefined
+
   while (dir !== undefined && dir.settings.project === null) {
-    dir = workspacesStore.getDir(dir.dir)
+    dir = workspaceStore.descriptorMap.get(dir.dir) as DirDescriptor|undefined
   }
 
   if (dir === undefined || dir.settings.project === null) {
@@ -303,7 +305,7 @@ function updateProjectInfo (): ProjectInfo|null {
 
   const extractedMetadata = absPaths
     .map(p => {
-      return workspacesStore.getFile(p)
+      return workspaceStore.descriptorMap.get(p)
     })
     .filter (d => d !== undefined && d.type === 'file')
     .map(d => {
@@ -330,7 +332,7 @@ function updateProjectInfo (): ProjectInfo|null {
 }
 
 // Update the project info as soon as anything in the workspaces has changed.
-workspacesStore.$subscribe(_mutation => {
+workspaceStore.$subscribe(() => {
   if (currentEditor !== null) {
     currentEditor.projectInfo = updateProjectInfo()
   }
@@ -355,14 +357,6 @@ watch(toRef(props.editorCommands, 'moveSection'), () => {
   if (typeof from === 'number' && typeof to === 'number') {
     currentEditor?.moveSection(from, to)
   }
-})
-
-watch(toRef(props.editorCommands, 'readabilityMode'), () => {
-  if (currentEditor === null || props.activeFile?.path !== props.file.path) {
-    return
-  }
-
-  currentEditor.readabilityMode = !currentEditor.readabilityMode
 })
 
 watch(toRef(props, 'distractionFree'), () => {
@@ -403,22 +397,7 @@ watch(toRef(props.editorCommands, 'replaceSelection'), () => {
 })
 
 const fsalFiles = computed<MDFileDescriptor[]>(() => {
-  const tree = workspacesStore.rootDescriptors
-  const files = []
-
-  for (const item of tree) {
-    if (item.type === 'directory') {
-      const contents = objectToArray<AnyDescriptor>(item, 'children')
-        .filter((descriptor): descriptor is MDFileDescriptor => {
-          return descriptor.type === 'file'
-        })
-      files.push(...contents)
-    } else if (item.type === 'file') {
-      files.push(item)
-    }
-  }
-
-  return files
+  return [...workspaceStore.descriptorMap.values()].filter(d => d.type === 'file')
 })
 
 // WATCHERS
@@ -456,13 +435,20 @@ async function getEditorFor (doc: string): Promise<MarkdownEditor> {
   const editor = new MarkdownEditor(props.leafId, props.windowId, doc, documentAuthorityIPCAPI, undefined, persistentState)
 
   // Update the document info on corresponding events
+  editor.on('loaded', () => {
+    if (currentEditor === editor) {
+      windowStateStore.activeDocumentInfo = currentEditor.documentInfo
+      windowStateStore.tableOfContents = currentEditor.tableOfContents
+    }
+  })
+
   editor.on('change', () => {
     if (currentEditor === editor) {
       windowStateStore.tableOfContents = currentEditor.tableOfContents
     }
   })
 
-  editor.on('cursorActivity', () => {
+  editor.on('docUpdate', () => {
     if (currentEditor === editor) {
       windowStateStore.activeDocumentInfo = currentEditor.documentInfo
     }
@@ -520,9 +506,6 @@ async function loadDocument (): Promise<void> {
   mainEditorWrapper.value?.appendChild(newEditor.dom)
   currentEditor = newEditor
 
-  windowStateStore.tableOfContents = currentEditor.tableOfContents
-  windowStateStore.activeDocumentInfo = currentEditor.documentInfo
-
   currentEditor.setCompletionDatabase('tags', tags.value)
   currentEditor.setCompletionDatabase('snippets', snippets.value)
 
@@ -539,6 +522,8 @@ async function loadDocument (): Promise<void> {
   if (library !== undefined) {
     updateCitationKeys(library).catch(e => console.error('Could not update citation keys', e))
   }
+
+  updateFileDatabase().catch(err => console.error('Could not update file database', err))
 
   // Provide the editor instance with metadata for the new file
   currentEditor.setOptions({
@@ -692,54 +677,6 @@ function maybeHighlightSearchResults (): void {
 
   .cm-editor {
     .cm-scroller { padding: 50px 50px; }
-
-    .code { // BEGIN: CODE BLOCK/FILE THEME
-      // We're using this solarized theme here: https://ethanschoonover.com/solarized/
-      // See also the CodeEditor.vue component, which uses the same colours
-      @base03:    #002b36;
-      @base02:    #073642;
-      @base01:    #586e75;
-      @base00:    #657b83;
-      @base0:     #839496;
-      @base1:     #93a1a1;
-      @base2:     #eee8d5;
-      @base3:     #fdf6e3;
-      @yellow:    #b58900;
-      @orange:    #cb4b16;
-      @red:       #dc322f;
-      @magenta:   #d33682;
-      @violet:    #6c71c4;
-      @blue:      #268bd2;
-      @cyan:      #2aa198;
-      @green:     #859900;
-
-      color: @base01;
-      font-family: Inconsolata, monospace;
-
-      .cm-string         { color: @green; }
-      .cm-keyword        { color: @green; }
-      .cm-atom           { color: @violet; }
-      .cm-tag-name,
-      .cm-modifier       { color: @cyan; }
-      .cm-qualifier      { color: @blue; }
-      .cm-builtin        { color: @blue; }
-      .cm-variable-name  { color: @cyan; }
-      .cm-variable       { color: @cyan; }
-      .cm-comment        { color: @base1; }
-      .cm-attribute-name { color: @orange; }
-      .cm-property       { color: @magenta; }
-      .cm-keyword,
-      .cm-name,
-      .cm-type-name      { color: @yellow; }
-      .cm-number         { color: @violet; }
-      .cm-property-name  { color: @blue; }
-      .cm-deleted        { color: @orange; }
-      .cm-changed        { color: @yellow; }
-      .cm-inserted       { color: @green; }
-      .cm-positive       { color: @green; }
-      .cm-negative       { color: @red; }
-      .cm-meta           { color: @violet; }
-    } // END: Solarized code theme
   }
 
   // If a code file is loaded, we need to display the editor contents in monospace.
@@ -756,8 +693,8 @@ function maybeHighlightSearchResults (): void {
 }
 
 body.dark .main-editor-wrapper {
-  background-color: rgba(20, 20, 30, 1);
-  .CodeMirror .CodeMirror-gutters { background-color: rgba(20, 20, 30, 1); }
+  background-color: #2b2b2c;
+  .CodeMirror .CodeMirror-gutters { background-color: #2b2b2c; }
 
   //Ellipsis (...) When a header is folded
   .cm-foldPlaceholder{

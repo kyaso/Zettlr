@@ -20,6 +20,7 @@ import ZettlrCommand from './zettlr-command'
 import { type DirDescriptor } from '@dts/common/fsal'
 import { CODE_EXT, MD_EXT } from '@common/util/file-extention-checks'
 import type { AppServiceContainer } from 'source/app/app-service-container'
+import type { NodeError } from '../windows/map-fs-error'
 
 export default class RootOpen extends ZettlrCommand {
   constructor (app: AppServiceContainer) {
@@ -124,14 +125,14 @@ export default class RootOpen extends ZettlrCommand {
       // First check if this thing is already added. If so, simply write
       // the existing file/dir into the newFile/newDir vars. They will be
       // opened accordingly.
-      if (isFile && (newFile = this._app.workspaces.findFile(absPath)) !== undefined) {
+      if (isFile && (newFile = await this._app.fsal.getDescriptorForAnySupportedFile(absPath)) !== undefined) {
         // Open the file immediately
         await this._app.documents.openFile(winKey, leafId, newFile.path, true)
         // Also set the newDir variable so that Zettlr will automatically
         // navigate to the directory. The directory of the latest file will
         // remain open afterwards.
-        newDir = this._app.workspaces.findDir(newFile.dir)
-      } else if (isDir && (newDir = this._app.workspaces.findDir(absPath)) != null) {
+        newDir = await this._app.fsal.getAnyDirectoryDescriptor(newFile.dir)
+      } else if (isDir && this._app.config.get().openPaths.includes(absPath)) {
         // Do nothing
       } else {
         // The path is not yet loaded -> load it now. NOTE: Adding a path will
@@ -156,7 +157,7 @@ export default class RootOpen extends ZettlrCommand {
           // Something went wrong, so remove the path again.
           this._app.config.removePath(absPath)
           this._app.log.error(`Could not open root ${absPath}: ${err.message as string}`, err)
-          this._app.windows.reportFSError('Could not open new root', err)
+          this._app.windows.reportFSError('Could not open new root', err as NodeError)
         }
       }
     }

@@ -7,55 +7,68 @@
     v-bind:initial-total-width="100"
   >
     <template #view1>
-      <SelectableList
-        v-bind:items="availableSnippets"
-        v-bind:selected-item="currentItem"
-        v-bind:editable="true"
-        v-on:select="currentItem = $event"
-        v-on:add="addSnippet()"
-        v-on:remove="removeSnippet($event)"
-      ></SelectableList>
-    </template>
-    <template #view2>
-      <div id="snippets-container">
-        <p>{{ snippetsExplanation }}</p>
-
-        <p>
-          <TextControl
-            v-model="currentSnippetText"
-            v-bind:inline="true"
-            v-bind:disabled="currentItem < 0"
-            v-on:confirm="renameSnippet()"
-          ></TextControl>
-          <ButtonControl
-            v-bind:label="renameSnippetLabel"
-            v-bind:inline="true"
-            v-bind:disabled="availableSnippets.length === 0 || currentSnippetText === availableSnippets[currentItem]"
-            v-on:click="renameSnippet()"
-          ></ButtonControl>
-        </p>
-
+      <div class="asset-container-list">
+        <SelectableList
+          v-bind:items="availableSnippets"
+          v-bind:selected-item="currentItem"
+          v-bind:editable="true"
+          v-bind:add-text-item="true"
+          v-on:add="addSnippet($event)"
+          v-on:select="currentItem = $event"
+          v-on:remove="removeSnippet($event)"
+        ></SelectableList>
         <ButtonControl
           v-bind:label="openSnippetsFolderLabel"
           v-bind:inline="false"
           v-on:click="openSnippetsDirectory"
         ></ButtonControl>
-
-        <CodeEditor
-          ref="code-editor"
-          v-model="editorContents"
-          v-bind:mode="'markdown-snippets'"
-          v-bind:readonly="currentItem < 0"
-        ></CodeEditor>
-
-        <ButtonControl
-          v-bind:primary="true"
-          v-bind:label="saveButtonLabel"
-          v-bind:inline="true"
-          v-bind:disabled="currentItem < 0 || ($refs['code-editor'] as any).isClean()"
-          v-on:click="saveSnippet()"
-        ></ButtonControl>
-        <span v-if="savingStatus !== ''" class="saving-status">{{ savingStatus }}</span>
+      </div>
+    </template>
+    <template #view2>
+      <div class="asset-container">
+        <ZtrAdmonition type="info" class="asset-admonition">
+          {{ snippetsExplanation }}
+        </ZtrAdmonition>
+        <template v-if="currentItem < 0">
+          <ZtrAdmonition type="warning" class="asset-admonition">
+            {{ noSnippetsMessage }}
+          </ZtrAdmonition>
+        </template>
+        <template v-else>
+          <p class="asset-input">
+            <TextControl
+              v-model="currentSnippetText"
+              class="asset-input-name"
+              v-bind:inline="false"
+              v-bind:disabled="currentItem < 0"
+              v-on:confirm="renameSnippet()"
+            ></TextControl>
+            <ButtonControl
+              class="asset-input-button"
+              v-bind:label="renameSnippetLabel"
+              v-bind:inline="true"
+              v-bind:disabled="availableSnippets.length === 0 || currentSnippetText === availableSnippets[currentItem]"
+              v-on:click="renameSnippet()"
+            ></ButtonControl>
+          </p>
+          <CodeEditor
+            ref="code-editor"
+            v-model="editorContents"
+            v-bind:mode="'markdown-snippets'"
+            v-bind:readonly="currentItem < 0"
+          ></CodeEditor>
+          <!-- This div is used to keep the buttons in a line despite the flex -->
+          <div class="save-asset-file">
+            <ButtonControl
+              v-bind:primary="true"
+              v-bind:label="saveButtonLabel"
+              v-bind:inline="true"
+              v-bind:disabled="currentItem < 0 || ($refs['code-editor'] != null && ($refs['code-editor'] as any).isClean())"
+              v-on:click="saveSnippet()"
+            ></ButtonControl>
+            <span v-if="savingStatus !== ''" class="saving-status">{{ savingStatus }}</span>
+          </div>
+        </template>
       </div>
     </template>
   </SplitView>
@@ -85,9 +98,11 @@ import CodeEditor from '@common/vue/CodeEditor.vue'
 import { trans } from '@common/i18n-renderer'
 import { ref, watch, onUnmounted } from 'vue'
 import type { AssetsProviderIPCAPI } from 'source/app/service-providers/assets'
+import ZtrAdmonition from 'source/common/vue/ZtrAdmonition.vue'
 
 const ipcRenderer = window.ipc
 
+const noSnippetsMessage = trans('No snippet selected.')
 const saveButtonLabel = trans('Save')
 const renameSnippetLabel = trans('Rename snippet')
 const snippetsExplanation = trans('Snippets let you define reusable pieces of text with variables.')
@@ -104,7 +119,7 @@ watch(currentItem, () => {
 })
 
 watch(editorContents, () => {
-  if (CodeEditor.value?.isClean() === true) {
+  if (CodeEditor.value != null && CodeEditor.value.isClean() === true) {
     savingStatus.value = ''
   } else {
     savingStatus.value = trans('Unsaved changes')
@@ -177,16 +192,22 @@ function saveSnippet (): void {
   } as AssetsProviderIPCAPI)
     .then(() => {
       savingStatus.value = trans('Saved!')
-      setTimeout(() => {
-        savingStatus.value = ''
-      }, 1000)
+      setTimeout(() => { savingStatus.value = '' }, 1000)
     })
-    .catch(err => console.error(err))
+    .catch(err => {
+      savingStatus.value = trans('Could not save changes')
+      console.error(err)
+    })
 }
 
-function addSnippet (): void {
+function addSnippet (newName?: string): void {
   // Adds a snippet with empty contents and a generic default name
-  const newName = ensureUniqueName('snippet')
+  if (newName !== undefined) {
+    newName = newName.trim()
+  }
+  if (newName === undefined || newName === '') {
+    newName = ensureUniqueName('snippet')
+  }
 
   ipcRenderer.invoke('assets-provider', {
     command: 'set-snippet',
@@ -268,14 +289,5 @@ function openSnippetsDirectory (): void {
 </script>
 
 <style lang="less">
-#snippets-container {
-  padding: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-
-  .CodeMirror {
-    flex-grow: 1;
-  }
-}
+//
 </style>

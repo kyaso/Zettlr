@@ -89,7 +89,7 @@ export default class Export extends ZettlrCommand {
     }
 
     // We must have an absolute path given in file
-    const fileDescriptor = this._app.workspaces.findFile(file)
+    const fileDescriptor = await this._app.fsal.getDescriptorForAnySupportedFile(file)
     if (fileDescriptor !== undefined) {
       // If we have a cached version, we already have a file to export.
       // Otherwise, use the regular one from disk.
@@ -106,7 +106,7 @@ export default class Export extends ZettlrCommand {
       // key zettlr.pandoc_working_dir: /path/to/directory
       if (fileDescriptor.type === 'file' &&
       typeof fileDescriptor.frontmatter?.zettlr?.pandoc_working_dir === 'string' &&
-      await this._app.fsal.isDir(fileDescriptor.frontmatter.zettlr.pandoc_working_dir)) {
+      await this._app.fsal.isDir(fileDescriptor.frontmatter.zettlr.pandoc_working_dir as string)) {
         exporterOptions.cwd = fileDescriptor.frontmatter.zettlr.pandoc_working_dir
       }
 
@@ -147,7 +147,7 @@ export default class Export extends ZettlrCommand {
 
         // In case of a textbundle/pack it's a folder, else it's a file
         if (this._app.config.get().export.autoOpenExportedFiles) {
-          if ([ 'textbundle', 'textpack' ].includes(arg.profile.writer)) {
+          if ([ 'textbundle', 'textpack' ].includes(arg.profile.writer as string)) {
             shell.showItemInFolder(output.targetFile)
           } else {
             const potentialError = await shell.openPath(output.targetFile)
@@ -163,8 +163,9 @@ export default class Export extends ZettlrCommand {
         this._app.windows.showErrorMessage(title, message, contents)
       }
     } catch (err: any) {
-      this._app.windows.showErrorMessage(err.message, err.message)
-      this._app.log.error(err.message, err)
+      const message: string = err.message
+      this._app.windows.showErrorMessage(message, message)
+      this._app.log.error(message, err)
     }
   }
 }

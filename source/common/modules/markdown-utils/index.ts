@@ -14,7 +14,7 @@
  */
 
 import markdownParser, { type MarkdownParserConfig } from '@common/modules/markdown-editor/parser/markdown-parser'
-import { parseNode, type ASTNode, type ASTNodeType, type TextNode } from './markdown-ast'
+import { parseNode, type ASTNode, type ASTNodeType, type TextNode, type Document } from './markdown-ast'
 import { type Tree } from '@lezer/common'
 
 export { md2html } from './markdown-to-html'
@@ -35,8 +35,8 @@ export { md2html } from './markdown-to-html'
  *
  * @return  {ASTNode}            The root node of the AST
  */
-export function markdownToAST (markdown: string, tree?: Tree, parserConfig?: MarkdownParserConfig): ASTNode {
-  if (tree === undefined) {
+export function markdownToAST (markdown: string, tree: Tree|null = null, parserConfig?: MarkdownParserConfig): Document|ASTNode {
+  if (tree === null) {
     const { parser } = markdownParser(parserConfig).language
     tree = parser.parse(markdown)
   }
@@ -57,35 +57,55 @@ export function markdownToAST (markdown: string, tree?: Tree, parserConfig?: Mar
  * @return  {ASTNode[]}              An array of all found nodes
  */
 export function extractASTNodes (ast: ASTNode, nodeType: ASTNodeType, filter?: (node: ASTNode) => boolean): ASTNode[] {
+  if (ast.type === 'Document') {
+    return ast.children.flatMap(child => extractASTNodes(child, nodeType, filter))
+  }
+
   if (filter !== undefined && !filter(ast)) {
     return []
   }
 
-  if (ast.type === nodeType) {
-    return [ast]
-  } else if (ast.type === 'FootnoteRef' || ast.type === 'Highlight' || ast.type === 'ListItem' || ast.type === 'Generic' || ast.type === 'Emphasis') {
-    let returnNodes: ASTNode[] = []
-    for (const child of ast.children) {
-      returnNodes = returnNodes.concat(extractASTNodes(child, nodeType, filter))
+  let returnNodes: ASTNode[] = []
+
+  switch (ast.type) {
+    case nodeType: {
+      returnNodes.push(ast)
+      break
     }
-    return returnNodes
-  } else if (ast.type === 'OrderedList' || ast.type === 'BulletList') {
-    let returnNodes: ASTNode[] = []
-    for (const item of ast.items) {
-      returnNodes = returnNodes.concat(extractASTNodes(item, nodeType, filter))
-    }
-    return returnNodes
-  } else if (ast.type === 'Table') {
-    let returnNodes: ASTNode[] = []
-    for (const row of ast.rows) {
-      for (const cell of row.cells) {
-        returnNodes = returnNodes.concat(cell.children.flatMap(c => extractASTNodes(c, nodeType, filter)))
+
+    case 'Generic':
+    case 'Heading':
+    case 'Emphasis':
+    case 'FootnoteRef':
+    case 'Highlight':
+    case 'ListItem':
+    case 'PandocSpan':
+    case 'PandocDiv': {
+      for (const child of ast.children) {
+        returnNodes = returnNodes.concat(extractASTNodes(child, nodeType, filter))
       }
+      break
     }
-    return returnNodes
-  } else {
-    return []
+
+    case 'OrderedList':
+    case 'BulletList': {
+      for (const item of ast.items) {
+        returnNodes = returnNodes.concat(extractASTNodes(item, nodeType, filter))
+      }
+      break
+    }
+
+    case 'Table': {
+      for (const row of ast.rows) {
+        for (const cell of row.cells) {
+          returnNodes = returnNodes.concat(cell.children.flatMap(c => extractASTNodes(c, nodeType, filter)))
+        }
+      }
+      break
+    }
   }
+
+  return returnNodes
 }
 
 /**
@@ -100,37 +120,70 @@ export function extractASTNodes (ast: ASTNode, nodeType: ASTNodeType, filter?: (
  * @return  {TextNode[]}          A list of all text nodes
  */
 export function extractTextnodes (ast: ASTNode, filter?: (node: ASTNode) => boolean): TextNode[] {
+  if (ast.type === 'Document') {
+    return ast.children.flatMap(child => extractTextnodes(child, filter))
+  }
+
   if (filter !== undefined && !filter(ast)) {
     return []
   }
 
   let textNodes: TextNode[] = []
-  if (ast.type === 'Text') {
-    textNodes.push(ast)
-  } else if (ast.type === 'Heading' || ast.type === 'FootnoteRef' || ast.type === 'Highlight' || ast.type === 'ListItem') {
-    for (const child of ast.children) {
-      textNodes = textNodes.concat(extractTextnodes(child, filter))
+
+  switch (ast.type) {
+    case 'Text': {
+      textNodes.push(ast)
+      break
     }
-  } else if (ast.type === 'Image' || ast.type === 'Link') {
-    textNodes.push(ast.alt)
-    if (ast.title !== undefined) {
-      textNodes.push(ast.title)
-    }
-  } else if (ast.type === 'OrderedList' || ast.type === 'BulletList') {
-    for (const item of ast.items) {
-      textNodes = textNodes.concat(extractTextnodes(item, filter))
-    }
-  } else if (ast.type === 'Generic' || ast.type === 'Emphasis') {
-    for (const child of ast.children) {
-      textNodes = textNodes.concat(extractTextnodes(child, filter))
-    }
-  } else if (ast.type === 'Table') {
-    for (const row of ast.rows) {
-      for (const cell of row.cells) {
-        const nodes = cell.children.flatMap(c => extractTextnodes(c, filter))
-        textNodes = textNodes.concat(nodes)
+
+    case 'Generic':
+    case 'Heading':
+    case 'Emphasis':
+    case 'FootnoteRef':
+    case 'Highlight':
+    case 'ListItem':
+    case 'PandocSpan':
+    case 'PandocDiv': {
+      for (const child of ast.children) {
+        textNodes = textNodes.concat(extractTextnodes(child, filter))
       }
+      break
+    }
+
+    case 'Image':
+    case 'Link': {
+      textNodes.push(ast.alt)
+      if (ast.title !== undefined) {
+        textNodes.push(ast.title)
+      }
+      break
+    }
+
+    case 'ZettelkastenLink':  {
+      if (ast.title !== undefined) {
+        textNodes.push(ast.title)
+      }
+      break
+    }
+
+    case 'OrderedList':
+    case 'BulletList': {
+      for (const item of ast.items) {
+        textNodes = textNodes.concat(extractTextnodes(item, filter))
+      }
+      break
+    }
+
+    case 'Table': {
+      for (const row of ast.rows) {
+        for (const cell of row.cells) {
+          const nodes = cell.children.flatMap(c => extractTextnodes(c, filter))
+          textNodes = textNodes.concat(nodes)
+        }
+      }
+      break
     }
   }
+
   return textNodes
 }

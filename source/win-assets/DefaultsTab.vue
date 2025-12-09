@@ -7,57 +7,66 @@
     v-bind:initial-total-width="100"
   >
     <template #view1>
-      <SelectableList
-        v-bind:items="listItems"
-        v-bind:editable="true"
-        v-bind:selected-item="currentItem"
-        v-on:select="currentItem = $event"
-        v-on:add="newDefaultsFile()"
-        v-on:remove="removeFile($event)"
-      ></SelectableList>
+      <div class="asset-container-list">
+        <SelectableList
+          v-bind:items="listItems"
+          v-bind:editable="true"
+          v-bind:selected-item="currentItem"
+          v-bind:add-text-item="true"
+          v-on:select="currentItem = $event"
+          v-on:add="newDefaultsFile($event)"
+          v-on:remove="removeFile($event)"
+        ></SelectableList>
+        <ButtonControl
+          v-bind:label="openDefaultsFolderLabel"
+          v-bind:inline="false"
+          v-on:click="openDefaultsDirectory"
+        ></ButtonControl>
+      </div>
     </template>
     <template #view2>
-      <div id="defaults-container">
-        <p>{{ defaultsExplanation }}</p>
-
-        <p>
+      <div class="asset-container">
+        <ZtrAdmonition type="info" class="asset-admonition">
+          {{ defaultsExplanation }}
+        </ZtrAdmonition>
+        <p class="asset-input">
           <TextControl
             v-model="currentFilename"
+            class="asset-input-name"
             v-bind:inline="false"
             v-bind:disabled="currentItem < 0"
             v-on:confirm="renameFile()"
           ></TextControl>
           <ButtonControl
+            class="asset-input-button"
             v-bind:label="renameFileLabel"
             v-bind:inline="true"
             v-bind:disabled="visibleItems.length === 0 || currentFilename === visibleItems[currentItem].name"
             v-on:click="renameFile()"
           ></ButtonControl>
         </p>
-
-        <ButtonControl
-          v-bind:label="openDefaultsFolderLabel"
-          v-bind:inline="false"
-          v-on:click="openDefaultsDirectory"
-        ></ButtonControl>
-
-        <ZtrAdmonition v-if="visibleItems.length > 0 && visibleItems[currentItem].isProtected === true" type="info">
+        <ZtrAdmonition
+          v-if="visibleItems.length > 0 && visibleItems[currentItem].isProtected === true"
+          type="warning"
+          class="asset-admonition"
+        >
           {{ protectedProfileWarning }}
         </ZtrAdmonition>
-
-        <ZtrAdmonition v-if="visibleItems[currentItem]?.isInvalid">
+        <ZtrAdmonition
+          v-if="visibleItems[currentItem]?.isInvalid"
+          class="asset-admonition"
+        >
           {{ invalidProfileWarning }}
         </ZtrAdmonition>
-
         <CodeEditor
           ref="code-editor"
           v-model="editorContents"
           v-bind:mode="'yaml'"
         ></CodeEditor>
-
         <!-- This div is used to keep the buttons in a line despite the flex -->
-        <div>
+        <div class="save-asset-file">
           <ButtonControl
+            class="save-button"
             v-bind:primary="true"
             v-bind:label="saveButtonLabel"
             v-bind:inline="true"
@@ -228,24 +237,22 @@ async function loadDefaultsForState (): Promise<void> {
   lastLoadedEditorContents.value = data
   editorContents.value = data
   currentFilename.value = visibleItems.value[currentItem.value].name
-  savingStatus.value = ''
 }
 
 async function retrieveDefaultsFiles (): Promise<void> {
   // NOTE: Here we are explicitly requesting only the defaults files, not
   // all export profiles, because here it's only about modifying them (which
   // does not work with the custom profiles the exporter provides).
-  ipcRenderer.invoke('assets-provider', {
+  const files: PandocProfileMetadata[] = await ipcRenderer.invoke('assets-provider', {
     command: 'list-defaults'
   } as AssetsProviderIPCAPI)
-    .then((files: PandocProfileMetadata[]) => {
-      availableDefaultsFiles.value = files
-      if (currentItem.value < 0) {
-        currentItem.value = 0
-      }
-      loadDefaultsForState().catch(e => console.error(e))
-    })
-    .catch(err => console.error(err))
+
+  availableDefaultsFiles.value = files
+  if (currentItem.value < 0) {
+    currentItem.value = 0
+  }
+
+  await loadDefaultsForState()
 }
 
 function saveDefaultsFile (): void {
@@ -263,10 +270,13 @@ function saveDefaultsFile (): void {
       await retrieveDefaultsFiles() // Always make sure to pull in any changes
       setTimeout(() => { savingStatus.value = '' }, 1000)
     })
-    .catch(err => console.error(err))
+    .catch(err => {
+      savingStatus.value = trans('Could not save changes')
+      console.error(err)
+    })
 }
 
-function newDefaultsFile (): void {
+function newDefaultsFile (newName?: string): void {
   // Create a new defaults file
   const dt = DateTime.now()
   const timeString = dt.toISOTime({
@@ -274,13 +284,23 @@ function newDefaultsFile (): void {
     suppressMilliseconds: true
   })
 
-  const newName = `New Profile ${dt.toISODate()} ${timeString}.yaml`
+  if (newName !== undefined) {
+    newName = newName.trim()
+  }
+
+  if (newName === undefined || newName === '') {
+    newName = `New Profile ${dt.toISODate()} ${timeString}.yaml`
+  }
+
   ipcRenderer.invoke('assets-provider', {
     command: 'set-defaults-file',
     payload: { filename: newName, contents: NEW_DEFAULTS_FILE_CONTENTS }
   } as AssetsProviderIPCAPI)
     .then(async () => {
       await retrieveDefaultsFiles() // Always make sure to pull in any changes
+      const idx = visibleItems.value.findIndex(val => val.name === newName)
+      currentItem.value = idx
+      console.log({ newName, idx })
     })
     .catch(err => console.error(err))
 }
@@ -330,18 +350,5 @@ function openDefaultsDirectory (): void {
 </script>
 
 <style lang="less">
-#defaults-container {
-  padding: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-
-  .CodeMirror {
-    flex-grow: 1;
-  }
-
-  span.protected-info {
-    color: gray;
-  }
-}
+//
 </style>

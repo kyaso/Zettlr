@@ -63,10 +63,10 @@ const markdownTheme = HighlightStyle.define([
   { tag: customTags.Footnote, class: 'footnote' },
   { tag: customTags.FootnoteRef, class: 'footnote-ref' },
   { tag: customTags.FootnoteRefLabel, class: 'footnote-ref-label' },
-  { tag: customTags.FootnoteRefBody, class: 'footnote-ref-body' },
   { tag: customTags.ZknLinkContent, class: 'cm-zkn-link' },
   { tag: customTags.ZknTagContent, class: 'cm-zkn-tag' },
-  { tag: customTags.PandocAttribute, class: 'pandoc-attribute' },
+  { tag: customTags.PandocAttribute, class: 'pandoc-attribute code' },
+  { tag: customTags.PandocAttributeMark, class: 'pandoc-attribute-mark cm-code-mark' },
   { tag: customTags.HighlightMark, class: 'cm-highlight cm-highlight-mark' },
   { tag: customTags.HighlightContent, class: 'cm-highlight' },
   { tag: customTags.Citation, class: 'cm-citation' },
@@ -77,6 +77,11 @@ const markdownTheme = HighlightStyle.define([
   { tag: customTags.CitationCitekey, class: 'cm-citation-citekey' },
   { tag: customTags.CitationLocator, class: 'cm-citation-locator' },
   { tag: customTags.CitationSuffix, class: 'cm-citation-suffix' },
+  { tag: customTags.PandocDiv, class: 'cm-pandoc-div' },
+  { tag: customTags.PandocDivInfo, class: 'cm-pandoc-div-info cm-code-mark cm-monospace' },
+  { tag: customTags.PandocDivMark, class: 'cm-pandoc-div-mark cm-code-mark cm-monospace' },
+  { tag: customTags.PandocSpan, class: 'cm-pandoc-span' },
+  { tag: customTags.PandocSpanMark, class: 'cm-pandoc-span-mark cm-code-mark' },
 ])
 
 const codeTheme = HighlightStyle.define([

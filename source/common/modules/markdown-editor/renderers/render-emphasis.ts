@@ -66,7 +66,7 @@ function hideFormattingCharacters (view: EditorView): RangeSet<Decoration> {
       to,
       enter (node) {
         // Do not hide any characters if a selection is inside here
-        if (rangeInSelection(view.state, node.from, node.to)) {
+        if (rangeInSelection(view.state.selection, node.from, node.to, true)) {
           return
         }
 
@@ -112,23 +112,44 @@ function hideFormattingCharacters (view: EditorView): RangeSet<Decoration> {
             }
             break
           }
+          // For bracketed spans
+          case 'PandocSpan': {
+            const marks = node.node.getChildren('PandocSpanMark')
+            const attrs = node.node.getChildren('PandocAttribute')
+            for (const mark of marks.concat(attrs)) {
+              ranges.push(hiddenDeco.range(mark.from, mark.to))
+            }
+            break
+          }
           // Hide the square brackets of inline footnotes (keep footnote refs for
           // easier identification)
-          case 'Footnote': {
+          case 'Footnote':
+          case 'FootnoteRefLabel': {
+            const isRef = node.name === 'FootnoteRefLabel'
             ranges.push(hiddenDeco.range(node.from, node.from + 2))
-            ranges.push(hiddenDeco.range(node.to - 1, node.to))
+            ranges.push(hiddenDeco.range(node.to - (isRef ? 2 : 1), node.to))
             break
           }
           case 'QuoteMark': { // Blockquotes
-            // Only render QuoteMark if its parent Blockquote doesn't contain a cursor
-            let parent: SyntaxNode|undefined|null = node.node.parent
-            while (parent != null && parent.node.name !== 'Blockquote') {
-              parent = parent.parent?.node
+            // Blockquotes can also be contained within blockquotes, so we try
+            // to find the highest parent node. Otherwise, when the cursor is in a
+            // parent, the quotemarks of the children will still be hidden. This
+            // means that `> > >` would render as `> > [ ]` when the cursor is in
+            // a parent block.
+            let parent: SyntaxNode|null = node.node.parent
+            let parentNode
+            while (parent) {
+              if (parent.name === 'Blockquote') {
+                parentNode = parent.node
+              }
+              parent = parent.parent
             }
 
-            if (parent && !rangeInSelection(view.state, parent.from, parent.to)) {
+            // Only render QuoteMark if the parent does not contain a cursor.
+            if (parentNode && !rangeInSelection(view.state.selection, parentNode.from, parentNode.to, true)) {
               ranges.push(Decoration.replace({ widget: new SpaceWidget(node.to - node.from, node.node) }).range(node.from, node.to))
             }
+
             break
           }
           case 'ListItem': {
@@ -157,7 +178,9 @@ export const renderEmphasis = ViewPlugin.fromClass(class {
   }
 
   update (update: ViewUpdate): void {
-    this.decorations = hideFormattingCharacters(update.view)
+    if (update.docChanged || update.viewportChanged || update.selectionSet) {
+      this.decorations = hideFormattingCharacters(update.view)
+    }
   }
 }, {
   decorations: v => v.decorations
