@@ -167,7 +167,7 @@ import { type LeafNodeJSON } from '@dts/common/documents'
 import { buildPipeMarkdownTable } from '@common/util/build-pipe-markdown-table'
 import { type UpdateState } from '@providers/updates'
 import { type ToolbarControl } from '@common/vue/window/WindowToolbar.vue'
-import { useConfigStore, useDocumentTreeStore, useWindowStateStore, useWorkspacesStore } from 'source/pinia'
+import { useConfigStore, useDocumentTreeStore, useWindowStateStore, useWorkspaceStore } from 'source/pinia'
 import type { ConfigOptions } from 'source/app/service-providers/config/get-config-template'
 import { type AnyDescriptor } from 'source/types/common/fsal'
 import type { DocumentManagerIPCAPI } from 'source/app/service-providers/documents'
@@ -177,7 +177,7 @@ const ipcRenderer = window.ipc
 const configStore = useConfigStore()
 const documentTreeStore = useDocumentTreeStore()
 const windowStateStore = useWindowStateStore()
-const workspacesStore = useWorkspacesStore()
+const workspaceStore = useWorkspaceStore()
 
 const SOUND_EFFECTS = [
   {
@@ -1032,8 +1032,17 @@ function getFileName (filePath: string|undefined): string|undefined {
   if (filePath === undefined) {
     return undefined
   }
-  const descriptor = workspacesStore.getFile(filePath)
-  return descriptor?.name.replace(descriptor.ext, '')
+  const descriptor = workspaceStore.descriptorMap.get(filePath)
+
+  if (descriptor === undefined) {
+    return undefined
+  }
+
+  if (descriptor.type === 'directory') {
+    return descriptor.name
+  }
+
+  return descriptor.name.replace(descriptor.ext, '')
 }
 </script>
 
