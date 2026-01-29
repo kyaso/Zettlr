@@ -214,22 +214,6 @@ async function recomputeRelatedFiles (): Promise<void> {
     unreactiveList.push(related)
   }
 
-  // Get non-file links
-  const { links } = await ipcRenderer.invoke('link-provider', {
-    command: 'get-non-file-links',
-    payload: { filePath: lastActiveFile.value.path }
-  }) as { links: string[] }
-
-  for (const link of links) {
-    const related: RelatedFile = {
-      file: link,
-      path: link,
-      tags: [],
-      link: 'non-file'
-    }
-    unreactiveList.push(related)
-  }
-
   // The second way files can be related to each other is via shared tags.
   // This relation is not as important as explicit links, so they should
   // be below the inbound linked files.
@@ -286,9 +270,6 @@ async function recomputeRelatedFiles (): Promise<void> {
   const outboundOnly = unreactiveList.filter(e => e.link === 'outbound' && e.tags.length === 0)
   // No sorting necessary
 
-  const nonFile = unreactiveList.filter(e => e.link === 'non-file')
-  // No sorting necessary
-
   const tagsOnly = unreactiveList.filter(e => e.link === 'none')
   const idf: Record<string, number> = {}
   for (const tagRecord of tagStore.tags) {
@@ -308,7 +289,6 @@ async function recomputeRelatedFiles (): Promise<void> {
     ...backlinksOnly,
     ...outboundandTags,
     ...outboundOnly,
-    ...nonFile,
     ...tagsOnly
   ]
   const endTime = performance.now()
