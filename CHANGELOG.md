@@ -2,14 +2,98 @@
 
 ## GUI and Functionality
 
+(nothing here)
+
+## Under the Hood
+
+(nothing here)
+
+# 4.1.1
+
+## GUI and Functionality
+
+- Fix a bug where the preferences window would allow arbitrary tab sizes. Now,
+  tab sizes are bound between 2 and 10 (see #6131).
+- Fixed links not registering clicks when they are pre-rendered within table
+  cells of the TableEditor (#4557).
+- Fix application of custom tag classes.
+- Fixed a bug that would not correctly apply the `code` class to segments of
+  code in some circumstances (primarily when adding YAML front matters or
+  comments).
+- Fix syntax highlighting in code blocks, frontmatters, etc. Now, Zettlr assigns
+  more default-colors of the solarized code syntax theme. In addition, regular
+  text is now more readable, especially in light mode.
+- Fixes and improvements to the toolbar styling; simplify CSS rules.
+- Made toolbar icons slightly larger.
+- Update `ja-JP` translation (#6132).
+- Fixed a bug that would not accept custom height constraints via Pandoc
+  attributes for images if the maximum image height was set to 100% in the
+  settings.
+- Fixed "Learn more" link on the citation page in the onboarding window (#6138).
+- Fixed an issue that would make the file search crash on Windows, if a
+  workspace was located at a volume root (#6142).
+- Fixed an issue that would cause Mermaid graphs to still be pre-rendered in
+  "raw" mode (#6141).
+- Fixed a bug that would cause code files (JSON/YAML/TeX) to be formatted
+  weirdly if Zettlr opens with one of these files on startup, due to relevant
+  CSS never being loaded in this case.
+- Improved PDF viewer interaction (#6153).
+
+## Under the Hood
+
+- Update dependencies:
+  - Electron: `v40.0`
+  - Forge: `7.11.1`
+  - Builder: `26.5.0`
+- The FSAL Cache now consistently utilizes asynchronous filesystem operations
+  (#5994).
+- Refactor Zettelkasten link and tag parsing (#5997).
+- Number controls in forms now allow for providing `min` and `max` values.
+- Increased strictness of the `@typescript-eslint/no-explicit-any` rule from
+  "off" (no checking) to "warn" to slowly start migrating away from any
+  remaining `any` uses in the wild.
+- FSAL Improvements:
+  - Removed a lot of dead code in the FSAL.
+  - Moved the save functionality away from the `FSAL*`-submodules, and divided
+    the responsibility between the `DocumentsProvider` and the `FSAL` module.
+
+# 4.1.0
+
+## Read Before Updating
+
+In this version, we perform a long-planned configuration change that affects
+your loaded workspaces and files. Before installing this update, please take
+note of which workspaces and files you have open, in case they are being closed
+through this update. (No data will be actually deleted, but this helps you avoid
+having to search for the folders.)
+
+In addition, it is crucial to remember that once you update to this version,
+**there is no turning back**. If you decide to downgrade to a previous version,
+your files and workspaces *will* be closed, and you will have to re-open them
+afterwards.
+
+## GUI and Functionality
+
+- **Feature**: You can now collapse YAML frontmatters and Pandoc divs (#6115).
+- **Feature**: Zettlr now remembers folded regions as long as the window remains
+  open, even when you close a document (#6115).
 - **Change**: Due to a configuration change, downgrading Zettlr (which we
   generally discourage) after updating to this version will lead to your
   workspaces being closed.
 - Fixed XCode Command Line Tools setup dialog on macOS (#5428).
+- Fixed an issue that prevented opening Markdown files with tables that include
+  Pandoc attribute strings when the TableEditor was enabled (#6110).
+- Fixed footnote tooltip rendering (#6107).
+- Fixed an issue preventing Zettlr from starting if the stats file contained
+  errors (#6127).
+- Improved link target extraction logic when following links (#6098).
 - Performance improvements when following links (#6072).
+- Hide reference link labels when previewing Markdown links (#6097).
 - Improved performance on generating the preview-bibliography in the sidebar by
   collecting citation keys from the document only in the main process (#6068).
 - Improved math parsing to fix certain cases (#6030).
+- Relaxed filename restrictions for loading custom dictionaries (#6126).
+- Improved Pandoc div parsing (#6120).
 - Update `de-DE` translation (#6081).
 - Update `ja-JP` translation (#6086).
 
@@ -27,6 +111,8 @@
   non-existing file paths, and I didn't like that). In rare situations, this
   change may close all your workspaces, in which case you would have to re-open
   them.
+- New utility function `disambiguateFile` that can be used to retrieve a
+  time-based non-existing path that can be used for backup purposes.
 - Added a new environment variable, `ZETTLR_DISABLE_UPDATE_CHECK`. If that
   variable is detected during build, this will hard-disable update checks in the
   application. This can be used by package maintainers to ensure update checks
@@ -51,6 +137,8 @@
   Pandoc (e.g., by listing it as a dependency for Zettlr). This also means that
   the build environment does not require the dependencies that are specifically
   for the download script.
+- fix: The Pandoc Attribute parser does not throw an error on malformed
+  attribute strings anymore, and instead just returns an empty record (#6110).
 
 # 4.0.0
 

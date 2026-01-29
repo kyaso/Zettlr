@@ -27,6 +27,8 @@ import { generateColumnControls, generateEmptyTableWidgetElement, generateRowCon
 import { displayTableContextMenu } from './context-menu'
 import { CITEPROC_MAIN_DB } from 'source/types/common/citeproc'
 import { configField } from '../util/configuration'
+import { interceptAnchorClicks } from './util/anchor-callbacks'
+import openMarkdownLink from '../util/open-markdown-link'
 
 /**
  * This holds the last measured height of each rendered table to provide
@@ -74,7 +76,7 @@ export class TableWidget extends WidgetType {
   // For more background, see issue #5940.
   private readonly meanRowHeight = 100
 
-  constructor (readonly table: string, readonly node: SyntaxNode) {
+  constructor (readonly ast: Table, readonly node: SyntaxNode) {
     super()
   }
 
@@ -101,13 +103,8 @@ export class TableWidget extends WidgetType {
       return height
     }
 
-    const tableAST = parseTableNode(this.node, this.table)
-    if (tableAST.type !== 'Table') {
-      return -1
-    }
-
     // We base our height estimate off the mean row height.
-    return tableAST.rows.length * this.meanRowHeight
+    return this.ast.rows.length * this.meanRowHeight
   }
 
   // By setting the cache key to the node's `from` position,
@@ -261,8 +258,10 @@ export class TableWidget extends WidgetType {
     const newDecos: Array<Range<Decoration>> = tree
       // Get all Table nodes in the document
       .topNode.getChildren('Table')
-      .filter(table => {
-        const ast = parseTableNode(table, markdown)
+      .map(node => {
+        return { node, ast: parseTableNode(node, markdown) }
+      })
+      .filter(({ ast }) => {
         // The TableEditor cannot support grid tables, since they can have
         // (a) colspans and rowspans, and (b) multiple lines, which is just
         // too difficult to represent using our approach here. (Also, grids
@@ -276,9 +275,9 @@ export class TableWidget extends WidgetType {
         return false
       })
       // Turn the nodes into Decorations
-      .map(node => {
+      .map(({ node, ast }) => {
         return Decoration.replace({
-          widget: new TableWidget(state.sliceDoc(node.from, node.to), node.node),
+          widget: new TableWidget(ast as Table, node.node),
           // inclusive: false,
           block: true
         }).range(node.from, node.to)
@@ -374,6 +373,7 @@ function updateRow (
       const { zknLinkFormat } = view.state.field(configField)
       const html = nodeToHTML(cell.children, { onCitation, zknLinkFormat }, 0).trim()
       contentWrapper.innerHTML = html.length > 0 ? html : '&nbsp;'
+      interceptAnchorClicks(contentWrapper, href => openMarkdownLink(href, view))
 
       // NOTE: This handle gets attached once and then remains on the TD for
       // the existence of the table. Since the `view` will always be the same,
@@ -448,6 +448,7 @@ function updateRow (
       const { zknLinkFormat } = view.state.field(configField)
       const html = nodeToHTML(cell.children, { onCitation, zknLinkFormat }, 0).trim()
       contentWrapper.innerHTML = html.length > 0 ? html : '&nbsp;'
+      interceptAnchorClicks(contentWrapper, href => openMarkdownLink(href, view))
     } else if (subview === null && selectionInCell) {
       // Before we mount a subview, we need to normalize the selection if
       // necessary. The table commands are allowed to place the new selection
@@ -490,6 +491,7 @@ function updateRow (
       const html = nodeToHTML(cell.children, { onCitation, zknLinkFormat }, 0).trim()
       if (html !== contentWrapper.innerHTML) {
         contentWrapper.innerHTML = html.length > 0 ? html : '&nbsp;'
+        interceptAnchorClicks(contentWrapper, href => openMarkdownLink(href, view))
       }
     } else if ((subviewFrom !== cell.from || subviewTo !== cell.to) && (columnsChanged || rowsChanged)) {
       // Here, there is a subview in the cell and the selection is in this cell,
