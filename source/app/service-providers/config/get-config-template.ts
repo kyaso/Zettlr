@@ -117,7 +117,6 @@ export interface ConfigOptions {
     linkFormat: 'link|title'|'title|link'
     autoSearch: boolean
     customDirectory: string
-    tooltipDelay: number
     copyOnClick: boolean
     copyIDWithBrackets: boolean
     blockIds: {
@@ -350,7 +349,6 @@ export function getConfigTemplate (): ConfigOptions {
       linkFormat: 'link|title', // Determines what internal links ([[link|title]]) look like
       autoSearch: true, // Automatically start a search upon following a link?
       customDirectory: '', // If present, saves auto-created files here
-      tooltipDelay: 250, // Tooltip popup delay (ms)
       copyOnClick: true, // Whether to copy the ID/tag on click (search)
       copyIDWithBrackets: false, // Whether to copy the ID with "[[ ]]"
       blockIds: {

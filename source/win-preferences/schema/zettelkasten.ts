@@ -99,12 +99,6 @@ export function getZettelkastenFields (_config: ConfigOptions): PreferencesField
           reset: ''
         },
         {
-          type: 'number',
-          label: 'Link tooltip delay (ms)',
-          model: 'zkn.tooltipDelay',
-          reset: 250
-        },
-        {
           type: 'checkbox',
           label: 'Copy ID/tag on search click',
           model: 'zkn.copyOnClick'

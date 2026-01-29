@@ -195,7 +195,7 @@ function getTitle (title: string): HTMLHeadingElement {
 }
 
 export const filePreview = [
-  hoverTooltip(filePreviewTooltip, { hoverTime: window.config.get('zkn.tooltipDelay') }),
+  hoverTooltip(filePreviewTooltip, { hoverTime: 100 }),
   // Provide basic styles for these tooltips
   EditorView.baseTheme({
     '.editor-note-preview': {

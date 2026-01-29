@@ -61,4 +61,4 @@ function getTooltipElement (tagContents: string): HTMLDivElement {
   return wrapper
 }
 
-export const tagTooltipExt = hoverTooltip(tagTooltip, { hoverTime: window.config.get('zkn.tooltipDelay') })
+export const tagTooltipExt = hoverTooltip(tagTooltip, { hoverTime: 100 })
