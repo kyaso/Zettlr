@@ -376,6 +376,7 @@ const shouldShowMenubar = computed<boolean>(() => process.platform === 'win32' |
 const shouldShowToolbar = computed<boolean>(() => !distractionFree.value || !configStore.config.display.hideToolbarInDistractionFree)
 
 // Custom ID
+const shouldUseHashtagForBlockIds = computed<boolean>(() => configStore.config.zkn.blockIds.useHashtag)
 const shouldInsertRootIDSymbol = computed<boolean>(() => configStore.config.zkn.blockIds.addRootIndicator)
 const rootIDSymbol = computed<string>(() => configStore.config.zkn.blockIds.rootIndicator)
 
@@ -671,9 +672,18 @@ onMounted(() => {
       if (!base62) {
         id = generateId(configStore.config.zkn.idGen)
       } else {
-        id = '[[' + generateId('%base62') + ']]'
+        const idBase62 = generateId('%base62')
+        if (shouldUseHashtagForBlockIds.value) {
+          id = '#' + idBase62
+        } else {
+          id = '[[' + idBase62 + ']]'
+        }
         if (shouldInsertRootIDSymbol.value) {
-          id += rootIDSymbol.value
+          if (shouldUseHashtagForBlockIds.value) {
+            id += '|' + rootIDSymbol.value
+          } else {
+            id += rootIDSymbol.value
+          }
         }
       }
       editorCommands.value.data = id

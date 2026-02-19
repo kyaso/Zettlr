@@ -121,6 +121,7 @@ export interface ConfigOptions {
     copyOnClick: boolean
     copyIDWithBrackets: boolean
     blockIds: {
+      useHashtag: boolean
       addRootIndicator: boolean
       rootIndicator: string
     }
@@ -358,6 +359,7 @@ export function getConfigTemplate (): ConfigOptions {
       copyOnClick: true, // Whether to copy the ID/tag on click (search)
       copyIDWithBrackets: false, // Whether to copy the ID with "[[ ]]"
       blockIds: {
+        useHashtag: false, // Whether to use # instead of [[ ]] for block references
         addRootIndicator: true, // Whether to append symbol after block ID
         rootIndicator: '🟨' // What symbol to use
       }
