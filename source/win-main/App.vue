@@ -117,6 +117,12 @@
     v-on:start="startPomodoro()"
     v-on:stop="stopPomodoro()"
   ></PopoverPomodoro>
+  <PopoverPandoc
+    v-if="showPandocPopover && pandocButton !== null"
+    v-bind:target="pandocButton"
+    v-on:close="showPandocPopover = false"
+    v-on:insert-pandoc="insertPandoc($event)"
+  ></PopoverPandoc>
 </template>
 
 <script setup lang="ts">
@@ -147,6 +153,7 @@ import PopoverTags from './PopoverTags.vue'
 import PopoverPomodoro from './PopoverPomodoro.vue'
 import PopoverTable from './PopoverTable.vue'
 import PopoverDocInfo from './PopoverDocInfo.vue'
+import PopoverPandoc from './PopoverPandoc.vue'
 import { trans } from '@common/i18n-renderer'
 import localiseNumber from '@common/util/localise-number'
 import generateId from '@common/util/generate-id'
@@ -225,6 +232,8 @@ const docInfoButton = ref<HTMLElement|null>(null)
 const showDocInfoPopover = ref<boolean>(false)
 const pomodoroButton = ref<HTMLElement|null>(null)
 const showPomodoroPopover = ref<boolean>(false)
+const pandocButton = ref<HTMLElement|null>(null)
+const showPandocPopover = ref<boolean>(false)
 
 export interface PomodoroConfig {
   currentEffectFile: string
@@ -296,6 +305,7 @@ export interface EditorCommands {
   moveSection: boolean
   addKeywords: boolean
   replaceSelection: boolean
+  insertPandoc: boolean
   executeCommand: boolean
   data: any
 }
@@ -306,6 +316,7 @@ const editorCommands = ref<EditorCommands>({
   moveSection: false,
   addKeywords: false,
   replaceSelection: false,
+  insertPandoc: false,
   executeCommand: false,
   data: undefined
 })
@@ -497,6 +508,13 @@ const toolbarControls = computed<ToolbarControl[]>(() => {
     },
     {
       type: 'button',
+      id: 'pandocDivOrSpan',
+      title: trans('Insert Pandoc Div or Span'),
+      icon: 'drag-handle',
+      visible: getToolbarButtonDisplay('showPandocDivSpanButton')
+    },
+    {
+      type: 'button',
       id: 'markdownComment',
       title: trans('Insert comment'),
       icon: 'code',
@@ -643,6 +661,7 @@ onMounted(() => {
   tableButton.value = document.querySelector('#toolbar-insert-table')
   docInfoButton.value = document.querySelector('#toolbar-document-info')
   pomodoroButton.value = document.querySelector('#toolbar-pomodoro')
+  pandocButton.value = document.querySelector('#toolbar-pandocDivOrSpan')
 
   ipcRenderer.on('shortcut', (event, shortcut, base62: boolean) => {
     if (shortcut === 'toggle-sidebar') {
@@ -760,6 +779,11 @@ function insertTable (spec: { rows: number, cols: number }): void {
 
   editorCommands.value.data = buildPipeMarkdownTable(ast, align)
   editorCommands.value.replaceSelection = !editorCommands.value.replaceSelection
+}
+
+function insertPandoc (spec: { type: string, attributes: string }): void {
+  editorCommands.value.data = spec
+  editorCommands.value.insertPandoc = !editorCommands.value.insertPandoc
 }
 
 function genericJtl (lineNumber: number): void {
@@ -901,6 +925,8 @@ function handleClick (clickedID?: string): void {
     showTablePopover.value = !showTablePopover.value
   } else if (clickedID === 'document-info') {
     showDocInfoPopover.value = !showDocInfoPopover.value
+  } else if (clickedID === 'pandocDivOrSpan') {
+    showPandocPopover.value = !showPandocPopover.value
   } else if (clickedID !== undefined && clickedID.startsWith('markdown') && clickedID.length > 8) {
     // The user clicked a command button, so we just have to run that.
     editorCommands.value.data = clickedID

@@ -14,7 +14,7 @@
 
 import { EditorView, showTooltip, type Tooltip } from '@codemirror/view'
 import { type EditorState, StateField } from '@codemirror/state'
-import { applyBold, applyCode, applyItalic, applyZknLink, insertLink, applyStrikeThrough, toggleHighlight } from '../commands/markdown'
+import { applyBold, applyCode, applyComment, applyItalic, applyZknLink, applyPandocDivOrSpan, insertImage, insertLink, applyHighlight, applyStrikethrough } from '../commands/markdown'
 import { trans } from '@common/i18n-renderer'
 import { copyAsPlain } from '../util/copy-paste-cut'
 import { configField } from '../util/configuration'
@@ -48,6 +48,21 @@ function getToolbar (state: EditorState): Tooltip[] {
       italic.setAttribute('title', trans('Italics'))
       italic.innerHTML = '<cds-icon shape="italic"></cds-icon>'
 
+      // const underline = document.createElement('button')
+      // underline.classList.add('formatting-toolbar-button')
+      // underline.setAttribute('title', trans('Underline'))
+      // underline.innerHTML = '<cds-icon shape="underline"></cds-icon>'
+
+      const highlight = document.createElement('button')
+      highlight.classList.add('formatting-toolbar-button')
+      highlight.setAttribute('title', trans('Highlight'))
+      highlight.innerHTML = '<cds-icon shape="highlighter"></cds-icon>'
+
+      const strikethrough = document.createElement('button')
+      strikethrough.classList.add('formatting-toolbar-button')
+      strikethrough.setAttribute('title', trans('Strikethrough'))
+      strikethrough.innerHTML = '<cds-icon shape="strikethrough"></cds-icon>'
+
       const link = document.createElement('button')
       link.classList.add('formatting-toolbar-button')
       link.setAttribute('title', trans('Link'))
@@ -78,16 +93,6 @@ function getToolbar (state: EditorState): Tooltip[] {
       copy.setAttribute('title', trans('Copy'))
       copy.innerHTML = '<cds-icon shape="copy"></cds-icon>'
 
-      const strikeThrough = document.createElement('button')
-      strikeThrough.classList.add('formatting-toolbar-button')
-      strikeThrough.setAttribute('title', trans('Strike through'))
-      strikeThrough.innerHTML = '<cds-icon shape="strikethrough"></cds-icon>'
-
-      const highlight = document.createElement('button')
-      highlight.classList.add('formatting-toolbar-button')
-      highlight.setAttribute('title', trans('Highlight'))
-      highlight.innerHTML = '<cds-icon shape="highlighter"></cds-icon>'
-
       buttonWrapper.append(
         copy,
         bold,
@@ -96,7 +101,7 @@ function getToolbar (state: EditorState): Tooltip[] {
         // image,
         // comment,
         code,
-        strikeThrough,
+        strikethrough,
         highlight,
         zknlink
       )
@@ -105,16 +110,52 @@ function getToolbar (state: EditorState): Tooltip[] {
       // NOTE: We need to use the onmousedown event here, since the click only
       // triggers after onmouseup, and by that time the editor has gone through
       // a transaction cycle that has re-rendered the tooltip.
-      bold.onmousedown = function (event) { applyBold(view) }
-      italic.onmousedown = function (event) { applyItalic(view) }
-      link.onmousedown = function (event) { insertLink(view) }
-      // image.onmousedown = function (event) { insertImage(view) }
-      // comment.onmousedown = function (event) { applyComment(view) }
-      code.onmousedown = function (event) { applyCode(view) }
-      zknlink.onmousedown = function (event) { applyZknLink(view) }
-      copy.onmousedown = function (event) { copyAsPlain(view) }
-      strikeThrough.onmousedown = function (event) { applyStrikeThrough(view) }
-      highlight.onmousedown = function (event) { toggleHighlight(view) }
+      bold.onmousedown = function (event) {
+        event.preventDefault()
+        applyBold(view)
+      }
+      italic.onmousedown = function (event) {
+        event.preventDefault()
+        applyItalic(view)
+      }
+      // underline.onmousedown = function (event) {
+      //   event.preventDefault()
+      //   applyPandocDivOrSpan(view, 'span', { classes: ['underline'] })
+      // }
+      highlight.onmousedown = function (event) {
+        event.preventDefault()
+        applyHighlight(view)
+      }
+      strikethrough.onmousedown = function (event) {
+        event.preventDefault()
+        applyStrikethrough(view)
+      }
+      link.onmousedown = function (event) {
+        event.preventDefault()
+        insertLink(view)
+      }
+      // image.onmousedown = function (event) {
+      //   event.preventDefault()
+      //   insertImage(view)
+      // }
+      // comment.onmousedown = function (event) {
+      //   event.preventDefault()
+      //   applyComment(view)
+      // }
+      code.onmousedown = function (event) {
+        event.preventDefault()
+        applyCode(view)
+      }
+
+      copy.onmousedown = function (event) {
+        event.preventDefault()
+        copyAsPlain(view)
+      }
+
+      zknlink.onmousedown = function (event) {
+        event.preventDefault()
+        applyZknLink(view)
+      }
 
       return { dom }
     }
