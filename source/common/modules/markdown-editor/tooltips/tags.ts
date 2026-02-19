@@ -20,7 +20,7 @@ import { getSearchButton, getCopyButton } from './common'
 async function tagTooltip (view: EditorView, pos: number): Promise<Tooltip|null> {
   const nodeAt = syntaxTree(view.state).resolve(pos, 0)
 
-  if (nodeAt.type.name !== 'ZknTagContent') {
+  if (nodeAt.type.name !== 'ZknTag') {
     return null
   }
 
