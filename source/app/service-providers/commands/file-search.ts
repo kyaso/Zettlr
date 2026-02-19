@@ -14,6 +14,7 @@
 
 import type { AppServiceContainer } from 'source/app/app-service-container'
 import ZettlrCommand from './zettlr-command'
+// import type { SearchResult, SearchTerm } from 'source/types/common/search'
 
 export default class FileSearch extends ZettlrCommand {
   constructor (app: AppServiceContainer) {
@@ -27,6 +28,7 @@ export default class FileSearch extends ZettlrCommand {
    * @return {Boolean}     Whether the call succeeded.
    */
   async run (evt: string, arg: any): Promise<boolean|any> {
+  // async run (evt: string, arg: { path: string, terms: SearchTerm[] }): Promise<SearchResult[]> {
     // Handle a query index event
     if (evt === 'query-index') {
       // console.log('[file-search]: query-index event received. Query: '+arg.query)
@@ -48,9 +50,11 @@ export default class FileSearch extends ZettlrCommand {
       }
       const result = await this._app.fsal.searchFile(descriptor, arg.terms)
       return result
-    } catch (e: any) {
-      this._app.log.error(`Could not search file: ${e.message as string}`, e)
-      return false
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        this._app.log.error(`Could not search file: ${err.message}`, err)
+      }
+      return []
     }
   }
 }

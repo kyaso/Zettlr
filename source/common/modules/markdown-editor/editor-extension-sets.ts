@@ -44,7 +44,7 @@ import { mdLint } from './linters/md-lint'
 import { countField, countPlugin } from './plugins/statistics-fields'
 import { tocField } from './plugins/toc-field'
 import { typewriter } from './plugins/typewriter'
-import { formattingToolbar, footnoteHover, filePreview, urlHover, tagTooltipExt } from './tooltips'
+import { formattingToolbar, footnoteHover, filePreview, urlHover, tagTooltipExt, inlineCodeTooltipExt } from './tooltips'
 import { type EditorConfiguration, configField } from './util/configuration'
 import { highlightRanges } from './plugins/highlight-ranges'
 import { markdownFolding } from './code-folding/markdown'
@@ -346,6 +346,7 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     urlHover,
     filePreview,
     tagTooltipExt,
+    inlineCodeTooltipExt,
     backgroundLayers, // Add a background behind inline code and code blocks
     defaultContextMenu, // A default context menu
     softwrapVisualIndent, // Always indent visually

@@ -105,7 +105,12 @@ export function getZettelkastenFields (_config: ConfigOptions): PreferencesField
         },
         {
           type: 'checkbox',
-          label: 'Add "[[ ]]" when copying ID',
+          label: 'Use "#" for IDs instead of "[[ ]]',
+          model: 'zkn.blockIds.useHashtag'
+        },
+        {
+          type: 'checkbox',
+          label: 'Add "[[ ]]" when copying ID/ZKN links',
           model: 'zkn.copyIDWithBrackets'
         },
         {
