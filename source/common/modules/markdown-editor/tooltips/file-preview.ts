@@ -15,11 +15,6 @@
 
 import { syntaxTree } from '@codemirror/language'
 import { hoverTooltip, EditorView, type Tooltip } from '@codemirror/view'
-// import { trans } from '@common/i18n-renderer'
-// import { md2html } from '@common/modules/markdown-utils/markdown-to-html'
-// import formatDate from '@common/util/format-date'
-// import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
-// import sanitizeHtml from 'sanitize-html'
 import { getSearchButton, getCopyButton } from './common'
 import { type MDFileDescriptor } from '@dts/common/fsal'
 import type { ForceOpenAPI } from 'source/app/service-providers/commands/force-open'
@@ -203,6 +198,7 @@ export const filePreview = [
       padding: '5px',
       fontSize: '80%'
     },
+    '.editor-note-preview pre': { whiteSpace: 'pre-wrap' },
     '.editor-note-preview h1': { fontSize: '100%' },
     '.editor-note-preview h2': { fontSize: '95%' },
     '.editor-note-preview h3': { fontSize: '90%' },

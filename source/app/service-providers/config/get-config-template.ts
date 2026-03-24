@@ -69,6 +69,8 @@ export interface ConfigOptions {
   alwaysReloadFiles: boolean
   muteLines: boolean
 
+  // NOTE to everyone: These options (and possibly others) that pertain to the
+  // file manager should slowly be migrated into the fileManager group below.
   fileManagerMode: 'thin'|'combined'|'expanded'
   fileManagerShowFiles: boolean
   fileManagerShowWorkspaces: boolean
@@ -77,6 +79,14 @@ export interface ConfigOptions {
   sorting: 'natural'|'ascii'
   sortFoldersFirst: boolean
   fileNameDisplay: 'filename'|'title'|'heading'|'title+heading'
+
+  // NOTE to everyone: The various filemanager options (see above) should over
+  // time be migrated into this group.
+  fileManager: {
+    twoStepCollapseWorkspaces: boolean
+    // If this is true, the config will never attempt to auto-sort workspaces.
+    sortWorkspacesManually: boolean
+  }
 
   newFileNamePattern: string
   newFileDontPrompt: boolean
@@ -139,6 +149,7 @@ export interface ConfigOptions {
     enableTableHelper: boolean
     indentUnit: number
     indentWithTabs: boolean
+    alwaysIndentLineOnTab: boolean
     fontSize: number
     countChars: boolean
     inputMode: 'default'|'vim'|'emacs'
@@ -329,6 +340,10 @@ export function getConfigTemplate (): ConfigOptions {
     fileManagerShowFiles: true, // Allow users to persistently collapse or uncollapse the files and workspaces sections.
     fileManagerShowWorkspaces: true,
     fileNameDisplay: 'title+heading', // Controls what info is displayed as filenames
+    fileManager: {
+      twoStepCollapseWorkspaces: false,
+      sortWorkspacesManually: false // By default, let Zettlr sort workspaces
+    },
     newFileNamePattern: '%id.md',
     newFileDontPrompt: false, // If true immediately creates files
     export: {
@@ -375,6 +390,7 @@ export function getConfigTemplate (): ConfigOptions {
       enableTableHelper: true, // Enable the table helper plugin
       indentUnit: 4, // The number of spaces to be added
       indentWithTabs: false,
+      alwaysIndentLineOnTab: false, // Whether `Tab` always indents the current line
       fontSize: 18, // The editor's font size in pixels
       countChars: false, // Set to true to enable counting characters instead of words
       inputMode: 'default', // Can be default, vim, emacs

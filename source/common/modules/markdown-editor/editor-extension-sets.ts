@@ -75,6 +75,7 @@ import { vimPlugin } from './plugins/vim-mode'
 import { projectInfoField } from './plugins/project-info-field'
 import { headingGutter } from './renderers/render-headings'
 import { codeTheme } from './renderers/render-code'
+import { citationTooltips } from './tooltips/citations'
 
 /**
  * This interface describes the required properties which the extension sets
@@ -347,6 +348,7 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
     filePreview,
     tagTooltipExt,
     inlineCodeTooltipExt,
+    citationTooltips,
     backgroundLayers, // Add a background behind inline code and code blocks
     defaultContextMenu, // A default context menu
     softwrapVisualIndent, // Always indent visually
@@ -356,19 +358,18 @@ export function getMarkdownExtensions (options: CoreExtensionOptions): Extension
 }
 
 /**
- * This public function returns a set of extensions required to display JSON
+ * This public function returns a set of extensions required to display LaTeX
  * documents in Zettlr editors. These include the core extensions, the generic
- * code extensions as well as the JSON syntax highlighter.
+ * code extensions as well as the LaTeX syntax highlighter.
  *
  * @param   {CoreExtensionOptions}  options  The default options
  *
- * @return  {Extension[]}                    An array of options for JSON files
+ * @return  {Extension[]}                    An array of options for LaTeX files
  */
-export function getJSONExtensions (options: CoreExtensionOptions): Extension[] {
+export function getTexExtensions (options: CoreExtensionOptions): Extension[] {
   return [
     ...getGenericCodeExtensions(options),
-    json(),
-    linter(jsonParseLinter())
+    StreamLanguage.define(stex)
   ]
 }
 
@@ -388,18 +389,20 @@ export function getYAMLExtensions (options: CoreExtensionOptions): Extension[] {
   ]
 }
 
+
 /**
- * This public function returns a set of extensions required to display LaTeX
+ * This public function returns a set of extensions required to display JSON
  * documents in Zettlr editors. These include the core extensions, the generic
- * code extensions as well as the LaTeX syntax highlighter.
+ * code extensions as well as the JSON syntax highlighter.
  *
  * @param   {CoreExtensionOptions}  options  The default options
  *
- * @return  {Extension[]}                    An array of options for LaTeX files
+ * @return  {Extension[]}                    An array of options for JSON files
  */
-export function getTexExtensions (options: CoreExtensionOptions): Extension[] {
+export function getJSONExtensions (options: CoreExtensionOptions): Extension[] {
   return [
     ...getGenericCodeExtensions(options),
-    StreamLanguage.define(stex)
+    json(),
+    linter(jsonParseLinter())
   ]
 }
