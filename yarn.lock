@@ -2267,10 +2267,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@orama/orama@npm:^3.1.14":
-  version: 3.1.14
-  resolution: "@orama/orama@npm:3.1.14"
-  checksum: 10/25f7fe48a60cce66005477266df5f39df936d439782947d293e3e4bb65005bb0695ab05ec096aeb68da96a4de1d0d47a148b7c09be8cda9bb1f5b397ef3235a8
+"@orama/orama@npm:^3.1.18":
+  version: 3.1.18
+  resolution: "@orama/orama@npm:3.1.18"
+  checksum: 10/86bc4ef4864b22d2bbec387f59fc54de66e7c941d4846a4f5d660af2445ca0f6c6ce749b496773eded90194034a2382e448cfa1f5d6826c180d71073c413d37f
   languageName: node
   linkType: hard
 
@@ -16092,7 +16092,7 @@ __metadata:
     "@lezer/highlight": "npm:^1.2.3"
     "@lezer/lr": "npm:^1.4.8"
     "@lezer/markdown": "npm:^1.6.3"
-    "@orama/orama": "npm:^3.1.14"
+    "@orama/orama": "npm:^3.1.18"
     "@replit/codemirror-emacs": "npm:^6.1.0"
     "@replit/codemirror-lang-nix": "npm:^6.0.1"
     "@replit/codemirror-vim": "npm:^6.3.0"
