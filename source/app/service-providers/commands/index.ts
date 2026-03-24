@@ -182,7 +182,7 @@ export default class CommandProvider extends ProviderContract {
       this._app.windows.showUpdateWindow()
     } else if (command === 'open-project-preferences' && typeof payload === 'string') {
       this._app.windows.showProjectPropertiesWindow(payload)
-    } else if (command === 'start-global-search') {
+    } else if (command === 'start-global-search' && typeof payload === 'string') {
       this.startGlobalSearch(payload)
     } else {
       // ELSE: If the command has not yet been found, try to run one of the
