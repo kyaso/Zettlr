@@ -492,6 +492,13 @@ const toolbarControls = computed<ToolbarControl[]>(() => {
       visible: true
     },
     {
+      type: 'button',
+      id: 'save-file',
+      title: 'Save file',
+      icon: 'floppy',
+      visible: true
+    },
+    {
       type: 'spacer',
       size: '3x'
     },
@@ -918,6 +925,19 @@ function handleClick (clickedID?: string): void {
       })
         .catch(err => console.error(err))
     }
+  } else if (clickedID === 'save-file') {
+    if (activeFile.value !== undefined) {
+      ipcRenderer.invoke('documents-provider', {
+        command: 'save-file',
+        payload: { path: activeFile.value?.path }
+      } as DocumentManagerIPCAPI)
+        .then(result => {
+          if (result !== true) {
+            console.error('Retrieved a falsy result from main, indicating an error with saving the file.')
+          }
+        })
+        .catch(e => console.error(e))
+        }
   } else if (clickedID === 'export') {
     showExportPopover.value = !showExportPopover.value
   } else if (clickedID === 'show-stats') {
