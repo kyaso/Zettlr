@@ -937,7 +937,7 @@ function handleClick (clickedID?: string): void {
           }
         })
         .catch(e => console.error(e))
-        }
+    }
   } else if (clickedID === 'export') {
     showExportPopover.value = !showExportPopover.value
   } else if (clickedID === 'show-stats') {
