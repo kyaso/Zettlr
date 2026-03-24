@@ -8,6 +8,121 @@
 
 (nothing here)
 
+# 4.3.0
+
+## GUI and Functionality
+
+- **Feature**: Added a citation tooltip. When hovering over a citation cluster
+  in your documents with your mouse, this will generate a small bibliography of
+  just the items contained in the citation cluster and display it using the
+  tooltip. This allows you to quickly check which item you cited exactly.
+- **Feature**: The Custom CSS editor now offers autocomplete assistance (#6226).
+- **Feature**: Added dedicated `math` code block syntax highlighting to add
+  MathTeX to files without rendering (#6226).
+- **Feature**: You can now close all standalone/root files as well as all
+  workspaces from a new file manager context menu that opens via right-click
+  onto the section headers or with a click on the corresponding button. In
+  addition, you can collapse all folders with a simple click (#6209).
+- **Feature**: You can now manually change the sorting of your workspaces. By
+  default, Zettlr automatically sorts your workspaces by name. However,
+  sometimes you may wish to change the ordering. To do so, use the new file
+  manager context menu and select "Sort workspaces…". This will open a popover
+  that allows you to change the workspace ordering using drag and drop. As soon
+  as you overwrite the sort order manually, this will disable automatic sorting
+  from here on. Newly opened workspaces will simply be appended at the end of
+  the list of open workspaces. To re-enable automatic sorting of your
+  workspaces, use the new setting in the file manager preferences, or click the
+  corresponding button in the sort popover.
+- **Feature**: You can now assign custom accent colors to folders across your
+  workspaces to make them easier identifiable. This aids the existing custom
+  icons that you can already use to differentiate folders. You can assign one of
+  seven built-in colors to every directory: blue, purple, rose, red, orange,
+  yellow, and green. For friends of Custom CSS: These are specified as CSS
+  variables so that you can adjust them if you wish. The pattern is:
+  `--accent-<color>`.
+- Fixed potential crashes when standalone/root files or workspaces have been
+  removed while Zettlr was closed (#6223). Recognizes PR #6225 by @SergioChan
+  who started this effort. Previously, the re-indexing process when Zettlr boots
+  would not check for the existence of open paths, causing crashes.
+- Show citation menu when right-clicking on a non-rendered citation (#6213).
+- Updated `ja-JP` translations (#6227; #6230; #6249).
+- Updated `zh-CN` translations (#6243).
+- Fixed an issue with improper HTML sanitization in the file preview tooltip,
+  which would escape unusual HTML (such as KaTeX equations) instead of allowing
+  it (#6221).
+- Fixed an issue that might prevent the correct app icon to show up for the
+  AppImage release of Zettlr.
+- Re-enabled the broken System Verilog syntax highlighting. However, the code
+  highlighting uses the Verilog parser, since no dedicated System Verilog parser
+  is available, so there may be inconsistencies in highlighting.
+- Allow more emojis in tags (#6202).
+- Fix crashes when directories aren't accessible by the app (#6172).
+- Improve autocorrect handling. Now, users can undo an unwanted replacement
+  (`Ctrl/Cmd+Z`) without losing the inserted space or new line (#6210).
+- Made the app more resilient in light of missing workspaces or root files. Now,
+  crashes on startup due to missing standalone files or workspaces should be
+  much less frequent and the app should be more stable.
+- Fixed a regression that would overlay the default menu on top of the citation
+  menu on non-macOS clients, rendering it unusable (#6213).
+- Fixed an issue that would make code blocks exceed the size of the preview
+  window in some instances.
+- Fix footnote preview styling in footnote tooltips.
+- Fixed custom export profiles not working during project exports (#6235).
+- Fixed text color of disabled menu items on Linux and Windows.
+- Fixed "Find in file" menu item (#6234).
+- Improve file name extension handling (#6194).
+
+## Under the Hood
+
+- The `md2html` utility function now has a new flag, `sanitizeHTML` that you can
+  use to make the function properly sanitize potentially harmful HTML in
+  situations where HTML shall be inserted into the DOM without endangering the
+  display of special elements such as equations.
+- The app now sanitizes HTML in more cases where it is inserted into the DOM.
+  This preemptively prevents attacks using malicious HTML in the table of
+  contents, the print window, and footnote tooltip rendering. Note that this
+  does not apply when copying Markdown as HTML, since in this case we expect the
+  user wishes to retain every bit of HTML (also, in that case, they usually have
+  seen the code, making possible attacks unlikely).
+- Updated various code syntax highlighting parsers from the legacy mode to the
+  corresponding dedicated parsers (#6226).
+- Since `JSON.stringify` is sensitive to object insertion order, we switched the
+  detection logic whether directory settings are all on default to
+  `assert.deepStrictEqual`. This means that we now compare the values of the
+  properties instead of their ordering.
+- Harden the TableEditor by properly sanitizing possibly unsafe HTML using the
+  new `sanitizeHTML` option on the `nodeToHTML` function (via `md2html`).
+
+# 4.2.1
+
+## Fixed Pandoc Extension Parsing
+
+If you ever used [Pandoc extensions](https://pandoc.org/MANUAL.html#extensions)
+with Zettlr, you may have wondered why they sometimes appeared not to work.
+After a report by a user, we have found out that Zettlr never actually parsed
+these correctly. We decided to make this a bit more visible in the changelog
+since your exports may have been broken without you realizing. This way you can
+verify any of your exports.
+
+## GUI and Functionality
+
+- Fix indenting and tab insertion behavior (#6196).
+- Fix Zettlr not correctly parsing Pandoc extensions (#6212).
+- Improved error handling when opening PDF attachments.
+- Make Zettlr more resilient when CSL JSON library files are malformed.
+
+## Under the Hood
+
+- Add unit tests for `parseReaderWriter` utility function.
+- Upgrade Electron to `v40.8.0`.
+- Upgrade Pandoc to `v3.9.0`.
+- Upgrade ESLint to `v10.0.3`.
+- Properly parse and check the returned results from the BetterBibTex JSON RPC
+  API when querying PDF attachments.
+- Zettlr no longer assumes CSL JSON files are well-formed. Instead, each item is
+  checked for the presence of required keys, and is skipped if there is an
+  issue. This ensures library files can also be loaded partially.
+
 # 4.2.0
 
 ## GUI and Functionality

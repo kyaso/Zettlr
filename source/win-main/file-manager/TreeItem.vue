@@ -4,10 +4,11 @@
       v-bind:class="{
         'tree-item': true,
         [item.type]: true,
-        'selected': isSelected,
-        'active': activeItem === item.path,
-        'project': item.type === 'directory' && item.settings.project != null,
-        'root': isRoot
+        [item.type === 'directory' ? item.settings.color ?? '' : '']: true,
+        selected: isSelected,
+        active: activeItem === item.path,
+        project: item.type === 'directory' && item.settings.project != null,
+        root: isRoot
       }"
       v-bind:data-id="item.type === 'file' ? item.id : ''"
       v-bind:data-path="item.path"
@@ -67,7 +68,7 @@
         }"
         role="button"
         v-bind:aria-label="`Select ${item.name}`"
-        v-bind:draggable="!isRoot"
+        v-bind:draggable="!isRoot && !nameEditing"
         v-bind:title="item.path"
         v-on:dragstart="beginDragging"
         v-on:drag="onDragHandler"
@@ -185,6 +186,7 @@ import {
 import { isDotFile } from 'source/common/util/ignore-path'
 import type { FSALEventPayload, FSALEventPayloadChange } from 'source/app/service-providers/fsal'
 import { getSorter } from 'source/common/util/directory-sorter'
+import type { WritingTarget } from 'source/app/service-providers/targets'
 
 const ipcRenderer = window.ipc
 
@@ -318,7 +320,7 @@ const writingTarget = computed<undefined|{ path: string, mode: 'words'|'chars', 
   if (props.item.type !== 'file') {
     return undefined
   } else {
-    return windowStateStore.writingTargets.find((x: any) => x.path === props.item.path)
+    return windowStateStore.writingTargets.find((x: WritingTarget) => x.path === props.item.path)
   }
 })
 
@@ -474,8 +476,14 @@ const isSelected = computed(() => {
   }
 })
 
-watch(selectedFile, uncollapseIfApplicable)
-watch(selectedDir, uncollapseIfApplicable)
+// We need to reset the scroll position when exiting editing mode
+// so that the filename is displayed within the element correctly.
+// It would otherwise be offset to the left edge of the container.
+watch(nameEditing, (isEditing) => {
+  if (!isEditing && displayText.value !== null) {
+    displayText.value.scrollLeft = 0
+  }
+})
 
 watch(operationType, (newVal) => {
   if (newVal !== undefined) {
@@ -509,14 +517,12 @@ watch(toRef(props, 'item'), function (value) {
 
 watch(showDotFiles, async function () {
   if (props.item.type === 'directory') {
-    uncollapseIfApplicable()
     await fetchChildren()
   }
 })
 
 onMounted(async () => {
   if (props.item.type === 'directory') {
-    uncollapseIfApplicable()
     ipcRenderer.on('shortcut', (_, message) => {
       if (message === 'new-dir') {
         operationType.value = 'createDir'
@@ -563,25 +569,6 @@ async function fetchChildren (): Promise<void> {
   children.value = await ipcRenderer.invoke('fsal', { command: 'read-directory', payload: props.item.path })
 }
 
-function uncollapseIfApplicable (): void {
-  if (!collapsed.value) {
-    return // We are already open, no need to do anything.
-  }
-
-  const filePath = selectedFile.value?.path ?? ''
-  const dirPath = selectedDir.value ?? ''
-
-  // Open the tree, if the selected file is contained in this dir somewhere
-  if (filePath.startsWith(props.item.path)) {
-    windowStateStore.uncollapsedDirectories.push(props.item.path)
-  }
-
-  // If a directory within this has been selected, open up, lads!
-  if (dirPath.startsWith(props.item.path)) {
-    windowStateStore.uncollapsedDirectories.push(props.item.path)
-  }
-}
-
 /**
  * Initiates a drag movement and inserts the correct data
  * @param {DragEvent} event The drag event
@@ -616,7 +603,7 @@ function enterDragging (_event: DragEvent): void {
   uncollapseTimeout.value = setTimeout(() => {
     windowStateStore.uncollapsedDirectories.push(props.item.path)
     uncollapseTimeout.value = undefined
-  }, 2000)
+  }, 1000)
 }
 
 /**
@@ -744,22 +731,20 @@ body {
   div.tree-item-container {
     font-size: 13px;
 
-    // These inputs should be more or less "invisible"
-    input.filename-input {
-      border: none;
-      color: inherit;
-      font-family: inherit;
-      font-size: inherit;
-      background-color: transparent;
-      width: auto;
-      field-sizing: content;
-      padding: 0;
-    }
-
     .tree-item {
       white-space: nowrap;
       display: flex;
       margin: 8px 0px;
+
+      // Available directory colors (the colors are CSS variables specified
+      // in WindowChrome.vue and string-values defined in PopoverDirProps.vue)
+      &.blue { color: var(--accent-blue); }
+      &.purple { color: var(--accent-purple); }
+      &.rose { color: var(--accent-rose); }
+      &.red { color: var(--accent-red); }
+      &.orange { color: var(--accent-orange); }
+      &.yellow { color: var(--accent-yellow); }
+      &.green { color: var(--accent-green); }
 
       .item-icon, .toggle-icon {
         display: flex;
@@ -769,12 +754,38 @@ body {
         flex-shrink: 0; // Prevent shrinking; only the display text should
       }
 
+      // These inputs should be more or less "invisible"
+      input.filename-input {
+        border: none;
+        border-radius: 0;
+        font-family: inherit;
+        font-size: inherit;
+        background-color: inherit;
+        width: auto;
+        field-sizing: content;
+        padding: 1px 3px;
+      }
+
       .display-text {
         padding: 3px 5px;
         overflow: hidden;
         text-overflow: ellipsis;
         margin-right: 8px;
+      }
+      // Here, the padding has to be reset in order for
+      // the padding around the input element to not change
+      // the overall size of the display element.
+      .display-text:has(input.filename-input) {
+        padding: 2px 2px;
 
+        // This enables selecting and dragging to scroll
+        overflow: auto;
+        text-overflow: unset;
+
+        // Disable scrollbars
+        &::-webkit-scrollbar {
+          display: none;
+        }
       }
 
       &.project {
@@ -813,6 +824,10 @@ body.darwin {
 
     // On macOS, non-standard icons are normally displayed in color
     cds-icon.special { color: var(--system-accent-color, --c-primary); }
+
+    input.filename-input {
+      border-radius: 4px;
+    }
 
     .display-text {
       border-radius: 4px;
