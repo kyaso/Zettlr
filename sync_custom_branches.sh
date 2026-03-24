@@ -27,7 +27,7 @@ for target in "${targets[@]}"; do
 
   # Merge 'custom' into target
   echo "Merging 'custom' into '${target}'..."
-  if ! git merge --no-ff custom; then
+  if ! git merge custom; then
     echo "\nMerge error: conflicts or other merge failure occurred while merging 'custom' into '${target}'." >&2
     echo "Do NOT push. Resolve conflicts manually, commit, then push when ready." >&2
     exit 1
