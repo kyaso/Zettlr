@@ -206,7 +206,7 @@ const searchParams = new URLSearchParams(window.location.search)
 // necessary for the documents and split views to show up.
 const windowId = searchParams.get('window_id')!
 
-const fileManagerVisible = ref(true)
+const fileManagerVisible = computed<boolean>(() => configStore.config.window.fileManagerVisible)
 const mainSplitViewVisibleComponent = ref<'fileManager'|'globalSearch'>('fileManager')
 const isUpdateAvailable = ref(false)
 const hasVibrancy = computed(() => configStore.config.window.vibrancy && process.platform === 'darwin')
@@ -380,13 +380,13 @@ const shouldUseHashtagForBlockIds = computed<boolean>(() => configStore.config.z
 const shouldInsertRootIDSymbol = computed<boolean>(() => configStore.config.zkn.blockIds.addRootIndicator)
 const rootIDSymbol = computed<string>(() => configStore.config.zkn.blockIds.rootIndicator)
 
-const parsedDocumentInfo = computed<string>(() => {
+const parsedDocumentInfo = computed<string[]>(() => {
   const info = windowStateStore.activeDocumentInfo
   if (info == null) {
-    return ''
+    return []
   }
 
-  let cnt = ''
+  const lines: string[] = []
 
   if (info.selections.length > 0) {
     // We have selections to display.
@@ -395,27 +395,23 @@ const parsedDocumentInfo = computed<string>(() => {
       length += shouldCountChars.value ? sel.chars : sel.words
     })
 
-    cnt = trans('%s selected', localiseNumber(length))
-    cnt += '<br>'
+    lines.push(trans('%s selected', localiseNumber(length)))
     if (info.selections.length === 1) {
-      cnt += (info.selections[0].anchor.line) + ':'
-      cnt += (info.selections[0].anchor.ch) + ' &ndash; '
-      cnt += (info.selections[0].head.line) + ':'
-      cnt += (info.selections[0].head.ch)
+      const { head, anchor } = info.selections[0]
+      lines.push(`${anchor.line}:${anchor.ch} – ${head.line}:${head.ch}`)
     } else {
       // Multiple selections --> indicate
-      cnt += trans('%s selections', info.selections.length)
+      lines.push(trans('%s selections', info.selections.length))
     }
   } else {
     // No selection.
-    cnt = shouldCountChars.value
+    lines.push(shouldCountChars.value
       ? trans('%s characters', localiseNumber(info.chars))
-      : trans('%s words', localiseNumber(info.words))
-    cnt += '<br>'
-    cnt += info.cursor.line + ':' + info.cursor.ch
+      : trans('%s words', localiseNumber(info.words)))
+    lines.push(`${info.cursor.line}:${info.cursor.ch}`)
   }
 
-  return cnt
+  return lines
 })
 
 const toolbarControls = computed<ToolbarControl[]>(() => {
@@ -599,7 +595,7 @@ const toolbarControls = computed<ToolbarControl[]>(() => {
       icon: 'download',
       visible: isUpdateAvailable.value
     }
-  ]
+  ] satisfies ToolbarControl[]
 })
 
 const editorSidebarSplitComponent = ref<typeof SplitView|null>(null)
@@ -654,11 +650,11 @@ watch(distractionFree, (newValue) => {
       sidebar: sidebarVisible.value
     }
     configStore.setConfigValue('window.sidebarVisible', false)
-    fileManagerVisible.value = false
+    configStore.setConfigValue('window.fileManagerVisible', false)
   } else {
     // Leave distraction free mode
     configStore.setConfigValue('window.sidebarVisible', sidebarsBeforeDistractionfree.value.sidebar)
-    fileManagerVisible.value = sidebarsBeforeDistractionfree.value.fileManager
+    configStore.setConfigValue('window.fileManagerVisible', sidebarsBeforeDistractionfree.value.fileManager)
   }
 })
 
@@ -697,7 +693,7 @@ onMounted(() => {
       editorCommands.value.replaceSelection = !editorCommands.value.replaceSelection
       navigator.clipboard.writeText(id).catch(err => console.error(err))
     } else if (shortcut === 'copy-current-id' && documentTreeStore.lastLeafActiveFile !== undefined) {
-      ipcRenderer.invoke('application', {
+      ipcRenderer.invoke('fsal', {
         command: 'get-descriptor',
         payload: documentTreeStore.lastLeafActiveFile.path
       })
@@ -708,7 +704,7 @@ onMounted(() => {
         })
         .catch(err => console.error(err))
     } else if (shortcut === 'global-search') {
-      fileManagerVisible.value = true
+      configStore.setConfigValue('window.fileManagerVisible', true)
       mainSplitViewVisibleComponent.value = 'globalSearch'
       // Focus input
       nextTick()
@@ -716,9 +712,9 @@ onMounted(() => {
         .catch(err => console.error(err))
     } else if (shortcut === 'toggle-file-manager') {
       if (fileManagerVisible.value && mainSplitViewVisibleComponent.value === 'fileManager') {
-        fileManagerVisible.value = false
+        configStore.setConfigValue('window.fileManagerVisible', false)
       } else if (!fileManagerVisible.value) {
-        fileManagerVisible.value = true
+        configStore.setConfigValue('window.fileManagerVisible', true)
         mainSplitViewVisibleComponent.value = 'fileManager'
       } else if (mainSplitViewVisibleComponent.value === 'globalSearch') {
         mainSplitViewVisibleComponent.value = 'fileManager'
@@ -726,7 +722,7 @@ onMounted(() => {
     } else if (shortcut === 'filter-files') {
       // We need to immediately make the file manager visible, which will
       // -- in the next tick -- focus its filter input.
-      fileManagerVisible.value = true
+      configStore.setConfigValue('window.fileManagerVisible', true)
       mainSplitViewVisibleComponent.value = 'fileManager'
     } else if (shortcut === 'export') {
       showExportPopover.value = true
@@ -763,6 +759,11 @@ onMounted(() => {
   // by default.
   if (!sidebarVisible.value) {
     editorSidebarSplitComponent.value?.hideView(2)
+  }
+
+  // Similarly, if the file manager is set to hidden, do that, too.
+  if (!fileManagerVisible.value) {
+    fileManagerSplitComponent.value?.hideView(1)
   }
 
   // Check if there is an update available.
@@ -876,7 +877,7 @@ function moveSection (data: { from: number, to: number }): void {
 
 function startGlobalSearch (terms: string): void {
   mainSplitViewVisibleComponent.value = 'globalSearch'
-  fileManagerVisible.value = true
+  configStore.setConfigValue('window.fileManagerVisible', true)
   nextTick()
     .then(() => {
       globalSearchComponent.value?.startSearch(terms)
@@ -1004,7 +1005,7 @@ function handleToggle (controlState: { id?: string, state?: string | boolean }):
     configStore.setConfigValue('window.sidebarVisible', state)
   } else if (id === 'toggle-file-manager') {
     // Since this is a three-way-toggle, we have to inspect the state.
-    fileManagerVisible.value = state !== undefined
+    configStore.setConfigValue('window.fileManagerVisible', state !== undefined)
     if (typeof state === 'string' && (state === 'fileManager' || state === 'globalSearch')) {
       // Set the shown component to the correct one
       mainSplitViewVisibleComponent.value = state
@@ -1102,6 +1103,5 @@ function getFileName (filePath: string|undefined): string|undefined {
 }
 </script>
 
-<style lang="less">
-//
+<style lang="css" scoped>
 </style>
