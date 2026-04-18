@@ -180,13 +180,13 @@ import {
   hasMSOfficeExt,
   hasOpenOfficeExt,
   hasPDFExt,
-  hasExt,
-  hasMdOrCodeExt
+  hasExt
 } from 'source/common/util/file-extention-checks'
 import { isDotFile } from 'source/common/util/ignore-path'
 import type { FSALEventPayload, FSALEventPayloadChange } from 'source/app/service-providers/fsal'
 import { getSorter } from 'source/common/util/directory-sorter'
 import type { WritingTarget } from 'source/app/service-providers/targets'
+import { filterDescriptorChildren } from './util/filter-children'
 
 const ipcRenderer = window.ipc
 
@@ -360,7 +360,8 @@ const filteredChildren = computed(() => {
     return []
   }
 
-  const { files, attachmentExtensions } = configStore.config
+  const { files } = configStore.config
+  const filter = filterDescriptorChildren()
 
   return children.value
     // Ensure we only consider filtered files
@@ -377,30 +378,7 @@ const filteredChildren = computed(() => {
         return child.type === 'directory' && (files.dotFiles.showInFilemanager || !isDotFile(child.name))
       }
 
-      // Filter files based on our settings
-      if (child.type === 'directory') {
-        return files.dotFiles.showInFilemanager || !isDotFile(child.name)
-      }
-
-      // We have to check for hidden files first so they are not
-      // included if they end in one of the accepted extensions
-      if (isDotFile(child.name)) {
-        return files.dotFiles.showInFilemanager
-      } else if (hasImageExt(child.path)) {
-        return files.images.showInFilemanager
-      } else if (hasPDFExt(child.path)) {
-        return files.pdf.showInFilemanager
-      } else if (hasMSOfficeExt(child.path)) {
-        return files.msoffice.showInFilemanager
-      } else if (hasOpenOfficeExt(child.path)) {
-        return files.openOffice.showInFilemanager
-      } else if (hasDataExt(child.path)) {
-        return files.dataFiles.showInFilemanager
-      } else if (hasMdOrCodeExt(child.path)) {
-        return true
-      } else {
-        return hasExt(child.path, attachmentExtensions) // Any other "other" file should be excluded
-      }
+      return filter(child)
     })
 })
 
@@ -473,6 +451,14 @@ const isSelected = computed(() => {
     return selectedDir.value === props.item.path
   } else {
     return selectedFile.value?.path === props.item.path
+  }
+})
+
+watch(isSelected, (value, oldValue) => {
+  // Scrolls this item into view, but only if it has just been selected and is
+  // not yet visible.
+  if (value !== oldValue && value) {
+    scrollIntoView()
   }
 })
 
@@ -563,7 +549,26 @@ onMounted(async () => {
     // of children.
     fetchChildren().catch(err => console.error(`[TreeItem] Could not fetch children for item "${props.item.path}": ${err.message}`, err))
   })
+
+  // Initially scroll into view if this item is selected
+  if (isSelected.value) {
+    scrollIntoView()
+  }
 })
+
+/**
+ * Scrolls this item into view
+ */
+function scrollIntoView () {
+  // We need to wait, so that the app can render the displayText element.
+  nextTick().then(() => {
+    if (displayText.value === null) {
+      return
+    }
+
+    displayText.value.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }).catch(err => console.error(err))
+}
 
 async function fetchChildren (): Promise<void> {
   children.value = await ipcRenderer.invoke('fsal', { command: 'read-directory', payload: props.item.path })
