@@ -2,8 +2,24 @@
 
 ## GUI and Functionality
 
+(nothing here)
+
+## Under the Hood
+
+(nothing here)
+
+
+# 4.4.0
+
+## GUI and Functionality
+
 - **Feature**: The app now remembers if the file manager was open or closed
   across restarts and applies this setting on each start (#3679).
+- **Feature**: The names of open folders in the file manager tree will now
+  remain sticked to the top of the file manager as you scroll through its list
+  of children. This is especially helpful in the "combined" file manager mode
+  with folders containing many files and subfolders (such as reading notes or
+  Zettelkasten folders).
 - Add strikethrough to the Markdown AST parser (#6263).
 - Fixed Markdown-to-HTML output to generate more valid HTML. This makes
   comparisons with DOM-inserted HTML deterministic and should reduce the amount
@@ -40,7 +56,7 @@
 - Security: Enforce loading remote resources using HTTPS.
 - Security: Generously spread HTML sanitization across the application. The
   following changes have been made:
-  - Moved HTML sanitization to the edge (directly to the injection sinks)
+  - Moved HTML sanitization to the edge (directly to the injection sinks).
   - Removed HTML sanitization from the translation helpers. The reason is that
     DOMPurify does not work out of the box in the main process, so we also
     removed the sanitization from the renderer-translation helper. However, this
