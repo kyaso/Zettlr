@@ -3,6 +3,7 @@
     <div
       v-bind:class="{
         'tree-item': true,
+        'collapsed': collapsed && item.type === 'directory',
         [item.type]: true,
         [item.type === 'directory' ? item.settings.color ?? '' : '']: true,
         selected: isSelected,
@@ -741,6 +742,14 @@ body {
       display: flex;
       margin: 8px 0px;
 
+      // If a directory is open, ensure the containing folder remains sticked to
+      // the top as the user scrolls through its (possibly long) contents.
+      &.directory:not(.collapsed) {
+        position: sticky;
+        top: 0px;
+        z-index: 1;
+      }
+
       // Available directory colors (the colors are CSS variables specified
       // in WindowChrome.vue and string-values defined in PopoverDirProps.vue)
       &.blue { color: var(--accent-blue); }
@@ -827,6 +836,10 @@ body.darwin {
   .tree-item {
     color: rgb(53, 53, 53);
 
+    &.directory:not(.collapsed) {
+      background-color: #f5f5f5;
+    }
+
     // On macOS, non-standard icons are normally displayed in color
     cds-icon.special { color: var(--system-accent-color, --c-primary); }
 
@@ -852,13 +865,16 @@ body.darwin {
   &.dark {
     .tree-item {
       color: rgb(240, 240, 240);
+
+      &.directory:not(.collapsed) {
+        background-color: #1e1e1e;
+      }
     }
   }
 }
 
 body.win32 {
   .tree-item {
-
     .display-text {
       &.highlight {
         // This class is applied on drag & drop
@@ -866,12 +882,19 @@ body.win32 {
         color: var(--system-accent-color-contrast, --c-primary-contrast);
       }
     }
+
+    &.directory:not(.collapsed) {
+      background-color: #fafafa;
+    }
+  }
+
+  &.dark .tree-item.directory:not(.collapsed) {
+    background-color: #1e1e28;
   }
 }
 
 body.linux {
   .tree-item {
-
     .display-text {
       &.highlight {
         // This class is applied on drag & drop
@@ -879,6 +902,14 @@ body.linux {
         color: var(--system-accent-color-contrast, --c-primary-contrast);
       }
     }
+
+    &.directory:not(.collapsed) {
+      background-color: #fafafa;
+    }
+  }
+
+  &.dark .tree-item.directory:not(.collapsed) {
+    background-color: #282832;
   }
 }
 </style>
