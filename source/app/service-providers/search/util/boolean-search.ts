@@ -392,12 +392,20 @@ function getTextSurrounding (ranges: Array<{ from: number, to: number }>, text: 
   const from = Math.min(...ranges.map(r => r.from))
   const to = Math.max(...ranges.map(r => r.to))
 
-  const prefix = from - window > 0 ? '…' : ''
-  const suffix = to + window < text.length - 1 ? '…' : ''
-  
-  const start = Math.max(0, from - window)
-  const end = Math.min(text.length, to + window)
-  
+  // Find the boundaries of the line that contains the match. text has
+  // normalized LF-only line endings at this point.
+  // (used Claude Sonnet 4.6)
+  const lineStart = text.lastIndexOf('\n', from - 1) + 1 // char after prev '\n', or 0
+  const lineEndRaw = text.indexOf('\n', to)
+  const lineEnd = lineEndRaw === -1 ? text.length : lineEndRaw
+
+  // Apply the window but clamp to the line so we never bleed into adjacent lines.
+  const start = Math.max(lineStart, from - window)
+  const end = Math.min(lineEnd, to + window)
+
+  const prefix = start > lineStart ? '…' : ''
+  const suffix = end < lineEnd ? '…' : ''
+
   const slice = text.slice(start, end)
 
   return {
