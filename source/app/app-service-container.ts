@@ -121,8 +121,8 @@ export class AppServiceContainer {
 
     this._targetProvider = new TargetProvider(this._logProvider, this._fsal)
     this._linkProvider = new LinkProvider(this._logProvider, this._configProvider, this._fsal)
-    this._searchProvider = new SearchProvider(this._logProvider, this._fsal, this._configProvider)
-    
+    this._searchProvider = new SearchProvider(this._logProvider, this._fsal, this._configProvider, this._searchIndexProvider)
+
     // The document provider accesses only the FSAL in its constructor
     this._documentManager = new DocumentManager(this)
     this._tagProvider = new TagProvider(this._logProvider, this._documentManager, this._configProvider, this._fsal)

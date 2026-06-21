@@ -22,6 +22,7 @@ import type FSAL from '../fsal'
 import broadcastIPCMessage from 'source/common/util/broadcast-ipc-message'
 import type ConfigProvider from '../config'
 import path from 'path'
+import SearchIndexProvider from '../search-index'
 
 export { SearchResult, FileContentSearchResult } from './util/boolean-search'
 
@@ -52,7 +53,7 @@ export class SearchProvider implements ProviderContract {
    */
   private currentQuery: SearchQueryBoolean|undefined
 
-  constructor (private readonly _logger: LogProvider, private readonly _fsal: FSAL, private readonly _config: ConfigProvider) {
+  constructor (private readonly _logger: LogProvider, private readonly _fsal: FSAL, private readonly _config: ConfigProvider, private readonly _index: SearchIndexProvider) {
     this.currentQuery = undefined
     this.fileSearchQueue = []
     this.sumFilesToSearch = 0
@@ -117,11 +118,25 @@ export class SearchProvider implements ProviderContract {
       this.fileSearchQueue = await this._fsal.readDirectoryRecursively(restrictToDirectory)
     }
 
+    // Only consider markdown files
+    this.fileSearchQueue = this.fileSearchQueue.filter(p => p.endsWith('.md'))
+
+    this._logger.verbose(`[Search Provider] fileSearchQueue length: ${this.fileSearchQueue.length}`)
+
+    const indexResults = this._index.search(query)
+    if (indexResults.length > 0) {
+      this._logger.verbose(`[Search Provider] Search index returned ${indexResults.length} results. Prioritizing these files in the search...`)
+      // Move all index results to the front of the search queue
+      let diff = this.fileSearchQueue.filter(p => !indexResults.includes(p))
+      this.fileSearchQueue = indexResults.concat(diff)
+    }
+
     this.sumFilesToSearch = this.fileSearchQueue.length
+    this._logger.verbose(`[Search Provider] ${this.sumFilesToSearch} files will be searched.`)
 
     // Start the search
     this.searchNextFile()
-    
+
     // Return the number of files to search
     return this.fileSearchQueue.length
   }
@@ -137,7 +152,7 @@ export class SearchProvider implements ProviderContract {
       return
     }
 
-    this._logger.verbose(`[Search Provider] Searching file ${path.basename(nextFile)}...`)
+    // this._logger.verbose(`[Search Provider] Searching file ${path.basename(nextFile)}...`)
 
     this.searchFileBoolean(nextFile, this.currentQuery)
       .then(rawResult => {
