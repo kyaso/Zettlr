@@ -111,23 +111,30 @@ export async function parse (
     }
   }
 
-  // Note: originally, this was inside the !hasCache block below.
-  // But since we need the content for indexing, we have it now here
-  let content = await fs.readFile(filePath, { encoding: 'utf8' })
-
-  // Add to index
+  // Only read the file content from disk when we actually need it: either to
+  // parse it (cache miss) or to insert it into the search index (not yet
+  // indexed). When both the descriptor cache and the search index are warm,
+  // reading the full file would be wasted I/O.
   const id = file.path
-  if (!searchIndex.contains(id)) {
-    // console.log(`fsal-file.ts: Inserting ${id}`)
-    searchIndex.insert(id, file.path, content)
-  }
+  const alreadyIndexed = searchIndex.contains(id)
 
-  if (!hasCache) {
-    // Read in the file, parse the contents and make sure to cache the file
-    // let content = await fs.readFile(filePath, { encoding: 'utf8' })
-    parser(file, content)
-    if (cache !== null) {
-      await cacheFile(file, cache)
+  if (!hasCache || !alreadyIndexed) {
+    const content = await fs.readFile(filePath, { encoding: 'utf8' })
+
+    if (!alreadyIndexed) {
+      // console.log(`fsal-file.ts: Inserting ${id}`)
+      searchIndex.insert(id, file.path, content)
+    } else {
+      // hasCache=false means the file changed on disk; update the stale entry.
+      searchIndex.update(id, file.path, content)
+    }
+
+    if (!hasCache) {
+      // Parse the contents and make sure to cache the file
+      parser(file, content)
+      if (cache !== null) {
+        await cacheFile(file, cache)
+      }
     }
   }
 

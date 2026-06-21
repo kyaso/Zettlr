@@ -346,6 +346,21 @@ export default class FSAL extends ProviderContract {
       // Requesting the descriptor will, behind the scenes, check for cache hits
       // and automatically recache if necessary.
       await this.getDescriptorFor(absPath)
+
+      // When the FSAL descriptor cache is warm, getDescriptorFor returns early
+      // without ever calling FSALFile.parse(), which is the only place that
+      // normally populates the search index. We therefore ensure Markdown files
+      // are indexed here explicitly on every boot.
+      if (hasMarkdownExt(absPath) && !this._searchIndex.contains(absPath)) {
+        try {
+          const content = await fs.readFile(absPath, { encoding: 'utf8' })
+          this._searchIndex.insert(absPath, absPath, content)
+        } catch (err: unknown) {
+          if (err instanceof Error) {
+            this._logger.error(`[FSAL] Could not index file ${absPath} for search: ${err.message}`, err)
+          }
+        }
+      }
     }
 
     task?.update({ info: trans('Indexing complete.') })
