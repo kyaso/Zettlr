@@ -35,7 +35,7 @@ export default class SearchIndexProvider extends ProviderContract {
     this._db = create({
       schema: {
         id: 'string',
-        fileName: 'string',
+        filePath: 'string',
         fileContent: 'string'
       }
     })
@@ -51,23 +51,23 @@ export default class SearchIndexProvider extends ProviderContract {
     this._logger.verbose(`SearchIndexProvider: ${what} took: ${executionTime}ms`)
   }
 
-  public insert (id: string, fileName: string, fileContent: string) {
+  public insert (id: string, filePath: string, fileContent: string) {
     this._logger.verbose(`SearchIndexProvider: Inserting ${id}...`)
     this.startTimeMeasurement()
     void insert(this._db, {
       id,
-      fileName,
+      filePath,
       fileContent
     })
     this.endTimeMeasurement('Insert')
   }
 
-  public update (id: string, fileName: string, fileContent: string) {
+  public update (id: string, filePath: string, fileContent: string) {
     this._logger.verbose(`SearchIndexProvider: Updating ${id}...`)
     this.startTimeMeasurement()
     void update(this._db, id, {
       id,
-      fileName,
+      filePath,
       fileContent
     })
     this.endTimeMeasurement('Update')
@@ -76,9 +76,10 @@ export default class SearchIndexProvider extends ProviderContract {
   public search (query: string) {
     this._logger.verbose(`SearchIndexProvider: Searching for ${query}...`)
     this.startTimeMeasurement()
+    this._logger.verbose(`Number of indexed documents: ${count(this._db)}`)
     const result: any = search(this._db, {
       term: query,
-      properties: [ 'fileName', 'fileContent' ],
+      properties: [ 'filePath', 'fileContent' ],
       // By default, orama only returns 10 results, hence we increase the limit
       // to the number of indexed files
       limit: count(this._db)
@@ -87,7 +88,7 @@ export default class SearchIndexProvider extends ProviderContract {
     // console.log(`Search took ${result.elapsed.formatted}`)
     // console.log(`Search result: ${JSON.stringify(result, undefined, 2)}`)
     // console.log(`count = ${result.count}`)
-    const fileList: string[] = result.hits.map((hit: any) => hit.document.fileName)
+    const fileList: string[] = result.hits.map((hit: any) => hit.document.filePath)
     // console.log(`File list: ${fileList} (${fileList.length})`)
     this.endTimeMeasurement('Search')
     return fileList
