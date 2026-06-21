@@ -265,8 +265,6 @@ const toggleState = ref<boolean>(false)
 const activeFileIdx = ref<undefined|number>(undefined)
 // The result line index of the most recently clicked search result.
 const activeLineIdx = ref<undefined|number>(undefined)
-// Actual number of search results (not just number of files)
-const individualResults = ref<number>(0)
 
 const searchIsRunning = ref<boolean>(false)
 const shouldStartNewSearch = ref<boolean>(false)

@@ -21,8 +21,7 @@ import { compileBooleanQuery, searchFileBoolean, type SearchResult, type SearchQ
 import type FSAL from '../fsal'
 import broadcastIPCMessage from 'source/common/util/broadcast-ipc-message'
 import type ConfigProvider from '../config'
-import path from 'path'
-import SearchIndexProvider from '../search-index'
+import type SearchIndexProvider from '../search-index'
 
 export { SearchResult, FileContentSearchResult } from './util/boolean-search'
 
