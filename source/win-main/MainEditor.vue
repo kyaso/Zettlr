@@ -43,14 +43,14 @@ import { CITEPROC_MAIN_DB } from '@dts/common/citeproc'
 import { type EditorConfigOptions } from '@common/modules/markdown-editor/util/configuration'
 import type { CodeFileDescriptor, DirDescriptor, MDFileDescriptor } from '@dts/common/fsal'
 import { getBibliographyForDescriptor as getBibliography } from '@common/util/get-bibliography-for-descriptor'
-import { EditorSelection } from '@codemirror/state'
+// import { EditorSelection } from '@codemirror/state'
 import { documentAuthorityIPCAPI } from '@common/modules/markdown-editor/util/ipc-api'
 import { useConfigStore, useDocumentTreeStore, useTagsStore, useWindowStateStore, useWorkspaceStore } from 'source/pinia'
 import { isAbsolutePath, pathBasename, pathDirname, resolvePath } from '@common/util/renderer-path-polyfill'
 import type { DocumentManagerIPCAPI, DocumentsUpdateContext } from 'source/app/service-providers/documents'
 import type { CiteprocProviderIPCAPI } from 'source/app/service-providers/citeproc'
 import type { ProjectInfo } from 'source/common/modules/markdown-editor/plugins/project-info-field'
-import type { FileContentSearchResult } from 'source/app/service-providers/search'
+// import type { FileContentSearchResult } from 'source/app/service-providers/search'
 
 const ipcRenderer = window.ipc
 
@@ -656,6 +656,7 @@ async function updateFileDatabase (): Promise<void> {
 function maybeHighlightSearchResults (): void {
   // FIXME: Something is broken here. App can crash with RangeError.
   return
+  /*
   if (currentEditor === null) {
     return
   }
@@ -677,6 +678,7 @@ function maybeHighlightSearchResults (): void {
     }
   }
   currentEditor.highlightRanges(rangesToHighlight)
+  */
 }
 
 </script>
