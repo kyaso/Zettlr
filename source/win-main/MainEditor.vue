@@ -654,6 +654,8 @@ async function updateFileDatabase (): Promise<void> {
 }
 
 function maybeHighlightSearchResults (): void {
+  // FIXME: Something is broken here. App can crash with RangeError.
+  return
   if (currentEditor === null) {
     return
   }
