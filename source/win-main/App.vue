@@ -1,6 +1,6 @@
 <template>
   <WindowChrome
-    v-bind:title="'Zettlr'"
+    v-bind:title="windowTitle"
     v-bind:titlebar="shouldShowTitlebar"
     v-bind:menubar="shouldShowMenubar"
     v-bind:show-toolbar="shouldShowToolbar"
@@ -179,6 +179,7 @@ import { DocumentType, type LeafNodeJSON } from '@dts/common/documents'
 import { buildPipeMarkdownTable } from '@common/util/build-pipe-markdown-table'
 import { type UpdateState } from '@providers/updates'
 import { type ToolbarControl } from '@common/vue/window/WindowToolbar.vue'
+import getDocumentTitle from './util/get-document-title'
 import { useConfigStore, useDocumentTreeStore, useWindowStateStore, useWorkspaceStore, useLRTStore } from 'source/pinia'
 import type { ConfigOptions } from 'source/app/service-providers/config/get-config-template'
 import { type AnyDescriptor } from 'source/types/common/fsal'
@@ -340,6 +341,13 @@ const sidebarVisible = computed<boolean>(() => configStore.config.window.sidebar
 const activeFile = computed(() => documentTreeStore.lastLeafActiveFile)
 const activeFileName = computed(() => getFileName(activeFile.value?.path))
 const shouldCountChars = computed<boolean>(() => configStore.config.editor.countChars)
+const windowTitle = computed<string>(() => {
+  if (activeFile.value === undefined) {
+    return 'Zettlr'
+  }
+
+  return `Zettlr - ${getDocumentTitle(activeFile.value)}`
+})
 
 // Simple state machine to trigger which of the three shows up when. Below's the
 // corresponding truth table, which is relatively large, but by spotting some
