@@ -126,7 +126,7 @@ export class SearchProvider implements ProviderContract {
     if (indexResults.length > 0) {
       this._logger.verbose(`[Search Provider] Search index returned ${indexResults.length} results. Prioritizing these files in the search...`)
       // Move all index results to the front of the search queue
-      let diff = this.fileSearchQueue.filter(p => !indexResults.includes(p))
+      const diff = this.fileSearchQueue.filter(p => !indexResults.includes(p))
       this.fileSearchQueue = indexResults.concat(diff)
     }
 

@@ -32,7 +32,6 @@ export default class SearchIndexProvider extends ProviderContract {
   }
 
   private init () {
-    return
     this._db = create({
       schema: {
         id: 'string',
@@ -53,7 +52,6 @@ export default class SearchIndexProvider extends ProviderContract {
   }
 
   public insert (id: string, filePath: string, fileContent: string) {
-    return
     this._logger.verbose(`SearchIndexProvider: Inserting ${id}...`)
     this.startTimeMeasurement()
     void insert(this._db, {
@@ -65,7 +63,6 @@ export default class SearchIndexProvider extends ProviderContract {
   }
 
   public update (id: string, filePath: string, fileContent: string) {
-    return
     this._logger.verbose(`SearchIndexProvider: Updating ${id}...`)
     this.startTimeMeasurement()
     void update(this._db, id, {
@@ -77,7 +74,6 @@ export default class SearchIndexProvider extends ProviderContract {
   }
 
   public search (query: string) {
-    return []
     this._logger.verbose(`SearchIndexProvider: Searching for ${query}...`)
     this.startTimeMeasurement()
     this._logger.verbose(`Number of indexed documents: ${count(this._db)}`)
@@ -99,7 +95,6 @@ export default class SearchIndexProvider extends ProviderContract {
   }
 
   public contains (id: string) {
-    return true
     const ret = getByID(this._db, id)
     return (ret !== undefined)
   }

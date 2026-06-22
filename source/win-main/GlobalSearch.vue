@@ -82,55 +82,46 @@
       <hr>
     </template>
     <!-- Finally, display all search results, per file and line. -->
-    <template v-if="filteredSearchResults.length > 0 && !searchIsRunning">
+    <template v-if="filteredSearchResults.length > 0">
       <!-- First, display a filter ... -->
       <TextControl
         v-model="filter"
         v-bind:placeholder="filterPlaceholder"
         v-bind:label="filterLabel"
       ></TextControl>
-      <!-- ... then the search results. NOTE: The 34px minimum size are purely empirical, and will be overridden with the actually measured size. -->
-      <DynamicScroller
-        v-bind:items="filteredSearchResults"
-        v-bind:min-item-size="34"
-        v-bind:key-field="'key'"
-        v-bind:disable-transform="true"
-        v-bind:page-mode="true"
-        class="search-result-container"
-      >
-        <template #default="{ item, index, active }">
-          <DynamicScrollerItem
-            v-bind:item="item"
-            v-bind:active="active"
-            class="single-search-result"
-          >
-            <div class="result-header" v-on:click="item.hideResultSet = !item.hideResultSet">
-              <cds-icon shape="dot-circle" v-bind:style="`fill: ${getRelevancyColor(item)}`" class="relevancy-icon"></cds-icon>
-              <span class="filename">{{ item.file.displayName }}</span>
-              <cds-icon class="collapse-indicator" shape="angle" v-bind:direction="(item.hideResultSet) ? 'left' : 'down'"></cds-icon>
-              <span class="filepath">{{ item.file.relativeDirectoryPath }}</span>
-            </div>
+      <!-- ... then the search results. -->
+      <div class="search-result-container">
+        <div
+          v-for="(item, index) in filteredSearchResults"
+          v-bind:key="item.key"
+          class="single-search-result"
+        >
+          <div class="result-header" v-on:click="item.hideResultSet = !item.hideResultSet">
+            <cds-icon shape="dot-circle" v-bind:style="`fill: ${getRelevancyColor(item)}`" class="relevancy-icon"></cds-icon>
+            <span class="filename">{{ item.file.displayName }}</span>
+            <cds-icon class="collapse-indicator" shape="angle" v-bind:direction="(item.hideResultSet) ? 'left' : 'down'"></cds-icon>
+            <span class="filepath">{{ item.file.relativeDirectoryPath }}</span>
+          </div>
 
-            <div v-if="!item.hideResultSet" class="results-container">
-              <template
-                v-for="singleRes, idx2 in item.result"
-                v-bind:key="idx2"
+          <div v-if="!item.hideResultSet" class="results-container">
+            <template
+              v-for="singleRes, idx2 in item.result"
+              v-bind:key="idx2"
+            >
+              <div
+                class="result-line"
+                v-bind:class="{ active: index === activeFileIdx && idx2 === activeLineIdx }"
+                v-on:contextmenu.stop.prevent="fileContextMenu($event, item.file.path, singleRes)"
+                v-on:mousedown.stop.prevent="onResultClick($event, index, idx2, item.file.path, singleRes.type === 'content' ? singleRes.line : 1)"
               >
-                <div
-                  class="result-line"
-                  v-bind:class="{ active: index === activeFileIdx && idx2 === activeLineIdx }"
-                  v-on:contextmenu.stop.prevent="fileContextMenu($event, item.file.path, singleRes)"
-                  v-on:mousedown.stop.prevent="onResultClick($event, index, idx2, item.file.path, singleRes.type === 'content' ? singleRes.line : 1)"
-                >
-                  <span class="line-number"><strong>{{ singleRes.type === 'content' ? singleRes.line : 1 }}</strong>: </span>
-                  <!-- eslint-disable-next-line vue/no-v-html NOTE: We can disable the v-html error here, since markText runs DOMPurify over the data, and we have to allow HTML tags to mark the elements. -->
-                  <span v-if="singleRes.type === 'content'" class="excerpt" v-html="markText(singleRes)"></span>
-                </div>
-              </template>
-            </div>
-          </DynamicScrollerItem>
-        </template>
-      </DynamicScroller>
+                <span class="line-number"><strong>{{ singleRes.type === 'content' ? singleRes.line : 1 }}</strong>: </span>
+                <!-- eslint-disable-next-line vue/no-v-html NOTE: We can disable the v-html error here, since markText runs DOMPurify over the data, and we have to allow HTML tags to mark the elements. -->
+                <span v-if="singleRes.type === 'content'" class="excerpt" v-html="markText(singleRes)"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
     </template>
     <template v-else-if="!searchIsRunning && hadNoResult">
       <hr>
@@ -168,7 +159,6 @@ import { pathBasename, pathDirname, relativePath } from 'source/common/util/rend
 import { sanitizeHTML } from 'source/common/util/sanitize-html'
 import type { SearchProviderIPCAPI, SearchResult, FileContentSearchResult } from 'source/app/service-providers/search'
 import CheckboxControl from 'source/common/vue/form/elements/CheckboxControl.vue'
-import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import type { MetadataSearchResult } from 'source/app/service-providers/search/util/boolean-search'
 
 /**
@@ -563,9 +553,15 @@ defineExpose({ focusQueryInput, blurQueryInput, startSearch })
 <style lang="less">
 body div#global-search-pane {
   padding: 10px;
-  overflow: auto;
+  overflow: hidden;
   height: 100%;
   font-size: 13px;
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex-shrink: 0;
+  }
 
   hr {
     margin: 10px 0;
@@ -588,7 +584,9 @@ body div#global-search-pane {
 
   div.search-result-container {
     border-bottom: 1px solid rgb(180, 180, 180);
-    overflow: hidden;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
     font-size: 14px;
 
     div.single-search-result {
