@@ -63,6 +63,20 @@ export default class SearchIndexProvider extends ProviderContract {
   }
 
   public update (id: string, filePath: string, fileContent: string) {
+    // Skip the update if the indexed document is already identical. A single
+    // file save triggers multiple update calls (the explicit save, the
+    // descriptor refresh, and the watchdog's change event), all carrying the
+    // same content. De-duplicating here avoids redundant re-indexing.
+    const existing: any = getByID(this._db, id)
+    if (
+      existing !== undefined &&
+      existing.filePath === filePath &&
+      existing.fileContent === fileContent
+    ) {
+      this._logger.verbose(`SearchIndexProvider: Skipping update for ${id} (content unchanged).`)
+      return
+    }
+
     this._logger.verbose(`SearchIndexProvider: Updating ${id}...`)
     this.startTimeMeasurement()
     void update(this._db, id, {
