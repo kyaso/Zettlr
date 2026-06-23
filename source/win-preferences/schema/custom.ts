@@ -18,6 +18,21 @@ import { PreferencesGroups } from './_preferences-groups'
 export function getCustomFields (): PreferencesFieldset[] {
   return [
     {
+      title: 'Search',
+      group: PreferencesGroups.Custom,
+      help: undefined,
+      fields: [
+        {
+          type: 'number',
+          label: 'Maximum number of files to search in parallel',
+          inline: true,
+          min: 1,
+          model: 'custom.maxConcurrentSearches',
+          reset: 8
+        }
+      ]
+    },
+    {
       title: 'Test values',
       group: PreferencesGroups.Custom,
       help: undefined,

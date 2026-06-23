@@ -32,12 +32,33 @@ export type SearchProviderIPCAPI = IPCAPI<{
 
 export class SearchProvider implements ProviderContract {
   /**
+   * The default maximum number of files to search in parallel, used when the
+   * configured value (custom.maxConcurrentSearches) is missing or invalid.
+   *
+   * @var {number}
+   */
+  private static readonly DEFAULT_MAX_CONCURRENT_SEARCHES = 8
+  /**
    * Keeps a count of all files that will be searched during a search-in-
    * progress. Used to calculate an overall progress.
    *
    * @var {number}
    */
   private sumFilesToSearch: number
+  /**
+   * The number of files that have been searched so far during the ongoing
+   * search. Used to compute the overall progress.
+   *
+   * @var {number}
+   */
+  private searchedFiles: number
+  /**
+   * The timestamp (ms) at which the current search started. Used for logging
+   * the total search duration.
+   *
+   * @var {number}
+   */
+  private searchStartTime: number
   /**
    * Contains the absolute paths of all files that will be searched during the
    * ongoing search.
@@ -56,6 +77,8 @@ export class SearchProvider implements ProviderContract {
     this.currentQuery = undefined
     this.fileSearchQueue = []
     this.sumFilesToSearch = 0
+    this.searchedFiles = 0
+    this.searchStartTime = 0
 
     ipcMain.handle('search-provider', async (event, message: SearchProviderIPCAPI) => {
       const { command, payload } = message
@@ -131,45 +154,90 @@ export class SearchProvider implements ProviderContract {
     }
 
     this.sumFilesToSearch = this.fileSearchQueue.length
+    this.searchedFiles = 0
     this._logger.verbose(`[Search Provider] ${this.sumFilesToSearch} files will be searched.`)
 
-    // Start the search
-    this.searchNextFile()
+    // Start the search using a pool of concurrent workers so that the disk I/O
+    // of loading and parsing files does not get serialized on the main process.
+    // NOTE: We deliberately do not await this so that the IPC call returns the
+    // file count immediately; progress is reported via broadcast events.
+    this.runSearchWorkers().catch(err => {
+      this._logger.error(`[Search Provider] Search failed: ${err}`, err)
+    })
 
     // Return the number of files to search
     return this.fileSearchQueue.length
   }
 
   /**
-   * Runs a single search using the next available file to search
+   * Spins up a pool of concurrent search workers, each of which pulls files
+   * from the queue until it is empty, and resolves once every worker is done.
    */
-  private searchNextFile () {
-    const nextFile = this.fileSearchQueue.shift()
-    if (nextFile === undefined || this.currentQuery === undefined) {
+  private async runSearchWorkers (): Promise<void> {
+    const concurrency = Math.min(this.getMaxConcurrentSearches(), this.fileSearchQueue.length)
+
+    if (concurrency === 0 || this.currentQuery === undefined) {
       broadcastIPCMessage('search-provider', { type: 'search-end' })
       this.currentQuery = undefined
       return
     }
 
-    // this._logger.verbose(`[Search Provider] Searching file ${path.basename(nextFile)}...`)
+    this._logger.verbose(`[Search Provider] Starting ${concurrency} search worker(s) for ${this.fileSearchQueue.length} files.`)
+    this.searchStartTime = Date.now()
 
-    this.searchFileBoolean(nextFile, this.currentQuery)
-      .then(rawResult => {
+    // Launch all workers and wait for every one of them to drain the queue.
+    await Promise.all(
+      Array.from({ length: concurrency }, (_, i) => this.searchWorker(i))
+    )
+
+    const elapsed = Date.now() - this.searchStartTime
+    this._logger.verbose(`[Search Provider] Search complete: ${this.searchedFiles}/${this.sumFilesToSearch} files searched in ${elapsed}ms.`)
+    broadcastIPCMessage('search-provider', { type: 'search-end' })
+    this.currentQuery = undefined
+  }
+
+  /**
+   * Returns the configured maximum number of files to search in parallel,
+   * falling back to the default if the configured value is missing or invalid.
+   *
+   * @return  {number}  A positive integer concurrency limit.
+   */
+  private getMaxConcurrentSearches (): number {
+    const configured = this._config.get().custom.maxConcurrentSearches
+    if (typeof configured === 'number' && Number.isInteger(configured) && configured > 0) {
+      return configured
+    }
+    return SearchProvider.DEFAULT_MAX_CONCURRENT_SEARCHES
+  }
+
+  /**
+   * A single search worker: keeps pulling files off the shared queue and
+   * searching them until the queue is empty (or the search was cancelled).
+   *
+   * @param  {number}  workerId  An identifier for this worker, used for logging.
+   */
+  private async searchWorker (workerId: number): Promise<void> {
+    let nextFile: string | undefined
+    while ((nextFile = this.fileSearchQueue.shift()) !== undefined && this.currentQuery !== undefined) {
+      // const fileStartTime = Date.now()
+      // this._logger.verbose(`[Search Provider] Worker #${workerId} searching ${nextFile} (${this.fileSearchQueue.length} file(s) left in queue).`)
+      try {
+        const rawResult = await this.searchFileBoolean(nextFile, this.currentQuery)
         // Save some resources both in the IPC and the renderer by not
         // reporting empty results. We do so by setting the result as undefined.
         const result = rawResult.length > 0 ? rawResult : undefined
-        const total = this.sumFilesToSearch
-        const remaining = this.fileSearchQueue.length
-        const progress = (total - remaining) / total
+        this.searchedFiles++
+        const progress = this.searchedFiles / this.sumFilesToSearch
+        // const elapsed = Date.now() - fileStartTime
+        // this._logger.verbose(`[Search Provider] Worker #${workerId} done with ${nextFile} in ${elapsed}ms (${rawResult.length} match(es), progress ${Math.round(progress * 100)}%).`)
         broadcastIPCMessage('search-provider', { type: 'search-result', file: nextFile, result, progress })
-      })
-      .catch(err => {
-        this._logger.error(`[Search Provider] Could not search file ${nextFile}: ${err}`, err)
-      })
-      .finally(() => {
-        // Do the next search
-        this.searchNextFile()
-      })
+      } catch (err) {
+        this.searchedFiles++
+        this._logger.error(`[Search Provider] Worker #${workerId} could not search file ${nextFile}: ${err}`, err)
+      }
+    }
+
+    // this._logger.verbose(`[Search Provider] Worker #${workerId} finished.`)
   }
 
   /**

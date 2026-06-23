@@ -272,6 +272,7 @@ export interface ConfigOptions {
       file9: string
     }
     mousePrevBack: boolean
+    maxConcurrentSearches: number
     test: {
       val1: number
       val2: number
@@ -567,6 +568,7 @@ export function getConfigTemplate (): ConfigOptions {
         file9: 'foo9'
       },
       mousePrevBack: false, // false = switch, true = back/forward
+      maxConcurrentSearches: 8, // Number of files searched in parallel during a full-text search
       test: {
         val1: 0,
         val2: 0,

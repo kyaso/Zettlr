@@ -59,13 +59,47 @@ export const useWindowStateStore = defineStore('window-state', () => {
    */
   const searchResults = ref<SearchResultWrapper[]>([])
   const maxSearchResultWeight = computed(() => {
-    const allWeights = searchResults.value.map(r => r.weight)
-    return Math.max(...allWeights)
+    // NOTE: Use a reduce instead of `Math.max(...weights)` since the spread can
+    // overflow the call stack for large result sets and allocates a temporary
+    // array on every recomputation.
+    return searchResults.value.reduce((max, r) => Math.max(max, r.weight), 0)
   })
 
   function addSearchResult (result: SearchResultWrapper) {
-    searchResults.value.push(result)
-    searchResults.value.sort((a, b) => b.weight - a.weight)
+    // Insert the result at its correct position (descending by weight) using a
+    // binary search. This keeps the list sorted as results stream in without
+    // re-sorting the entire array on every single result, which would be
+    // O(n² log n) over the course of a search.
+    const results = searchResults.value
+    let low = 0
+    let high = results.length
+    while (low < high) {
+      const mid = (low + high) >>> 1
+      if (results[mid].weight > result.weight) {
+        low = mid + 1
+      } else {
+        high = mid
+      }
+    }
+    results.splice(low, 0, result)
+  }
+
+  /**
+   * Adds a whole batch of search results at once, triggering only a single
+   * reactive update (and thus a single re-render) for the entire batch. This is
+   * far cheaper than calling addSearchResult in a tight loop when many results
+   * stream in at the same time.
+   *
+   * @param  {SearchResultWrapper[]}  results  The results to add
+   */
+  function addSearchResults (results: SearchResultWrapper[]) {
+    if (results.length === 0) {
+      return
+    }
+    // Append all at once and sort the combined array a single time.
+    const combined = searchResults.value.concat(results)
+    combined.sort((a, b) => b.weight - a.weight)
+    searchResults.value = combined
   }
 
   // Snippets
@@ -103,6 +137,7 @@ export const useWindowStateStore = defineStore('window-state', () => {
     tableOfContents,
     searchResults,
     addSearchResult,
+    addSearchResults,
     maxSearchResultWeight,
     snippets,
     writingTargets,

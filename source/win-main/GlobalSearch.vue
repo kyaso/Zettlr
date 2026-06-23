@@ -341,17 +341,66 @@ const filteredSearchResults = computed<SearchResultWrapper[]>(() => {
 // Changing the query should reset the no-results message
 watch(query, () => { hadNoResult.value = false })
 
+// Incoming search results are buffered here and flushed to the store at most
+// once per animation frame. The main process can deliver hundreds of results in
+// a few hundred milliseconds; without batching, each one would trigger a full
+// reactive re-render of the result list, freezing the UI for seconds.
+let resultBuffer: SearchResultWrapper[] = []
+let latestProgress = 0
+let flushHandle: number | undefined
+
+/**
+ * Schedules a flush of the result buffer on the next animation frame, unless one
+ * is already scheduled.
+ */
+function scheduleFlush (): void {
+  if (flushHandle !== undefined) {
+    return
+  }
+  flushHandle = requestAnimationFrame(() => {
+    flushHandle = undefined
+    flushResults()
+  })
+}
+
+/**
+ * Flushes all buffered results into the store in a single reactive update and
+ * applies the most recent progress value.
+ */
+function flushResults (): void {
+  searchProgress.value = latestProgress
+  if (resultBuffer.length > 0) {
+    const batch = resultBuffer
+    resultBuffer = []
+    windowStateStore.addSearchResults(batch)
+  }
+}
+
+/**
+ * Cancels any pending flush and clears the buffer of not-yet-rendered results.
+ */
+function clearResultBuffer (): void {
+  resultBuffer = []
+  if (flushHandle !== undefined) {
+    cancelAnimationFrame(flushHandle)
+    flushHandle = undefined
+  }
+}
+
 onMounted(() => {
   queryInputElement.value?.focus()
 
   ipcRenderer.on('search-provider', (event, message) => {
     if (message.type === 'search-end') {
+      // Flush any remaining buffered results immediately so the final state is
+      // rendered without waiting for the next animation frame.
+      clearResultBuffer()
+      flushResults()
       searchIsRunning.value = false
       hadNoResult.value = filteredSearchResults.value.length === 0
       searchProgress.value = 0
     } else if (message.type === 'search-result') {
       processSearchResult(message.progress as number, message.file as string, message.result as SearchResult|undefined)
-        .catch(err => console.error(err))
     }
   })
 })
@@ -418,10 +467,18 @@ function startSearch (overrideQuery?: string): void {
  * @param  {string}                  absPath   The filepath that had been searched
  * @param  {SearchResult|undefined}  result    The search result, if the file contains a result
  */
-async function processSearchResult (progress: number, absPath: string, result: SearchResult|undefined): Promise<void> {
-  searchProgress.value = progress
+function processSearchResult (progress: number, absPath: string, result: SearchResult|undefined): void {
+  // Ignore late-arriving results once the search has been stopped/cancelled.
+  if (!searchIsRunning.value) {
+    return
+  }
+
+  latestProgress = progress
 
   if (result === undefined) {
+    // Still schedule a flush so the progress bar keeps advancing for files
+    // without matches.
+    scheduleFlush()
     return
   }
 
@@ -442,7 +499,8 @@ async function processSearchResult (progress: number, absPath: string, result: S
     hideResultSet: toggleState.value,
     weight: result.reduce((acc, cur) => acc + cur.weight, 0)
   }
-  windowStateStore.addSearchResult(newResult)
+  resultBuffer.push(newResult)
+  scheduleFlush()
 }
 
 /**
@@ -454,6 +512,12 @@ function cancelSearch (startNewSearch: boolean = false): void {
   ipcRenderer.invoke('search-provider', { command: 'cancel-search', payload: undefined } satisfies SearchProviderIPCAPI)
     .catch(err => console.error(err))
 
+  // Stop the renderer from continuing to process its own backlog: drop any
+  // buffered-but-unrendered results and immediately mark the search as stopped.
+  // (By the time the user clicks cancel, the main process is often already done
+  // and the lag is purely the renderer working through queued IPC results.)
+  clearResultBuffer()
+  searchIsRunning.value = false
   shouldStartNewSearch.value = startNewSearch
   searchProgress.value = 0
 }
