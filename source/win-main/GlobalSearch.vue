@@ -1,6 +1,16 @@
 <template>
   <div id="global-search-pane">
-    <h4>{{ searchTitle }}</h4>
+    <div class="search-controls">
+    <div class="controls-header" v-on:click="controlsCollapsed = !controlsCollapsed">
+      <cds-icon
+        class="collapse-indicator"
+        shape="angle"
+        v-bind:direction="controlsCollapsed ? 'right' : 'down'"
+      ></cds-icon>
+      <h4>{{ searchTitle }}</h4>
+    </div>
+    <!-- The input controls, which can be collapsed away to save space. -->
+    <div v-show="!controlsCollapsed" class="controls-body">
     <!-- First: Two text controls for search terms and to restrict the search -->
     <AutocompleteText
       ref="queryInputElement"
@@ -28,7 +38,10 @@
       v-bind:placeholder="restrictDirPlaceholder"
       v-on:keydown.enter="startSearch()"
     ></AutocompleteText>
-    <!-- Then an always-visible search button ... -->
+    </div><!-- .controls-body -->
+    <!-- The action buttons: search and cancel, plus clear and toggle once there
+         are results. They all share a single row and stay visible even when the
+         controls are collapsed. -->
     <p>
       <ButtonControl
         v-bind:label="searchButtonLabel"
@@ -42,24 +55,21 @@
         v-bind:disabled="!searchIsRunning"
         v-on:click="cancelSearch()"
       ></ButtonControl>
-    </p>
-    <!-- ... as well as two buttons to clear the results or toggle them. -->
-    <template v-if="windowStateStore.searchResults.length > 0">
-      <template v-if="!searchIsRunning">
-        <hr>
-        <p>
-          <ButtonControl
-            v-bind:label="clearButtonLabel"
-            v-bind:inline="true"
-            v-on:click="emptySearchResults()"
-          ></ButtonControl>
-          <ButtonControl
-            v-bind:label="toggleButtonLabel"
-            v-bind:inline="true"
-            v-on:click="toggleIndividualResults()"
-          ></ButtonControl>
-        </p>
+      <template v-if="windowStateStore.searchResults.length > 0 && !searchIsRunning">
+        <ButtonControl
+          v-bind:label="clearButtonLabel"
+          v-bind:inline="true"
+          v-on:click="emptySearchResults()"
+        ></ButtonControl>
+        <ButtonControl
+          v-bind:label="toggleButtonLabel"
+          v-bind:inline="true"
+          v-on:click="toggleIndividualResults()"
+        ></ButtonControl>
       </template>
+    </p>
+    <!-- Results summary. -->
+    <template v-if="windowStateStore.searchResults.length > 0">
       <hr>
       <p style="padding: 5px 0; text-align: center; display: block;">
         {{ resultsMessage }}
@@ -81,15 +91,19 @@
       </div>
       <hr>
     </template>
-    <!-- Finally, display all search results, per file and line. -->
+    <!-- First, display a filter (kept pinned with the controls) ... -->
     <template v-if="filteredSearchResults.length > 0">
-      <!-- First, display a filter ... -->
       <TextControl
         v-model="filter"
         v-bind:placeholder="filterPlaceholder"
         v-bind:label="filterLabel"
       ></TextControl>
-      <!-- ... then the search results. -->
+    </template>
+    </div><!-- .search-controls -->
+
+    <!-- ... then the (scrollable) search results, per file and line. -->
+    <div class="search-results">
+    <template v-if="filteredSearchResults.length > 0">
       <div class="search-result-container">
         <div
           v-for="(item, index) in filteredSearchResults"
@@ -129,6 +143,7 @@
         {{ noResultsMessage }}
       </p>
     </template>
+    </div><!-- .search-results -->
   </div>
 </template>
 
@@ -248,6 +263,9 @@ const caseInsensitive = ref<boolean>(true)
 const searchProgress = ref(0)
 // Whether the last search had no result
 const hadNoResult = ref(false)
+// Whether the input controls (query, options, buttons) are collapsed to save
+// space. Results remain visible while collapsed.
+const controlsCollapsed = ref<boolean>(false)
 // A global trigger for the result set trigger. This will determine what
 // the toggle will do to all result sets -- either hide or display them.
 const toggleState = ref<boolean>(false)
@@ -617,14 +635,33 @@ defineExpose({ focusQueryInput, blurQueryInput, startSearch })
 <style lang="less">
 body div#global-search-pane {
   padding: 10px;
-  overflow: hidden;
   height: 100%;
   font-size: 13px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
-  > * {
-    flex-shrink: 0;
+  // The controls (title, inputs, buttons, filter) stay pinned at the top ...
+  .search-controls {
+    flex: 0 0 auto;
+
+    // Clickable header that collapses/expands the input controls.
+    .controls-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+
+      h4 {
+        margin: 0;
+      }
+    }
+  }
+
+  // ... while only the results list scrolls.
+  .search-results {
+    flex: 1 1 auto;
+    overflow: auto;
   }
 
   hr {
@@ -648,9 +685,7 @@ body div#global-search-pane {
 
   div.search-result-container {
     border-bottom: 1px solid rgb(180, 180, 180);
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
+    overflow: hidden;
     font-size: 14px;
 
     div.single-search-result {
