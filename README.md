@@ -4,13 +4,10 @@ This is my **personal fork** of **Zettlr** containing some customizations that a
 
 Here are some customizations I want to highlight (more details on them can be found in the next section):
 
-- Backlinks / Unlinked mentions
-- Outbound links
 - Fuzzysearch for file filter
-- Search index for insanely fast full-text search
-- Favorite files keyboard shortcuts
+- Search index
 - Link tooltips optimized for keyboardless navigation between notes
-  - Tooltips also shown for tags
+  - Tooltips also shown for tags, and inline code
 - Block references
   - Poor man's style, see below
 
@@ -35,25 +32,11 @@ In the following, every customization so far is listed. Disclaimer: While I stri
     * Apply Highlight (`== ==`)
 * **Sidebar** customizations:
     * Related files:
-      * Show file path on hover
       * Show number of related files
-    - Added **Backlinks/Unlinked Mentions** tab (similar to Obsidian's)
-        - Basically, I recycled part from the GlobalSearch module
-    - Added **Outbound Links**
-      - This essentially lists all Zkn-/Wikilinks in the file and, for each of them, it show which other files also have that link
-      - It doesn't matter whether that link points to an actual file or not
-    * ToC, Backlinks, Outbound links and Related files are shown in a vertial stack in the first sidebar tab (aka ToC tab)
+    * ToC and Related files are shown in a vertial stack in the first sidebar tab (aka ToC tab)
       * Sections can be collapsed
     * Disabled References and Other files tabs
       * I don't use them at all in my workflow
-* **Global search** (full-text search) customizations
-    - Display number of search results
-    - Massive search speed improvement by using **search index**
-        - I used the [flexsearch](https://github.com/nextapps-de/flexsearch) library
-        - The search is now basically _instant_, however, some additional memory is required
-        - I need the fast search speed, as my workflow is heavily reliant on internal links which I also use as a kind of _block reference_ (see below)
-* Added **file quick switch** shortcuts
-    - One can assign `Ctrl+<num>`, where `<num>` is 1..9, to different files
 * **File filter** customizations
     - Filter can now be focussed using `Ctrl+P`
         - I'm used to that keybinding from VSCode
